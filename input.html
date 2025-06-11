@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>통빱 직원 호출 시스템</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 1vh 2vw;
+      margin: 0;
+      background-color: #fff;
+      color: #333;
+      height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      text-align: center;
+      font-size: 6vw;
+      font-weight: bold;
+      color: #e91e63;
+      margin-bottom: 1vh;
+    }
+
+    button, input {
+      font-size: 4.5vw;
+      padding: 1.2vh 0;
+      margin: 0.3vh 0;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+    }
+
+    .btn-orange {
+      background-color: orange;
+      color: white;
+    }
+
+    .btn-gray {
+      background-color: #ccc;
+      color: #333;
+    }
+
+    .btn-red {
+      background-color: #ff4444;
+      color: white;
+    }
+
+    .row {
+      display: flex;
+      gap: 1.5vw;
+      align-items: center;
+      width: 100%;
+    }
+
+    .input-short {
+      width: 22%;
+      font-size: 4.5vw;
+      text-align: center;
+      border: 2px solid #ccc;
+    }
+
+    .btn-flex {
+      flex: 1;
+    }
+
+    #status {
+      text-align: center;
+      font-size: 5.5vw;
+      color: #ff0000;
+      font-weight: bold;
+      margin: 1vh 0;
+      padding: 1vh 2vw;
+      min-height: 4vh;
+      flex-shrink: 0;
+      background-color: #ffe6e6;
+      border-radius: 8px;
+      border: 2px solid #ff6666;
+    }
+
+    #displayStatus {
+      text-align: center;
+      font-size: 4vw;
+      font-weight: bold;
+      min-height: 3vh;
+      flex-shrink: 0;
+      border-radius: 8px;
+      padding: 0.5vh 1vw;
+      margin-bottom: 0.5vh;
+    }
+
+    .status-connected {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .status-disconnected {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    #currentNumbers {
+      background-color: #f0f0f0;
+      padding: 0.8vh 1.5vw;
+      border-radius: 6px;
+      margin: 0.3vh 0;
+      font-size: 3.5vw;
+      text-align: center;
+      min-height: 2.5vh;
+      flex-shrink: 0;
+    }
+
+    .content-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">🍖 통빱 호출벨 🍜</div>
+  
+  <div id="displayStatus" class="status-disconnected">디스플레이 상태 확인 중...</div>
+
+  <div id="currentNumbers">현재 호출된 번호: 없음</div>
+
+  <div class="content-wrapper">
+    <div class="row">
+      <input type="number" id="callNumber" class="input-short" placeholder="번호" min="1" max="700" />
+      <button class="btn-orange btn-flex" onclick="sendCall()">📢 호출</button>
+    </div>
+
+    <div class="row">
+      <input type="number" id="sequenceNumber" class="input-short" placeholder="끝번호" min="5" max="700" />
+      <button class="btn-orange btn-flex" onclick="sendSequenceCall()">📢 연속 5개 호출</button>
+    </div>
+
+    <button class="btn-red" onclick="clearAllNumbers()">🗑️ 모든 호출번호 지우기</button>
+
+    <button class="btn-orange" onclick="sendMessage('삼겹살만 주문하신 분 먼저 드립니다')">🥩 삼겹살 먼저</button>
+    <button class="btn-orange" onclick="sendMessage('국수만 주문하신 분 먼저 드립니다')">🍜 국수 먼저</button>
+
+    <div class="row">
+      <input type="number" id="samTime" class="input-short" placeholder="삼겹살" value="5" />
+      <button class="btn-orange btn-flex" onclick="sendSamTime()">⏱ 삼겹살 시간</button>
+    </div>
+    <div class="row">
+      <input type="number" id="noodleTime" class="input-short" placeholder="국수" value="5" />
+      <button class="btn-orange btn-flex" onclick="sendNoodleTime()">⏱ 국수 시간</button>
+    </div>
+
+    <button class="btn-gray" onclick="testDisplay()" style="background-color: #666;">🔍 디스플레이 테스트</button>
+
+    <div id="status">호출벨 시스템 준비됨</div>
+  </div>
+
+  <audio id="alert" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSqW3/LNeCQEJoO+8+KVQQAJT6/h3rNSEwc7iNb94HQ7BQFM1O+9czCZvpyMnf3mgJFyRBFh3+/8JQEBS9XvuiEEAQECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/" preload="auto"></audio>
+
+  <script>
+    // ✅ 웹소켓 URL을 동적으로 생성 (HTTP/HTTPS 자동 감지)
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(protocol + '//' + location.host);
+    
+    const statusBox = document.getElementById("status");
+    const displayStatusBox = document.getElementById("displayStatus");
+    const currentNumbersBox = document.getElementById("currentNumbers");
+    let currentNumbers = [];
+    let isDisplayConnected = false;
+
+    ws.onopen = () => {
+      console.log("웹소켓 연결됨");
+      ws.send("INPUT");
+      setStatus("✅ 서버 연결됨");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'DISPLAY_ON') {
+          isDisplayConnected = true;
+          displayStatusBox.innerText = "✅ 디스플레이 연결됨";
+          displayStatusBox.className = "status-connected";
+        } else if (data.type === 'DISPLAY_OFF') {
+          isDisplayConnected = false;
+          displayStatusBox.innerText = "❌ 디스플레이 연결 끊김";
+          displayStatusBox.className = "status-disconnected";
+          playAlert();
+        } else if (data.type === 'CALL' && Array.isArray(data.list)) {
+          currentNumbers = data.list;
+          updateCurrentNumbersDisplay();
+        }
+      } catch (e) {
+        console.log("비JSON 메시지:", event.data);
+      }
+    };
+
+    ws.onerror = () => {
+      setStatus("❌ 서버 연결 실패");
+    };
+
+    ws.onclose = () => {
+      setStatus("⚠️ 서버 연결 끊김");
+    };
+
+    function updateCurrentNumbersDisplay() {
+      if (currentNumbers.length === 0) {
+        currentNumbersBox.innerText = "현재 호출된 번호: 없음";
+      } else {
+        currentNumbersBox.innerText = `현재 호출된 번호: ${currentNumbers.join(', ')}`;
+      }
+    }
+
+    function setStatus(msg) {
+      statusBox.innerText = msg;
+    }
+
+    function playAlert() {
+      const alert = document.getElementById("alert");
+      if (alert) {
+        alert.currentTime = 0;
+        alert.play().catch(() => {});
+      }
+    }
+
+    function checkDisplayAndNotify() {
+      if (!isDisplayConnected) {
+        setStatus("⚠️ 디스플레이 연결 끊김 - 호출이 전달되지 않을 수 있습니다");
+        playAlert();
+        return false;
+      }
+      return true;
+    }
+
+    function sendCall() {
+      if (!checkDisplayAndNotify()) return;
+      
+      const num = parseInt(document.getElementById("callNumber").value);
+      if (!isNaN(num) && num >= 1 && num <= 700) {
+        ws.send(`CALL:${num}`);
+        setStatus(`📢 ${num}번 호출됨`);
+        document.getElementById("callNumber").value = '';
+      }
+    }
+
+    function sendSequenceCall() {
+      if (!checkDisplayAndNotify()) return;
+      
+      const endNum = parseInt(document.getElementById("sequenceNumber").value);
+      if (!isNaN(endNum) && endNum >= 5 && endNum <= 700) {
+        const startNum = endNum - 4;
+        const sequence = [];
+        for (let i = startNum; i <= endNum; i++) {
+          sequence.push(i);
+        }
+        
+        ws.send(`SEQUENCE:${sequence.join(',')}`);
+        setStatus(`📢 연속 호출: ${sequence.join(', ')}`);
+        document.getElementById("sequenceNumber").value = '';
+      } else {
+        setStatus(`❌ 5 이상의 번호를 입력해주세요`);
+      }
+    }
+
+    function clearAllNumbers() {
+      ws.send('CLEAR');
+      setStatus('🗑️ 모든 호출번호 지워짐');
+    }
+
+    function sendMessage(text) {
+      if (!checkDisplayAndNotify()) return;
+      
+      ws.send(`MSG:${text}`);
+      setStatus(`💬 메시지 전송: ${text}`);
+    }
+
+    function sendSamTime() {
+      const sam = parseInt(document.getElementById("samTime").value);
+      const noodle = parseInt(document.getElementById("noodleTime").value);
+      if (!isNaN(sam) && !isNaN(noodle)) {
+        ws.send(`TIME:${sam}:${noodle}`);
+        setStatus(`⏱ 삼겹살 예상시간: ${sam}분`);
+      }
+    }
+
+    function sendNoodleTime() {
+      const sam = parseInt(document.getElementById("samTime").value);
+      const noodle = parseInt(document.getElementById("noodleTime").value);
+      if (!isNaN(sam) && !isNaN(noodle)) {
+        ws.send(`TIME:${sam}:${noodle}`);
+        setStatus(`⏱ 국수 예상시간: ${noodle}분`);
+      }
+    }
+    
+    function testDisplay() {
+      ws.send(`MSG:디스플레이 테스트 - ${new Date().getSeconds()}초`);
+      setStatus("🔍 디스플레이 테스트 메시지 전송됨");
+    }
+  </script>
+</body>
+</html>

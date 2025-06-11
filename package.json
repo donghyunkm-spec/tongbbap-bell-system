@@ -1,0 +1,20 @@
+{
+  "name": "tongbbap-bell-system",
+  "version": "1.0.0",
+  "description": "통빱 음식점 호출벨 시스템",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": ["restaurant", "call-system", "websocket"],
+  "author": "통빱",
+  "license": "MIT"
+}
