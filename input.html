@@ -54,6 +54,13 @@
       color: white;
     }
 
+    .btn-dark-red {
+      background-color: #8b0000;
+      color: white;
+      margin-top: 2vh;
+      padding: 2vh 0;
+    }
+
     .row {
       display: flex;
       gap: 1.5vw;
@@ -107,6 +114,11 @@
       color: #721c24;
     }
 
+    .status-reconnecting {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
     #currentNumbers {
       background-color: #f0f0f0;
       padding: 0.8vh 1.5vw;
@@ -125,11 +137,53 @@
       gap: 0.5vh;
       overflow-y: auto;
     }
+
+    #connectionInfo {
+      font-size: 3vw;
+      text-align: center;
+      color: #666;
+      margin-bottom: 0.5vh;
+    }
+
+    .pulse {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    /* PWA 느낌을 위한 추가 스타일 */
+    .offline-indicator {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: #dc3545;
+      color: white;
+      text-align: center;
+      padding: 0.5vh;
+      font-size: 3.5vw;
+      z-index: 1000;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    .offline-indicator.show {
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
+  <div id="offlineIndicator" class="offline-indicator">
+    🔄 서버 재연결 중... 잠시만 기다려 주세요
+  </div>
+
   <div class="header">🍖 통빱 호출벨 🍜</div>
   
+  <div id="connectionInfo">연결 상태 확인 중...</div>
   <div id="displayStatus" class="status-disconnected">디스플레이 상태 확인 중...</div>
 
   <div id="currentNumbers">현재 호출된 번호: 없음</div>
@@ -159,58 +213,294 @@
       <button class="btn-orange btn-flex" onclick="sendNoodleTime()">⏱ 국수 시간</button>
     </div>
 
-    <button class="btn-gray" onclick="testDisplay()" style="background-color: #666;">🔍 디스플레이 테스트</button>
-
     <div id="status">호출벨 시스템 준비됨</div>
+
+    <button class="btn-dark-red" onclick="sendClosedMessage()">🚫 재고 소진 마감</button>
   </div>
 
   <audio id="alert" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSqW3/LNeCQEJoO+8+KVQQAJT6/h3rNSEwc7iNb94HQ7BQFM1O+9czCZvpyMnf3mgJFyRBFh3+/8JQEBS9XvuiEEAQECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/" preload="auto"></audio>
 
   <script>
-    // ✅ 웹소켓 URL을 동적으로 생성 (HTTP/HTTPS 자동 감지)
-    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(protocol + '//' + location.host);
-    
+    // WebSocket 관리 클래스
+    class WebSocketManager {
+      constructor() {
+        this.ws = null;
+        this.reconnectTimer = null;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 50; // 최대 재연결 시도 횟수
+        this.reconnectInterval = 3000; // 재연결 간격 (3초)
+        this.heartbeatTimer = null;
+        this.heartbeatInterval = 30000; // 30초마다 ping
+        this.lastPongTime = Date.now();
+        this.isManualClose = false;
+        
+        this.initVisibilityHandling();
+        this.connect();
+      }
+
+      // 페이지 가시성 변화 처리
+      initVisibilityHandling() {
+        // Page Visibility API로 백그라운드/포그라운드 감지
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            // 포그라운드로 돌아왔을 때
+            console.log('📱 앱이 포그라운드로 돌아옴');
+            this.handleForeground();
+          } else {
+            // 백그라운드로 갔을 때
+            console.log('📱 앱이 백그라운드로 이동');
+            this.handleBackground();
+          }
+        });
+
+        // 페이지 포커스/블러 이벤트
+        window.addEventListener('focus', () => {
+          console.log('🎯 페이지 포커스 됨');
+          this.handleForeground();
+        });
+
+        window.addEventListener('blur', () => {
+          console.log('😴 페이지 블러 됨');
+        });
+
+        // 온라인/오프라인 감지
+        window.addEventListener('online', () => {
+          console.log('🌐 인터넷 연결됨');
+          this.handleOnline();
+        });
+
+        window.addEventListener('offline', () => {
+          console.log('📵 인터넷 연결 끊김');
+          this.handleOffline();
+        });
+      }
+
+      handleForeground() {
+        // 연결 상태 확인 및 재연결
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+          console.log('🔄 포그라운드 복귀 - 재연결 시도');
+          this.reconnect();
+        } else {
+          // 연결이 살아있는지 확인
+          this.sendHeartbeat();
+        }
+      }
+
+      handleBackground() {
+        // 백그라운드로 갈 때는 특별한 처리 없음
+        // 모바일 브라우저가 알아서 연결을 관리함
+      }
+
+      handleOnline() {
+        this.hideOfflineIndicator();
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+          this.reconnect();
+        }
+      }
+
+      handleOffline() {
+        this.showOfflineIndicator();
+        this.stopHeartbeat();
+      }
+
+      connect() {
+        if (this.reconnectTimer) {
+          clearTimeout(this.reconnectTimer);
+          this.reconnectTimer = null;
+        }
+
+        if (this.ws) {
+          this.isManualClose = true;
+          this.ws.close();
+        }
+
+        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${location.host}`;
+        
+        console.log(`🔗 WebSocket 연결 시도 (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts}):`, wsUrl);
+        
+        this.updateConnectionInfo('연결 중...', true);
+        this.isManualClose = false;
+        
+        try {
+          this.ws = new WebSocket(wsUrl);
+          this.setupWebSocketEvents();
+        } catch (error) {
+          console.error('❌ WebSocket 생성 실패:', error);
+          this.scheduleReconnect();
+        }
+      }
+
+      setupWebSocketEvents() {
+        this.ws.onopen = () => {
+          console.log("✅ WebSocket 연결됨");
+          this.reconnectAttempts = 0;
+          this.ws.send("INPUT");
+          this.updateConnectionInfo('연결됨', false);
+          this.hideOfflineIndicator();
+          this.startHeartbeat();
+          this.lastPongTime = Date.now();
+          setStatus("✅ 서버 연결됨");
+        };
+
+        this.ws.onmessage = (event) => {
+          this.lastPongTime = Date.now(); // 메시지 받으면 연결 상태 업데이트
+          
+          try {
+            const data = JSON.parse(event.data);
+            
+            // Pong 응답 처리
+            if (data.type === 'PONG') {
+              console.log('🏓 Pong 받음');
+              return;
+            }
+            
+            if (data.type === 'DISPLAY_ON') {
+              isDisplayConnected = true;
+              displayStatusBox.innerText = "✅ 디스플레이 연결됨";
+              displayStatusBox.className = "status-connected";
+            } else if (data.type === 'DISPLAY_OFF') {
+              isDisplayConnected = false;
+              displayStatusBox.innerText = "❌ 디스플레이 연결 끊김";
+              displayStatusBox.className = "status-disconnected";
+              playAlert();
+            } else if (data.type === 'CALL' && Array.isArray(data.list)) {
+              currentNumbers = data.list;
+              updateCurrentNumbersDisplay();
+            }
+          } catch (e) {
+            console.log("비JSON 메시지:", event.data);
+          }
+        };
+
+        this.ws.onerror = (error) => {
+          console.error("❌ WebSocket 에러:", error);
+          setStatus("❌ 서버 연결 실패");
+        };
+
+        this.ws.onclose = (event) => {
+          console.log("❌ WebSocket 연결 끊김:", event.code, event.reason);
+          this.stopHeartbeat();
+          
+          if (!this.isManualClose) {
+            setStatus("⚠️ 서버 연결 끊김");
+            this.updateConnectionInfo('연결 끊김', false);
+            this.scheduleReconnect();
+          }
+        };
+      }
+
+      scheduleReconnect() {
+        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+          console.error(`❌ 최대 재연결 시도 횟수 초과 (${this.maxReconnectAttempts})`);
+          this.updateConnectionInfo('연결 실패 - 새로고침 필요', false);
+          setStatus("❌ 연결 실패 - 새로고침해주세요");
+          return;
+        }
+
+        // 재연결 간격을 점진적으로 증가 (최대 30초)
+        const delay = Math.min(this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts), 30000);
+        
+        this.updateConnectionInfo(`${Math.ceil(delay/1000)}초 후 재연결...`, true);
+        this.showOfflineIndicator();
+        
+        this.reconnectTimer = setTimeout(() => {
+          this.reconnectAttempts++;
+          this.reconnect();
+        }, delay);
+      }
+
+      reconnect() {
+        console.log('🔄 재연결 시도');
+        this.connect();
+      }
+
+      // 하트비트로 연결 상태 확인
+      startHeartbeat() {
+        this.stopHeartbeat();
+        this.heartbeatTimer = setInterval(() => {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            // 마지막 pong으로부터 너무 오랜 시간이 지났으면 재연결
+            if (Date.now() - this.lastPongTime > 60000) { // 60초
+              console.warn('🚨 하트비트 타임아웃 - 재연결');
+              this.reconnect();
+              return;
+            }
+            
+            // Ping 전송
+            try {
+              this.ws.send(JSON.stringify({ type: 'PING' }));
+              console.log('🏓 Ping 전송');
+            } catch (error) {
+              console.error('❌ Ping 전송 실패:', error);
+              this.reconnect();
+            }
+          }
+        }, this.heartbeatInterval);
+      }
+
+      stopHeartbeat() {
+        if (this.heartbeatTimer) {
+          clearInterval(this.heartbeatTimer);
+          this.heartbeatTimer = null;
+        }
+      }
+
+      send(message) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(message);
+          return true;
+        } else {
+          console.warn('⚠️ WebSocket이 연결되지 않음 - 재연결 시도');
+          setStatus("⚠️ 연결 끊김 - 재연결 중...");
+          this.reconnect();
+          return false;
+        }
+      }
+
+      updateConnectionInfo(text, isPulse) {
+        const info = document.getElementById('connectionInfo');
+        info.textContent = `🔗 ${text}`;
+        if (isPulse) {
+          info.classList.add('pulse');
+        } else {
+          info.classList.remove('pulse');
+        }
+      }
+
+      showOfflineIndicator() {
+        const indicator = document.getElementById('offlineIndicator');
+        indicator.classList.add('show');
+      }
+
+      hideOfflineIndicator() {
+        const indicator = document.getElementById('offlineIndicator');
+        indicator.classList.remove('show');
+      }
+
+      // 정리
+      destroy() {
+        this.isManualClose = true;
+        this.stopHeartbeat();
+        if (this.reconnectTimer) {
+          clearTimeout(this.reconnectTimer);
+        }
+        if (this.ws) {
+          this.ws.close();
+        }
+      }
+    }
+
+    // 전역 변수들
+    let wsManager;
     const statusBox = document.getElementById("status");
     const displayStatusBox = document.getElementById("displayStatus");
     const currentNumbersBox = document.getElementById("currentNumbers");
     let currentNumbers = [];
     let isDisplayConnected = false;
 
-    ws.onopen = () => {
-      console.log("웹소켓 연결됨");
-      ws.send("INPUT");
-      setStatus("✅ 서버 연결됨");
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'DISPLAY_ON') {
-          isDisplayConnected = true;
-          displayStatusBox.innerText = "✅ 디스플레이 연결됨";
-          displayStatusBox.className = "status-connected";
-        } else if (data.type === 'DISPLAY_OFF') {
-          isDisplayConnected = false;
-          displayStatusBox.innerText = "❌ 디스플레이 연결 끊김";
-          displayStatusBox.className = "status-disconnected";
-          playAlert();
-        } else if (data.type === 'CALL' && Array.isArray(data.list)) {
-          currentNumbers = data.list;
-          updateCurrentNumbersDisplay();
-        }
-      } catch (e) {
-        console.log("비JSON 메시지:", event.data);
-      }
-    };
-
-    ws.onerror = () => {
-      setStatus("❌ 서버 연결 실패");
-    };
-
-    ws.onclose = () => {
-      setStatus("⚠️ 서버 연결 끊김");
-    };
+    // WebSocket 매니저 초기화
+    wsManager = new WebSocketManager();
 
     function updateCurrentNumbersDisplay() {
       if (currentNumbers.length === 0) {
@@ -246,9 +536,10 @@
       
       const num = parseInt(document.getElementById("callNumber").value);
       if (!isNaN(num) && num >= 1 && num <= 700) {
-        ws.send(`CALL:${num}`);
-        setStatus(`📢 ${num}번 호출됨`);
-        document.getElementById("callNumber").value = '';
+        if (wsManager.send(`CALL:${num}`)) {
+          setStatus(`📢 ${num}번 호출됨`);
+          document.getElementById("callNumber").value = '';
+        }
       }
     }
 
@@ -263,32 +554,42 @@
           sequence.push(i);
         }
         
-        ws.send(`SEQUENCE:${sequence.join(',')}`);
-        setStatus(`📢 연속 호출: ${sequence.join(', ')}`);
-        document.getElementById("sequenceNumber").value = '';
+        if (wsManager.send(`SEQUENCE:${sequence.join(',')}`)) {
+          setStatus(`📢 연속 호출: ${sequence.join(', ')}`);
+          document.getElementById("sequenceNumber").value = '';
+        }
       } else {
         setStatus(`❌ 5 이상의 번호를 입력해주세요`);
       }
     }
 
     function clearAllNumbers() {
-      ws.send('CLEAR');
-      setStatus('🗑️ 모든 호출번호 지워짐');
+      if (wsManager.send('CLEAR')) {
+        setStatus('🗑️ 모든 호출번호 지워짐');
+      }
     }
 
     function sendMessage(text) {
       if (!checkDisplayAndNotify()) return;
       
-      ws.send(`MSG:${text}`);
-      setStatus(`💬 메시지 전송: ${text}`);
+      if (wsManager.send(`MSG:${text}`)) {
+        setStatus(`💬 메시지 전송: ${text}`);
+      }
+    }
+
+    function sendClosedMessage() {
+      if (wsManager.send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`)) {
+        setStatus('🚫 재고 소진 마감 메시지 전송됨');
+      }
     }
 
     function sendSamTime() {
       const sam = parseInt(document.getElementById("samTime").value);
       const noodle = parseInt(document.getElementById("noodleTime").value);
       if (!isNaN(sam) && !isNaN(noodle)) {
-        ws.send(`TIME:${sam}:${noodle}`);
-        setStatus(`⏱ 삼겹살 예상시간: ${sam}분`);
+        if (wsManager.send(`TIME:${sam}:${noodle}`)) {
+          setStatus(`⏱ 삼겹살 예상시간: ${sam}분`);
+        }
       }
     }
 
@@ -296,15 +597,31 @@
       const sam = parseInt(document.getElementById("samTime").value);
       const noodle = parseInt(document.getElementById("noodleTime").value);
       if (!isNaN(sam) && !isNaN(noodle)) {
-        ws.send(`TIME:${sam}:${noodle}`);
-        setStatus(`⏱ 국수 예상시간: ${noodle}분`);
+        if (wsManager.send(`TIME:${sam}:${noodle}`)) {
+          setStatus(`⏱ 국수 예상시간: ${noodle}분`);
+        }
       }
     }
-    
-    function testDisplay() {
-      ws.send(`MSG:디스플레이 테스트 - ${new Date().getSeconds()}초`);
-      setStatus("🔍 디스플레이 테스트 메시지 전송됨");
-    }
+
+    // 페이지 언로드 시 정리
+    window.addEventListener('beforeunload', () => {
+      if (wsManager) {
+        wsManager.destroy();
+      }
+    });
+
+    // 엔터키로 호출 기능
+    document.getElementById('callNumber').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendCall();
+      }
+    });
+
+    document.getElementById('sequenceNumber').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendSequenceCall();
+      }
+    });
   </script>
 </body>
 </html>
