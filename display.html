@@ -24,14 +24,14 @@
 
 
     #message {
-      font-size: 7vw;
+      font-size: 5vw; /* 7vw에서 5vw로 축소 */
       font-weight: 700;
       background: rgba(255, 255, 255, 0.1);
       border: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 3vh 4vw;
+      padding: 2.5vh 3vw; /* 패딩도 약간 축소 */
       border-radius: 25px;
-      margin-top: 4vh;
-      min-height: 8vh;
+      margin-top: 3vh; /* 마진도 약간 축소 */
+      min-height: 7vh; /* 최소 높이 축소 */
       display: inline-block;
       z-index: 1000;
       position: relative;
@@ -137,7 +137,7 @@
 
 
     .footer-icon {
-      font-size: 6vw;
+      font-size: 4vw; /* 6vw에서 4vw로 축소 */
       font-weight: 900;
       margin-bottom: 0.8vh;
       text-shadow: 
@@ -146,7 +146,7 @@
     }
 
     .footer-arrow {
-      font-size: 4vw;
+      font-size: 6vw; /* 4vw에서 6vw로 확대 */
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
@@ -168,10 +168,23 @@
 
     /* 반응형 조정 */
     @media (max-width: 1024px) {
-      #message { font-size: 8vw; }
+      #message { font-size: 6vw; } /* 8vw에서 6vw로 조정 */
       .numBox { font-size: 11vw; }
       #rotatingGuide { font-size: 5vw; }
       #fixedTimes { font-size: 4.5vw; }
+      .footer-icon { font-size: 5vw; } /* 작은 화면에서는 약간 더 크게 */
+      .footer-arrow { font-size: 7vw; }
+    }
+
+    /* 큰 화면(32인치 FHD)용 추가 조정 */
+    @media (min-width: 1920px) {
+      #message { 
+        font-size: 4vw; /* 큰 화면에서 더 작게 */
+        padding: 2vh 2.5vw;
+        margin-top: 2vh;
+      }
+      .footer-icon { font-size: 3.5vw; } /* 큰 화면에서 더 작게 */
+      .footer-arrow { font-size: 5.5vw; } /* 큰 화면에서 적당히 크게 */
     }
 
     /* 접근성 개선 */
