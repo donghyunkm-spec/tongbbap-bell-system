@@ -1,29 +1,41 @@
-<!DOCTYPE html>
+<div class="status-indicator"></div><!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <title>호출 화면</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      background-color: black;
+      background-color: #1a1a2e;
       color: white;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Noto Sans KR', sans-serif;
       text-align: center;
       margin: 0;
       padding: 0;
       overflow: hidden;
+      min-height: 100vh;
+      position: relative;
     }
+
+
 
     #message {
       font-size: 7vw;
-      background-color: rgba(255, 255, 255, 0.1);
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
       padding: 3vh 4vw;
-      border-radius: 20px;
+      border-radius: 25px;
       margin-top: 4vh;
       min-height: 8vh;
       display: inline-block;
       z-index: 1000;
       position: relative;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
 
     #numbers {
@@ -31,55 +43,71 @@
       justify-content: center;
       align-items: center;
       margin-top: 4vh;
-      gap: 1vw;
+      gap: 1.2vw;
       min-height: 18vh;
+      perspective: 1000px;
     }
 
     .numBox {
-      background-color: yellow;
-      color: black;
+      background: #ffeb3b;
+      color: #1a1a1a;
+      font-family: 'Orbitron', monospace;
       font-size: 10vw;
-      font-weight: bold;
+      font-weight: 900;
       padding: 2vh 1.5vw;
-      border-radius: 15px;
+      border-radius: 20px;
       min-width: 12vw;
       width: auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      animation: flash 1s ease-in-out;
       flex-shrink: 0;
+      position: relative;
+      box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
-    @keyframes flash {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
+
+
+
+
+    /* 새로 추가된 번호 특별 효과 */
+    .numBox.new-number {
+      animation: newNumberEntry 0.6s ease-out;
+    }
+
+    @keyframes newNumberEntry {
+      0% {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
     #rotatingGuide {
       font-size: 4.5vw;
+      font-weight: 400;
       margin-top: 6vh;
       margin-bottom: 2vh;
-      color: white;
+      color: rgba(255, 255, 255, 0.9);
       text-align: center;
       white-space: normal;
       word-break: keep-all;
       padding: 0 2vw;
       max-width: 90vw;
-      animation: fadeInOut 4s infinite;
-    }
-
-    @keyframes fadeInOut {
-      0%, 100% { opacity: 0.7; }
-      50% { opacity: 1; }
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
     }
 
     #fixedTimes {
-      font-size: 4vw;
+      font-size: 4.2vw;
+      font-weight: 600;
       color: #ffd700;
       text-align: center;
       white-space: pre-line;
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
     }
 
     #footer {
@@ -94,22 +122,32 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      background-color: #fff;
-      color: black;
-      padding: 2vh 3vw;
-      border-radius: 12px;
-      box-shadow: 0 0 17px rgba(255,255,255,0.3);
-      font-weight: bold;
-      min-width: 15vw;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.95);
+      color: #1a1a1a;
+      padding: 2.5vh 3vw;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      font-weight: 700;
+      width: 18vw;
+      min-height: 14vh;
+      border: 2px solid rgba(255, 255, 255, 0.4);
     }
 
+
+
     .footer-icon {
-      font-size: 5vw;
-      font-weight: bold;
+      font-size: 6vw;
+      font-weight: 900;
+      margin-bottom: 0.8vh;
+      text-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        0 0 8px rgba(0, 0, 0, 0.2);
     }
 
     .footer-arrow {
-      font-size: 5vw;
+      font-size: 4vw;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     #footer-section {
@@ -125,9 +163,29 @@
     #connectionStatus {
       display: none;
     }
+
+
+
+    /* 반응형 조정 */
+    @media (max-width: 1024px) {
+      #message { font-size: 8vw; }
+      .numBox { font-size: 11vw; }
+      #rotatingGuide { font-size: 5vw; }
+      #fixedTimes { font-size: 4.5vw; }
+    }
+
+    /* 접근성 개선 */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body onclick="enableAudio()">
+  <div class="status-indicator"></div>
   <div id="connectionStatus" class="disconnected">연결 중...</div>
   
   <div id="message">안녕하세요! 통빱 입니다</div>
@@ -140,13 +198,13 @@
       삼겹살 예상 수령 시간: <span id="samTime">5</span>분  
       국수 예상 수령 시간: <span id="noodleTime">5</span>분
     </div>
-    <div id="footer" style="display: flex; justify-content: space-between; width: 97%; padding: 0 1vw; position: absolute; bottom: 2vh;">
+    <div id="footer" style="display: flex; justify-content: space-between; width: 98%; margin: 0 auto; position: absolute; bottom: 2vh; left: 1%; right: 1%;">
       <div class="footer-box">
         <div class="footer-icon">픽업</div>
         <div class="footer-arrow">⬇</div>
       </div>
       <div class="footer-box">
-        <div class="footer-icon">주문하기</div>
+        <div class="footer-icon">주문</div>
         <div class="footer-arrow">⬇</div>
       </div>
     </div>
@@ -274,12 +332,20 @@
     function updateNumbers(numbers) {
       console.log("📊 번호 업데이트:", numbers);
       const container = document.getElementById("numbers");
+      const currentNumbers = Array.from(container.children).map(child => child.innerText);
+      
       container.innerHTML = '';
       
       numbers.forEach((num, index) => {
         const box = document.createElement("div");
         box.className = "numBox";
         box.innerText = num;
+        
+        // 새로운 번호인지 확인하여 특별 애니메이션 적용
+        if (!currentNumbers.includes(num.toString())) {
+          box.classList.add('new-number');
+        }
+        
         // 최신 번호일수록 더 밝게 표시
         if (index === numbers.length - 1) {
           box.style.animationDelay = '0s';
