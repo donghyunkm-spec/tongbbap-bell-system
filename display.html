@@ -179,26 +179,7 @@
 
 
 
-    /* 반응형 조정 */
-    @media (max-width: 1024px) {
-      #message { font-size: 6vw; } /* 8vw에서 6vw로 조정 */
-      .numBox { font-size: 11vw; }
-      #rotatingGuide { font-size: 5vw; }
-      #fixedTimes { font-size: 4.5vw; }
-      .footer-icon { font-size: 5vw; } /* 작은 화면에서는 약간 더 크게 */
-      .footer-arrow { font-size: 7vw; }
-    }
-
-    /* 큰 화면(32인치 FHD)용 추가 조정 */
-    @media (min-width: 1920px) {
-      #message { 
-        font-size: 4vw; /* 큰 화면에서 더 작게 */
-        padding: 2vh 2.5vw;
-        margin-top: 2vh;
-      }
-      .footer-icon { font-size: 3.5vw; } /* 큰 화면에서 더 작게 */
-      .footer-arrow { font-size: 5.5vw; } /* 큰 화면에서 적당히 크게 */
-    }
+    /* 반응형 조정 - 모두 삭제하고 32인치 기준으로 고정 */
 
     /* 접근성 개선 */
     @media (prefers-reduced-motion: reduce) {
