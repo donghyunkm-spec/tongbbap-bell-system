@@ -362,12 +362,15 @@
       
       container.innerHTML = '';
       
+      // 3자리 수가 있는지 확인
+      const hasThreeDigits = numbers.some(num => num >= 100);
+      
       numbers.forEach((num, index) => {
         const box = document.createElement("div");
         box.className = "numBox";
         
-        // 번호 개수에 따라 크기 조정
-        if (numbers.length >= 8) {
+        // 3자리 수가 있거나 번호 개수에 따라 크기 조정
+        if (hasThreeDigits || numbers.length >= 8) {
           box.classList.add('very-small');
         } else if (numbers.length >= 6) {
           box.classList.add('small');
