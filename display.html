@@ -67,6 +67,19 @@
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
+    /* 번호가 많을 때 크기 조정 */
+    .numBox.small {
+      font-size: 7vw;
+      min-width: 9vw;
+      padding: 1.5vh 1vw;
+    }
+
+    .numBox.very-small {
+      font-size: 5vw;
+      min-width: 7vw;
+      padding: 1vh 0.8vw;
+    }
+
 
 
 
@@ -352,6 +365,14 @@
       numbers.forEach((num, index) => {
         const box = document.createElement("div");
         box.className = "numBox";
+        
+        // 번호 개수에 따라 크기 조정
+        if (numbers.length >= 8) {
+          box.classList.add('very-small');
+        } else if (numbers.length >= 6) {
+          box.classList.add('small');
+        }
+        
         box.innerText = num;
         
         // 새로운 번호인지 확인하여 특별 애니메이션 적용

@@ -228,7 +228,7 @@
         this.reconnectTimer = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 50; // 최대 재연결 시도 횟수
-        this.reconnectInterval = 3000; // 재연결 간격 (3초)
+        this.reconnectInterval = 15000; // 재연결 간격 (3초)
         this.heartbeatTimer = null;
         this.heartbeatInterval = 30000; // 30초마다 ping
         this.lastPongTime = Date.now();
