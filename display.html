@@ -1,9 +1,9 @@
-<div class="status-indicator"></div><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>호출 화면</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <title>통빱 디스플레이</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     * {
       box-sizing: border-box;
@@ -21,21 +21,27 @@
       position: relative;
     }
 
+    /* 호출화면 스타일 */
+    .call-screen {
+      display: block;
+    }
 
+    .call-screen.hidden {
+      display: none;
+    }
 
     #message {
-      font-size: 5vw; /* 7vw에서 5vw로 축소 */
+      font-size: 5vw;
       font-weight: 700;
       background: rgba(255, 255, 255, 0.1);
       border: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 2.5vh 3vw; /* 패딩도 약간 축소 */
+      padding: 2.5vh 3vw;
       border-radius: 25px;
-      margin-top: 3vh; /* 마진도 약간 축소 */
-      min-height: 7vh; /* 최소 높이 축소 */
+      margin-top: 3vh;
+      min-height: 7vh;
       display: inline-block;
       z-index: 1000;
       position: relative;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     }
 
     #numbers {
@@ -43,48 +49,42 @@
       justify-content: center;
       align-items: center;
       margin-top: 4vh;
-      gap: 1.0vw;
-      min-height: 18vh;
+      gap: 1.5vw;
+      min-height: 20vh;
       perspective: 1000px;
     }
 
     .numBox {
       background: #ffeb3b;
       color: #1a1a1a;
-      font-family: 'Orbitron', monospace;
-      font-size: 6vw;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 8vw;
       font-weight: 900;
-      padding: 1.5vh 1.5vw;
-      border-radius: 20px;
-      min-width: auto;
-      width: auto;
+      padding: 2vh 2vw;
+      border-radius: 25px;
+      min-width: 9vw;
+      min-height: 12vh;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       position: relative;
-      box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
-    /* 번호가 많을 때 크기 조정 */
     .numBox.small {
-      font-size: 5vw;
-      min-width: 7vw;
-      padding: 1vh 0.8vw;
+      font-size: 7vw;
+      min-width: 8vw;
+      min-height: 11vh;
+      padding: 1.5vh 1.5vw;
     }
 
     .numBox.very-small {
-      font-size: 5vw;
+      font-size: 6vw;
       min-width: 7vw;
-      padding: 1vh 0.8vw;
+      min-height: 10vh;
+      padding: 1vh 1vw;
     }
 
-
-
-
-
-    /* 새로 추가된 번호 특별 효과 */
     .numBox.new-number {
       animation: newNumberEntry 0.6s ease-out;
     }
@@ -111,7 +111,6 @@
       word-break: keep-all;
       padding: 0 2vw;
       max-width: 90vw;
-      text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
     }
 
     #fixedTimes {
@@ -120,7 +119,6 @@
       color: #ffd700;
       text-align: center;
       white-space: pre-line;
-      text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
     }
 
     #footer {
@@ -140,27 +138,20 @@
       color: #1a1a1a;
       padding: 2.5vh 3vw;
       border-radius: 20px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
       font-weight: 700;
       width: 18vw;
       min-height: 14vh;
       border: 2px solid rgba(255, 255, 255, 0.4);
     }
 
-
-
     .footer-icon {
-      font-size: 4vw; /* 6vw에서 4vw로 축소 */
+      font-size: 4vw;
       font-weight: 900;
       margin-bottom: 0.8vh;
-      text-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.3),
-        0 0 8px rgba(0, 0, 0, 0.2);
     }
 
     .footer-arrow {
-      font-size: 6vw; /* 4vw에서 6vw로 확대 */
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      font-size: 6vw;
     }
 
     #footer-section {
@@ -173,13 +164,90 @@
       gap: 1.5vh;
     }
 
-    #connectionStatus {
+    /* 대기화면 스타일 */
+    .waiting-screen {
       display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #1a1a2e;
+      z-index: 2000;
+      overflow: hidden;
     }
 
+    .waiting-screen.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
 
+    .slide {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      animation: slideIn 1s ease-in-out;
+    }
 
-    /* 반응형 조정 - 모두 삭제하고 32인치 기준으로 고정 */
+    .slide.active {
+      display: block;
+    }
+
+    @keyframes slideIn {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .slide-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .slide-indicator {
+      position: absolute;
+      bottom: 3vh;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1vw;
+    }
+
+    .indicator-dot {
+      width: 1.5vw;
+      height: 1.5vw;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      transition: all 0.3s ease;
+    }
+
+    .indicator-dot.active {
+      background: #ffd700;
+      transform: scale(1.2);
+    }
+
+    /* 동영상 슬라이드 스타일 */
+    .video-slide {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: #000;
+    }
+
+    .video-player {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
 
     /* 접근성 개선 */
     @media (prefers-reduced-motion: reduce) {
@@ -192,28 +260,46 @@
   </style>
 </head>
 <body onclick="enableAudio()">
-  <div class="status-indicator"></div>
-  <div id="connectionStatus" class="disconnected">연결 중...</div>
-  
-  <div id="message">안녕하세요! 통빱 입니다</div>
-  <div id="numbers"></div>
-  
-  <div id="rotatingGuide"></div>
+  <!-- 호출화면 -->
+  <div id="callScreen" class="call-screen hidden">
+    <div id="message">안녕하세요! 통빱 입니다</div>
+    <div id="numbers"></div>
+    
+    <div id="rotatingGuide"></div>
 
-  <div id="footer-section">
-    <div id="fixedTimes">
-      삼겹살 예상 수령 시간: <span id="samTime">5</span>분  
-      국수 예상 수령 시간: <span id="noodleTime">5</span>분
+    <div id="footer-section">
+      <div id="fixedTimes">
+        삼겹살 예상 수령 시간: <span id="samTime">5</span>분  
+        국수 예상 수령 시간: <span id="noodleTime">5</span>분
+      </div>
+      <div id="footer" style="display: flex; justify-content: space-between; width: 98%; margin: 0 auto; position: absolute; bottom: 2vh; left: 1%; right: 1%;">
+        <div class="footer-box">
+          <div class="footer-icon">픽업</div>
+          <div class="footer-arrow">⬇</div>
+        </div>
+        <div class="footer-box">
+          <div class="footer-icon">주문</div>
+          <div class="footer-arrow">⬇</div>
+        </div>
+      </div>
     </div>
-    <div id="footer" style="display: flex; justify-content: space-between; width: 98%; margin: 0 auto; position: absolute; bottom: 2vh; left: 1%; right: 1%;">
-      <div class="footer-box">
-        <div class="footer-icon">픽업</div>
-        <div class="footer-arrow">⬇</div>
+  </div>
+
+  <!-- 대기화면 -->
+  <div id="waitingScreen" class="waiting-screen active">
+    <div class="slide active" id="slide1">
+      <img src="slide1.jpg" alt="통빱 브랜딩" class="slide-image">
+    </div>
+
+    <div class="slide" id="slide2">
+      <div class="video-slide">
+        <video id="adVideo" src="ad.mp4" controls muted preload="auto" class="video-player"></video>
       </div>
-      <div class="footer-box">
-        <div class="footer-icon">주문</div>
-        <div class="footer-arrow">⬇</div>
-      </div>
+    </div>
+
+    <div class="slide-indicator">
+      <div class="indicator-dot active" data-slide="0"></div>
+      <div class="indicator-dot" data-slide="1"></div>
     </div>
   </div>
 
@@ -223,14 +309,116 @@
     let ws;
     let audioEnabled = false;
     let reconnectTimer = null;
-    let isClosedForDay = false; // 하루 마감 상태 추적
+    let isClosedForDay = false;
+    let currentMode = 'WAITING'; // 시작은 대기화면
+    let slideIndex = 0;
+    let slideTimer = null;
+
+    // 슬라이드쇼 관리
+    const slides = document.querySelectorAll('.slide');
+    const indicators = document.querySelectorAll('.indicator-dot');
+    
+    function showSlide(index) {
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+      indicators.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+      
+      // 동영상 슬라이드로 전환 시 자동 재생
+      if (index === 1) {
+        setTimeout(() => {
+          playVideo();
+        }, 100); // 500ms에서 100ms로 단축
+      } else {
+        // 다른 슬라이드로 전환 시 동영상 정지
+        pauseVideo();
+      }
+    }
+
+    function nextSlide() {
+      slideIndex = (slideIndex + 1) % slides.length;
+      showSlide(slideIndex);
+    }
+
+    function startSlideshow() {
+      if (slideTimer) clearInterval(slideTimer);
+      slideTimer = setInterval(nextSlide, 5000); // 5초마다 슬라이드 변경
+    }
+
+    function stopSlideshow() {
+      if (slideTimer) {
+        clearInterval(slideTimer);
+        slideTimer = null;
+      }
+    }
+
+    // 동영상 관리
+    const adVideo = document.getElementById('adVideo');
+    
+    function playVideo() {
+      if (adVideo) {
+        adVideo.currentTime = 0; // 처음부터 재생
+        adVideo.muted = false; // 음소거 해제
+        adVideo.play().then(() => {
+          console.log("🎬 광고 동영상 재생됨");
+        }).catch(err => {
+          console.warn("🔇 광고 동영상 재생 실패:", err.message);
+          // 재생 실패 시 음소거로 다시 시도
+          adVideo.muted = true;
+          adVideo.play().catch(console.warn);
+        });
+      }
+    }
+    
+    function pauseVideo() {
+      if (adVideo) {
+        adVideo.pause();
+        adVideo.currentTime = 0; // 처음으로 되돌리기
+      }
+    }
+    
+    // 동영상 이벤트 리스너
+    if (adVideo) {
+      adVideo.addEventListener('ended', () => {
+        console.log("🔇 광고 동영상 종료됨");
+        // 동영상 종료 후 다음 슬라이드로 자동 이동
+        setTimeout(nextSlide, 1000);
+      });
+      
+      // 동영상 로드 완료 시
+      adVideo.addEventListener('loadeddata', () => {
+        console.log("📹 동영상 로드 완료");
+      });
+      
+      // 재생 가능 상태가 되면
+      adVideo.addEventListener('canplay', () => {
+        console.log("▶️ 동영상 재생 준비 완료");
+      });
+    }
+
+    // 모드 전환 함수
+    function switchToWaitingMode() {
+      currentMode = 'WAITING';
+      document.getElementById('callScreen').classList.add('hidden');
+      document.getElementById('waitingScreen').classList.add('active');
+      startSlideshow();
+      console.log('📺 대기화면 모드로 전환');
+    }
+
+    function switchToCallMode() {
+      currentMode = 'CALL';
+      document.getElementById('waitingScreen').classList.remove('active');
+      document.getElementById('callScreen').classList.remove('hidden');
+      stopSlideshow();
+      console.log('📢 호출화면 모드로 전환');
+    }
 
     function enableAudio() {
       if (!audioEnabled) {
-        // 여러 방법으로 오디오 활성화 시도
         const promises = [];
         
-        // 1. AudioContext 초기화
         try {
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
           promises.push(audioContext.resume());
@@ -238,29 +426,21 @@
           console.warn("AudioContext 초기화 실패:", e);
         }
         
-        // 2. 더미 오디오 재생
         const ding = document.getElementById("ding");
         if (ding) {
-          ding.muted = true; // 음소거로 재생
+          ding.muted = true;
           promises.push(ding.play());
         }
         
         Promise.allSettled(promises).then(() => {
           if (ding) {
-            ding.muted = false; // 음소거 해제
-            ding.volume = 0.8; // 볼륨 설정
+            ding.muted = false;
+            ding.volume = 0.8;
           }
           
           audioEnabled = true;
           console.log("🔊 오디오 활성화 완료");
           
-          // 안내 메시지 숨김
-          const prompt = document.getElementById("audioPrompt");
-          if (prompt) {
-            prompt.style.display = 'none';
-          }
-          
-          // 테스트 사운드 재생
           setTimeout(() => {
             if (ding && !ding.muted) {
               ding.currentTime = 0;
@@ -268,12 +448,6 @@
             }
           }, 100);
         });
-      } else {
-        // 이미 활성화된 경우
-        const prompt = document.getElementById("audioPrompt");
-        if (prompt) {
-          prompt.style.display = 'none';
-        }
       }
     }
 
@@ -297,7 +471,6 @@
       ws.onclose = (event) => {
         console.warn("❌ 연결 끊김. 코드:", event.code, "이유:", event.reason);
         
-        // 3초 후 재연결 시도
         reconnectTimer = setTimeout(() => {
           console.log("🔄 재연결 시도...");
           connectWebSocket();
@@ -319,24 +492,34 @@
           return;
         }
 
-        if (data.type === "CALL" && Array.isArray(data.list)) {
-          updateNumbers(data.list);
-          playSound();
-        } else if (data.type === "MSG") {
-          showMessage(data.text);
-          playSound();
-        } else if (data.type === "TIME") {
-          updateTimes(data.sam, data.noodle);
-        } else if (data.type === "PING") {
-          // 서버 ping에 pong으로 응답 (연결 확인용)
+        if (data.type === "MODE") {
+          if (data.mode === "WAITING") {
+            switchToWaitingMode();
+          } else if (data.mode === "CALL") {
+            switchToCallMode();
+          }
+        } else if (currentMode === 'CALL') {
+          // 호출 모드일 때만 호출 관련 메시지 처리
+          if (data.type === "CALL" && Array.isArray(data.list)) {
+            updateNumbers(data.list);
+            playSound();
+          } else if (data.type === "MSG") {
+            showMessage(data.text);
+            playSound();
+          } else if (data.type === "TIME") {
+            updateTimes(data.sam, data.noodle);
+          }
+        }
+        
+        if (data.type === "PING") {
           ws.send(JSON.stringify({ type: 'PONG' }));
-        } else {
-          console.warn("❗ 알 수 없는 메시지 타입:", data.type);
         }
       };
     }
 
     function updateNumbers(numbers) {
+      if (currentMode !== 'CALL') return;
+      
       console.log("📊 번호 업데이트:", numbers);
       const container = document.getElementById("numbers");
       const currentNumbers = Array.from(container.children).map(child => child.innerText);
@@ -347,7 +530,6 @@
         const box = document.createElement("div");
         box.className = "numBox";
         
-        // 번호 개수에 따라 크기 조정 (3자리 수 고려 안함)
         if (numbers.length >= 8) {
           box.classList.add('very-small');
         } else if (numbers.length >= 6) {
@@ -356,12 +538,10 @@
         
         box.innerText = num;
         
-        // 새로운 번호인지 확인하여 특별 애니메이션 적용
         if (!currentNumbers.includes(num.toString())) {
           box.classList.add('new-number');
         }
         
-        // 최신 번호일수록 더 밝게 표시
         if (index === numbers.length - 1) {
           box.style.animationDelay = '0s';
         }
@@ -369,7 +549,6 @@
       });
     }
 
-    // 회전하는 광고 문구들
     const rotatingMessages = [
       "📋 픽업 시 영수증을 가지고 와주세요",
       "🍽️ 주문메뉴에 따라 조리시간이 다릅니다 양해 부탁 드립니다"
@@ -378,53 +557,50 @@
     let currentMessageIndex = 0;
     
     function updateRotatingMessage() {
+      if (currentMode !== 'CALL') return;
+      
       const guideEl = document.getElementById("rotatingGuide");
       guideEl.innerText = rotatingMessages[currentMessageIndex];
       currentMessageIndex = (currentMessageIndex + 1) % rotatingMessages.length;
       
-      // 메시지 변경할 때마다 오디오 활성화 재시도
       if (!audioEnabled) {
         const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
         document.body.dispatchEvent(clickEvent);
       }
     }
 
-    // 5초마다 메시지 변경
     setInterval(updateRotatingMessage, 5000);
 
-    // 추가: 마우스 움직임, 터치, 키보드 등 모든 사용자 인터랙션에 반응
     ['mousedown', 'mouseup', 'touchstart', 'touchend', 'keydown', 'scroll'].forEach(eventType => {
       document.addEventListener(eventType, () => {
         if (!audioEnabled) {
           enableAudio();
         }
-      }, { once: true }); // 한 번만 실행
+      }, { once: true });
     });
 
     function showMessage(msg) {
+      if (currentMode !== 'CALL') return;
+      
       console.log("💬 메시지 표시:", msg);
       const msgBox = document.getElementById("message");
       msgBox.innerText = msg;
 
-      // 재고 소진 마감 메시지인지 확인
       if (msg.includes('재고소진') && msg.includes('마감')) {
         console.log("🚫 하루 마감 처리됨");
         isClosedForDay = true;
-        // 마감 메시지는 계속 유지 (원래 메시지로 돌아가지 않음)
         return;
       }
 
-      // 삼겹살만/국수만 메시지는 20초 후에 원래 메시지로 복원
       if (msg.includes('삼겹살만') || msg.includes('국수만')) {
         setTimeout(() => {
-          if (!isClosedForDay) { // 마감 상태가 아닐 때만 복원
+          if (!isClosedForDay) {
             msgBox.innerText = '안녕하세요! 통빱 입니다';
           }
-        }, 20000); // 10초에서 20초로 변경
+        }, 20000);
       } else {
-        // 기타 메시지는 10초 후 복원
         setTimeout(() => {
-          if (!isClosedForDay) { // 마감 상태가 아닐 때만 복원
+          if (!isClosedForDay) {
             msgBox.innerText = '안녕하세요! 통빱 입니다';
           }
         }, 10000);
@@ -432,6 +608,8 @@
     }
 
     function updateTimes(sam, noodle) {
+      if (currentMode !== 'CALL') return;
+      
       console.log("⏱ 시간 업데이트:", sam, noodle);
       if (sam !== undefined) {
         document.getElementById("samTime").innerText = sam;
@@ -454,25 +632,21 @@
           console.log("🔊 알림음 재생됨");
         }).catch(err => {
           console.warn("🔇 오디오 재생 실패:", err.message);
-          // 재생 실패 시 다시 오디오 활성화 요청
           audioEnabled = false;
-          const prompt = document.getElementById("audioPrompt");
-          if (prompt) {
-            prompt.style.display = 'block';
-          }
         });
       }
     }
 
     // 페이지 로드 시 WebSocket 연결
     document.addEventListener('DOMContentLoaded', () => {
-      console.log("📄 페이지 로드됨 - WebSocket 연결 시작");
+      console.log("📄 페이지 로드됨 - 대기화면으로 시작");
       connectWebSocket();
       
-      // 회전 메시지 시작
+      // 대기화면으로 시작
+      switchToWaitingMode();
+      
       updateRotatingMessage();
       
-      // 자동으로 오디오 활성화 시도 (1초 후)
       setTimeout(() => {
         const clickEvent = new MouseEvent('click', {
           view: window,
@@ -482,31 +656,8 @@
         document.body.dispatchEvent(clickEvent);
         console.log("🤖 자동 클릭으로 오디오 활성화 시도");
       }, 1000);
-      
-      // 3초 후에도 활성화 안되면 더 적극적으로 시도
-      setTimeout(() => {
-        if (!audioEnabled) {
-          // 여러 요소에 클릭 이벤트 발생
-          ['body', 'message'].forEach(id => {
-            const element = document.getElementById(id) || document.body;
-            element.click();
-          });
-          console.log("🤖 적극적 오디오 활성화 시도");
-        }
-      }, 3000);
-      
-      // 5초 후 안내 메시지 업데이트
-      setTimeout(() => {
-        if (!audioEnabled) {
-          const prompt = document.getElementById("audioPrompt");
-          if (prompt) {
-            prompt.innerHTML = "🔊 호출음을 들으려면 화면을 터치해주세요<br><small>(터치 후 자동으로 사라집니다)</small>";
-          }
-        }
-      }, 5000);
     });
 
-    // 페이지 언로드 시 정리
     window.addEventListener('beforeunload', () => {
       if (ws) {
         ws.close();
@@ -514,6 +665,7 @@
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
       }
+      stopSlideshow();
     });
   </script>
 </body>

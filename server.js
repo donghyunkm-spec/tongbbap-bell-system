@@ -7,14 +7,13 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-let displayClients = new Map(); // Set 대신 Map으로 변경하여 메타데이터 저장
+let displayClients = new Map();
 let inputClients = new Map();
 let currentNumbers = [];
+let currentDisplayMode = 'WAITING'; // 기본값을 대기화면으로 설정
 
-// ✅ 환경 변수로 포트 설정 (서버 배포시 필요)
 const PORT = process.env.PORT || 3000;
 
-// 클라이언트 메타데이터 관리
 function addClient(clientMap, ws, req) {
   const clientInfo = {
     ws: ws,
@@ -36,7 +35,6 @@ function getClientInfo(clientMap, ws) {
   return clientMap.get(ws);
 }
 
-// ✅ 헬스체크 엔드포인트 추가 (서버 모니터링용)
 app.get('/health', (req, res) => {
   const now = new Date();
   const displayStats = Array.from(displayClients.values()).map(client => ({
@@ -56,6 +54,7 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: now.toISOString(),
+    currentMode: currentDisplayMode,
     displays: {
       count: displayClients.size,
       clients: displayStats
@@ -68,12 +67,12 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ✅ 상세 상태 엔드포인트
 app.get('/status', (req, res) => {
   res.json({
     server: 'running',
     uptime: process.uptime(),
     memory: process.memoryUsage(),
+    currentMode: currentDisplayMode,
     displays: displayClients.size,
     inputs: inputClients.size,
     currentNumbers: currentNumbers,
@@ -81,14 +80,12 @@ app.get('/status', (req, res) => {
   });
 });
 
-// ✅ 하트비트 및 연결 상태 체크 (15초마다)
 const HEARTBEAT_INTERVAL = 15000;
-const CLIENT_TIMEOUT = 60000; // 60초 타임아웃
+const CLIENT_TIMEOUT = 60000;
 
 function heartbeat() {
-  console.log(`💓 하트비트 체크 시작 - Display: ${displayClients.size}, Input: ${inputClients.size}`);
+  console.log(`💓 하트비트 체크 시작 - Display: ${displayClients.size}, Input: ${inputClients.size}, Mode: ${currentDisplayMode}`);
   
-  // 디스플레이 클라이언트 체크
   const deadDisplays = [];
   displayClients.forEach((clientInfo, ws) => {
     if (ws.readyState === WebSocket.OPEN) {
@@ -111,7 +108,6 @@ function heartbeat() {
     }
   });
 
-  // 입력 클라이언트 체크
   const deadInputs = [];
   inputClients.forEach((clientInfo, ws) => {
     if (ws.readyState === WebSocket.OPEN) {
@@ -134,7 +130,6 @@ function heartbeat() {
     }
   });
 
-  // 죽은 클라이언트들 정리
   deadDisplays.forEach(ws => {
     removeClient(displayClients, ws);
   });
@@ -142,7 +137,6 @@ function heartbeat() {
     removeClient(inputClients, ws);
   });
 
-  // 디스플레이 상태 변경 알림
   if (deadDisplays.length > 0) {
     console.log(`📺 디스플레이 클라이언트 ${deadDisplays.length}개 정리됨`);
     if (displayClients.size === 0) {
@@ -155,7 +149,6 @@ function heartbeat() {
 
 const heartbeatTimer = setInterval(heartbeat, HEARTBEAT_INTERVAL);
 
-// ✅ 오래된 연결 정리 (5분마다)
 function cleanupOldConnections() {
   const now = Date.now();
   const oldDisplays = [];
@@ -190,23 +183,19 @@ function cleanupOldConnections() {
   }
 }
 
-const cleanupTimer = setInterval(cleanupOldConnections, 5 * 60 * 1000); // 5분
+const cleanupTimer = setInterval(cleanupOldConnections, 5 * 60 * 1000);
 
-// ✅ HTML, JS, CSS 등 정적 파일 제공
 app.use(express.static(__dirname));
 
-// ✅ 루트 경로를 직원 화면으로 설정
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'input.html'));
 });
 
-// ✅ WebSocket 연결 처리
 wss.on('connection', (ws, req) => {
   const clientIP = req.socket.remoteAddress;
   const userAgent = req.headers['user-agent'] || 'Unknown';
   console.log(`🔗 새 클라이언트 연결됨: ${clientIP} (${userAgent.split(' ')[0]})`);
 
-  // 연결 시 임시 정보 저장
   let clientInfo = {
     ip: clientIP,
     userAgent: userAgent,
@@ -220,7 +209,6 @@ wss.on('connection', (ws, req) => {
     const message = data.toString();
     console.log(`📩 받은 메시지 (${clientIP}):`, message);
 
-    // PONG 응답 처리
     if (message.startsWith('{') && message.includes('PONG')) {
       try {
         const pongData = JSON.parse(message);
@@ -248,8 +236,19 @@ wss.on('connection', (ws, req) => {
         timestamp: new Date().toISOString()
       });
       
-      // 현재 번호가 있으면 새 디스플레이에 전송
-      if (currentNumbers.length > 0) {
+      // 현재 모드 전송
+      try {
+        ws.send(JSON.stringify({
+          type: 'MODE',
+          mode: currentDisplayMode,
+          timestamp: new Date().toISOString()
+        }));
+      } catch (error) {
+        console.error(`❌ 디스플레이에 모드 전송 실패:`, error.message);
+      }
+      
+      // 호출 모드이고 현재 번호가 있으면 전송
+      if (currentDisplayMode === 'CALL' && currentNumbers.length > 0) {
         try {
           ws.send(JSON.stringify({
             type: 'CALL',
@@ -266,7 +265,6 @@ wss.on('connection', (ws, req) => {
       clientInfo = addClient(inputClients, ws, req);
       console.log(`📱 입력 클라이언트 등록됨 (${clientIP}) - 총 ${inputClients.size}개`);
       
-      // 디스플레이 상태 알림
       try {
         if (displayClients.size > 0) {
           ws.send(JSON.stringify({ 
@@ -282,7 +280,6 @@ wss.on('connection', (ws, req) => {
           }));
         }
         
-        // 현재 번호 상태 전송
         if (currentNumbers.length > 0) {
           ws.send(JSON.stringify({ 
             type: 'CALL', 
@@ -295,7 +292,6 @@ wss.on('connection', (ws, req) => {
       }
       
     } else {
-      // 일반 메시지 처리
       processMessage(message, clientIP);
     }
   });
@@ -328,7 +324,6 @@ wss.on('connection', (ws, req) => {
     removeClient(inputClients, ws);
   });
 
-  // 연결 즉시 PING 전송하여 연결 상태 확인
   setTimeout(() => {
     if (ws.readyState === WebSocket.OPEN) {
       try {
@@ -343,7 +338,32 @@ wss.on('connection', (ws, req) => {
 function processMessage(message, clientIP) {
   let responseData = null;
 
-  if (message.startsWith('CALL:')) {
+  if (message.startsWith('MODE:')) {
+    const mode = message.substring(5);
+    if (mode === 'WAITING' || mode === 'CALL') {
+      currentDisplayMode = mode;
+      responseData = {
+        type: 'MODE',
+        mode: mode,
+        timestamp: new Date().toISOString(),
+        triggeredBy: clientIP
+      };
+      
+      console.log(`🔄 디스플레이 모드 변경: ${mode} (${clientIP})`);
+      
+      // 호출 모드로 전환 시 현재 번호도 함께 전송
+      if (mode === 'CALL' && currentNumbers.length > 0) {
+        setTimeout(() => {
+          const callData = {
+            type: 'CALL',
+            list: [...currentNumbers],
+            timestamp: new Date().toISOString()
+          };
+          broadcastToDisplays(JSON.stringify(callData));
+        }, 100);
+      }
+    }
+  } else if (message.startsWith('CALL:')) {
     const number = parseInt(message.split(':')[1]);
     if (!isNaN(number)) {
       if (!currentNumbers.includes(number)) {
@@ -446,7 +466,6 @@ function broadcastToDisplays(message) {
     }
   });
   
-  // 죽은 클라이언트 정리
   deadClients.forEach(ws => {
     removeClient(displayClients, ws);
   });
@@ -473,7 +492,6 @@ function notifyInputClients(data) {
     }
   });
   
-  // 죽은 클라이언트 정리
   deadClients.forEach(ws => {
     removeClient(inputClients, ws);
   });
@@ -483,29 +501,26 @@ function notifyInputClients(data) {
   }
 }
 
-// ✅ 서버 시작 - 모든 네트워크 인터페이스에서 접속 허용
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 통빱 호출벨 시스템 시작!`);
   console.log(`📱 직원용: http://localhost:${PORT}`);
   console.log(`🖥️ 디스플레이: http://localhost:${PORT}/display.html`);
   console.log(`💡 외부 접속: http://[서버IP]:${PORT}`);
   console.log(`📊 상태 확인: http://localhost:${PORT}/health`);
+  console.log(`📺 시작 모드: ${currentDisplayMode}`);
   console.log(`⏰ ${new Date().toLocaleString()}`);
   console.log(`💓 하트비트 간격: ${HEARTBEAT_INTERVAL/1000}초`);
   console.log(`⏱️ 클라이언트 타임아웃: ${CLIENT_TIMEOUT/1000}초`);
   
-  // ✅ 프로세스 종료 시 정리
   process.on('SIGTERM', gracefulShutdown);
   process.on('SIGINT', gracefulShutdown);
   
   function gracefulShutdown(signal) {
     console.log(`🛑 ${signal} 신호 받음 - 정리 시작`);
     
-    // 타이머들 정리
     clearInterval(heartbeatTimer);
     clearInterval(cleanupTimer);
     
-    // 모든 클라이언트에 서버 종료 알림
     const shutdownMessage = JSON.stringify({
       type: 'SERVER_SHUTDOWN',
       message: '서버가 곧 종료됩니다',
@@ -534,18 +549,15 @@ server.listen(PORT, '0.0.0.0', () => {
       }
     });
     
-    // WebSocket 서버 종료
     wss.close(() => {
       console.log('🔌 WebSocket 서버 종료됨');
       
-      // HTTP 서버 종료
       server.close(() => {
         console.log('✅ HTTP 서버 정상 종료됨');
         process.exit(0);
       });
     });
     
-    // 강제 종료 타이머 (10초)
     setTimeout(() => {
       console.log('⚡ 강제 종료');
       process.exit(1);
