@@ -234,20 +234,7 @@
       transform: scale(1.2);
     }
 
-    /* 동영상 슬라이드 스타일 */
-    .video-slide {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      background: #000;
-    }
-
-    .video-player {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
+    /* 동영상 슬라이드 스타일 - 제거됨 */
 
     /* 접근성 개선 */
     @media (prefers-reduced-motion: reduce) {
@@ -290,17 +277,6 @@
     <div class="slide active" id="slide1">
       <img src="slide1.jpg" alt="통빱 브랜딩" class="slide-image">
     </div>
-
-    <div class="slide" id="slide2">
-      <div class="video-slide">
-        <video id="adVideo" src="ad.mp4" controls muted preload="auto" class="video-player"></video>
-      </div>
-    </div>
-
-    <div class="slide-indicator">
-      <div class="indicator-dot active" data-slide="0"></div>
-      <div class="indicator-dot" data-slide="1"></div>
-    </div>
   </div>
 
   <audio id="ding" src="dingdong.mp3" preload="auto"></audio>
@@ -314,101 +290,25 @@
     let slideIndex = 0;
     let slideTimer = null;
 
-    // 슬라이드쇼 관리
+    // 슬라이드쇼 관리 - 단일 이미지로 변경
     const slides = document.querySelectorAll('.slide');
-    const indicators = document.querySelectorAll('.indicator-dot');
     
+    // 단일 슬라이드이므로 자동 전환 없음
     function showSlide(index) {
-      slides.forEach((slide, i) => {
-        slide.classList.toggle('active', i === index);
-      });
-      indicators.forEach((dot, i) => {
-        dot.classList.toggle('active', i === index);
-      });
-      
-      // 동영상 슬라이드로 전환 시 자동 재생
-      if (index === 1) {
-        setTimeout(() => {
-          playVideo();
-        }, 100); // 500ms에서 100ms로 단축
-      } else {
-        // 다른 슬라이드로 전환 시 동영상 정지
-        pauseVideo();
-      }
+      // 슬라이드가 1개뿐이므로 별도 처리 불필요
     }
 
     function nextSlide() {
-      slideIndex = (slideIndex + 1) % slides.length;
-      showSlide(slideIndex);
+      // 슬라이드가 1개뿐이므로 전환 없음
     }
 
     function startSlideshow() {
-      if (slideTimer) clearInterval(slideTimer);
-      
-      // 현재 슬라이드에 따라 다른 시간 설정
-      let slideTime;
-      if (slideIndex === 0) { // 이미지 슬라이드
-        slideTime = 7000; // 7초
-      } else { // 동영상 슬라이드
-        slideTime = 7000; // 7초 (2초 더 길게)
-      }
-      
-      slideTimer = setTimeout(() => {
-        nextSlide();
-        startSlideshow(); // 다음 슬라이드 타이머 시작
-      }, slideTime);
+      // 슬라이드가 1개뿐이므로 타이머 불필요
+      console.log("📺 단일 이미지 대기화면 표시");
     }
 
     function stopSlideshow() {
-      if (slideTimer) {
-        clearInterval(slideTimer);
-        slideTimer = null;
-      }
-    }
-
-    // 동영상 관리
-    const adVideo = document.getElementById('adVideo');
-    
-    function playVideo() {
-      if (adVideo) {
-        adVideo.currentTime = 0; // 처음부터 재생
-        adVideo.playbackRate = 0.5; // 50% 속도로 재생
-        adVideo.muted = false; // 음소거 해제
-        adVideo.play().then(() => {
-          console.log("🎬 광고 동영상 재생됨 (50% 속도)");
-        }).catch(err => {
-          console.warn("🔇 광고 동영상 재생 실패:", err.message);
-          // 재생 실패 시 음소거로 다시 시도
-          adVideo.muted = true;
-          adVideo.play().catch(console.warn);
-        });
-      }
-    }
-    
-    function pauseVideo() {
-      if (adVideo) {
-        adVideo.pause();
-        adVideo.currentTime = 0; // 처음으로 되돌리기
-      }
-    }
-    
-    // 동영상 이벤트 리스너
-    if (adVideo) {
-      adVideo.addEventListener('ended', () => {
-        console.log("🔇 광고 동영상 종료됨");
-        // 동영상 종료 후 다음 슬라이드로 자동 이동
-        setTimeout(nextSlide, 1000);
-      });
-      
-      // 동영상 로드 완료 시
-      adVideo.addEventListener('loadeddata', () => {
-        console.log("📹 동영상 로드 완료");
-      });
-      
-      // 재생 가능 상태가 되면
-      adVideo.addEventListener('canplay', () => {
-        console.log("▶️ 동영상 재생 준비 완료");
-      });
+      // 타이머가 없으므로 정리할 것 없음
     }
 
     // 모드 전환 함수
