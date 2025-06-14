@@ -240,7 +240,7 @@
         this.maxReconnectAttempts = 50; // 최대 재연결 시도 횟수
         this.reconnectInterval = 120000; // 재연결 간격 (2분)
         this.heartbeatTimer = null;
-        this.heartbeatInterval = 30000; // 30초마다 ping
+        this.heartbeatInterval = 120000; // 2분마다 ping
         this.lastPongTime = Date.now();
         this.isManualClose = false;
         
@@ -408,8 +408,8 @@
           return;
         }
 
-        // 재연결 간격을 점진적으로 증가 (최대 30초)
-        const delay = Math.min(this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts), 30000);
+        // 항상 2분 간격으로 재연결
+        const delay = this.reconnectInterval; // 120000ms (2분)
         
         this.updateConnectionInfo(`${Math.ceil(delay/1000)}초 후 재연결...`, true);
         this.showOfflineIndicator();
@@ -431,7 +431,7 @@
         this.heartbeatTimer = setInterval(() => {
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             // 마지막 pong으로부터 너무 오랜 시간이 지났으면 재연결
-            if (Date.now() - this.lastPongTime > 60000) { // 60초
+            if (Date.now() - this.lastPongTime > 240000) { // 4분 (2분 하트비트 × 2)
               console.warn('🚨 하트비트 타임아웃 - 재연결');
               this.reconnect();
               return;
