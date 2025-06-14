@@ -344,7 +344,19 @@
 
     function startSlideshow() {
       if (slideTimer) clearInterval(slideTimer);
-      slideTimer = setInterval(nextSlide, 5000); // 5초마다 슬라이드 변경
+      
+      // 현재 슬라이드에 따라 다른 시간 설정
+      let slideTime;
+      if (slideIndex === 0) { // 이미지 슬라이드
+        slideTime = 5000; // 5초
+      } else { // 동영상 슬라이드
+        slideTime = 7000; // 7초 (2초 더 길게)
+      }
+      
+      slideTimer = setTimeout(() => {
+        nextSlide();
+        startSlideshow(); // 다음 슬라이드 타이머 시작
+      }, slideTime);
     }
 
     function stopSlideshow() {
@@ -360,10 +372,10 @@
     function playVideo() {
       if (adVideo) {
         adVideo.currentTime = 0; // 처음부터 재생
-        adVideo.playbackRate = 0.8; // 80% 속도로 재생
+        adVideo.playbackRate = 0.5; // 50% 속도로 재생
         adVideo.muted = false; // 음소거 해제
         adVideo.play().then(() => {
-          console.log("🎬 광고 동영상 재생됨 (80% 속도)");
+          console.log("🎬 광고 동영상 재생됨 (50% 속도)");
         }).catch(err => {
           console.warn("🔇 광고 동영상 재생 실패:", err.message);
           // 재생 실패 시 음소거로 다시 시도
