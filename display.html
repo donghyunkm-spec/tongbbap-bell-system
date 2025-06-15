@@ -366,152 +366,66 @@
     let currentMode = 'WAITING'; // 시작은 대기화면
     let slideIndex = 0;
     let slideTimer = null;
-    let speechSynth = null;
     let fullscreenTimer = null;
+    let voiceAudioCache = new Map(); // 음성 파일 캐시
 
-    // 음성 합성 초기화
-    function initSpeech() {
-      if ('speechSynthesis' in window) {
-        speechSynth = window.speechSynthesis;
-        console.log("🎤 음성 합성 초기화됨");
-      } else {
-        console.warn("🔇 음성 합성을 지원하지 않는 브라우저");
-      }
-    }
-
-    // 숫자를 자연스럽게 읽기 위한 변환 함수
-    function convertNumberToNaturalKorean(number) {
-      const num = parseInt(number);
-      
-      // 일의 자리 한국어 변환 (십의 자리에서 사용)
-      const onesKorean = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
-      
-      if (num < 10) {
-        return `${num}번`;
-      } else if (num < 20) {
-        const ones = num % 10;
-        if (ones === 0) {
-          return `십번`;
-        } else {
-          return `십${onesKorean[ones]}번`;
-        }
-      } else if (num < 100) {
-        const tens = Math.floor(num / 10);
-        const ones = num % 10;
-        if (ones === 0) {
-          return `${tens}십번`;
-        } else {
-          return `${tens}십${onesKorean[ones]}번`;
-        }
-      } else if (num < 200) {
-        const remainder = num % 100;
-        if (remainder === 0) {
-          return `백번`;
-        } else if (remainder < 10) {
-          return `백${onesKorean[remainder]}번`;
-        } else if (remainder < 20) {
-          const ones = remainder % 10;
-          if (ones === 0) {
-            return `백십번`;
-          } else {
-            return `백십${onesKorean[ones]}번`;
-          }
-        } else {
-          const tens = Math.floor(remainder / 10);
-          const ones = remainder % 10;
-          if (ones === 0) {
-            return `백${tens}십번`;
-          } else {
-            return `백${tens}십${onesKorean[ones]}번`;
-          }
-        }
-      } else if (num < 1000) {
-        const hundreds = Math.floor(num / 100);
-        const remainder = num % 100;
-        
-        if (remainder === 0) {
-          return `${onesKorean[hundreds]}백번`;
-        } else if (remainder < 10) {
-          return `${onesKorean[hundreds]}백${onesKorean[remainder]}번`;
-        } else if (remainder < 20) {
-          const ones = remainder % 10;
-          if (ones === 0) {
-            return `${onesKorean[hundreds]}백십번`;
-          } else {
-            return `${onesKorean[hundreds]}백십${onesKorean[ones]}번`;
-          }
-        } else {
-          const tens = Math.floor(remainder / 10);
-          const ones = remainder % 10;
-          if (ones === 0) {
-            return `${onesKorean[hundreds]}백${tens}십번`;
-          } else {
-            return `${onesKorean[hundreds]}백${tens}십${onesKorean[ones]}번`;
-          }
-        }
-      } else {
-        return `${num}번`; // 1000 이상은 그냥 숫자로
-      }
-    }
-
-    // 숫자 음성 읽기
+    // 숫자 음성 재생 (필요할 때만 로드)
     function speakNumber(number) {
-      if (!speechSynth || !audioEnabled) {
-        console.warn("🔇 음성 합성 사용 불가");
+      if (!audioEnabled) {
+        console.warn("🔇 오디오가 아직 활성화되지 않음");
         return;
       }
 
-      // 기존 음성 정지
-      speechSynth.cancel();
-
-      const naturalNumber = convertNumberToNaturalKorean(number);
+      const num = parseInt(number);
       
-      // 더 큰 소리를 위해 여러 번 반복해서 말하기
-      const messages = [
-        `${naturalNumber} 손님 주문 나왔습니다`,
-        `${naturalNumber} 손님 주문 나왔습니다`  // 두 번 반복
-      ];
-
-      messages.forEach((text, index) => {
-        setTimeout(() => {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'ko-KR';
-          utterance.rate = 0.6;  // 더 천천히 (명확하게)
-          utterance.pitch = 2.0; // 최대 높은 톤
-          utterance.volume = 1.0; // 최대 음량
-
-          // 한국어 음성 우선 선택
-          if (speechSynth.getVoices().length > 0) {
-            const voices = speechSynth.getVoices();
-            const koreanVoice = voices.find(voice => 
-              voice.lang.includes('ko') || 
-              voice.name.includes('Korean') ||
-              voice.name.includes('한국')
-            );
-            if (koreanVoice) {
-              utterance.voice = koreanVoice;
-            }
-          }
-
-          utterance.onstart = () => {
-            console.log(`🎤 음성 재생 시작 (${index + 1}/2): ${naturalNumber}`);
-          };
-
-          utterance.onend = () => {
-            console.log(`🎤 음성 재생 완료 (${index + 1}/2): ${naturalNumber}`);
-          };
-
-          utterance.onerror = (event) => {
-            console.error("🎤 음성 재생 오류:", event.error);
-          };
-
-          try {
-            speechSynth.speak(utterance);
-          } catch (error) {
-            console.error("🎤 음성 재생 실패:", error);
-          }
-        }, index * 100); // 100ms 간격으로 실행
+      // 기존 재생 중인 음성 정지
+      voiceAudioCache.forEach((audio) => {
+        if (!audio.paused) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
       });
+
+      // 캐시에서 확인
+      let voiceAudio = voiceAudioCache.get(num);
+      
+      if (voiceAudio) {
+        // 캐시에 있으면 바로 재생
+        voiceAudio.currentTime = 0;
+        voiceAudio.play().then(() => {
+          console.log(`🎤 음성 재생 (캐시): ${num}번`);
+        }).catch(error => {
+          console.error(`🎤 음성 재생 실패: ${num}번 -`, error.message);
+        });
+      } else {
+        // 캐시에 없으면 새로 로드 후 재생
+        voiceAudio = new Audio(`voice/${num}번.mp3`);
+        voiceAudio.volume = 1.0;
+        
+        voiceAudio.addEventListener('canplay', () => {
+          voiceAudio.play().then(() => {
+            console.log(`🎤 음성 재생 (새로 로드): ${num}번`);
+            
+            // 재생 성공하면 캐시에 저장 (최대 10개까지만)
+            if (voiceAudioCache.size >= 10) {
+              // 가장 오래된 것 제거
+              const firstKey = voiceAudioCache.keys().next().value;
+              voiceAudioCache.delete(firstKey);
+            }
+            voiceAudioCache.set(num, voiceAudio);
+            
+          }).catch(error => {
+            console.error(`🎤 음성 재생 실패: ${num}번 -`, error.message);
+          });
+        });
+        
+        voiceAudio.addEventListener('error', () => {
+          console.warn(`⚠️ 음성 파일 없음: voice/${num}번.mp3`);
+        });
+        
+        // 로드 시작
+        voiceAudio.load();
+      }
     }
 
     // 전체화면 호출 표시
@@ -525,10 +439,10 @@
       
       fullscreenDiv.classList.add('active');
       
-      // 벨소리 후 1.5초 뒤에 음성 읽기 (겹치지 않도록)
+      // 벨소리 후 2초 뒤에 음성 재생 (겹치지 않도록 더 늘림)
       setTimeout(() => {
         speakNumber(number);
-      }, 1500);
+      }, 2000);
 
       // 5초 후 원래 화면으로 복귀
       if (fullscreenTimer) {
@@ -612,7 +526,6 @@
           }
           
           audioEnabled = true;
-          initSpeech(); // 음성 합성 초기화
           console.log("🔊 오디오 활성화 완료");
           
           setTimeout(() => {
@@ -852,9 +765,14 @@
       if (fullscreenTimer) {
         clearTimeout(fullscreenTimer);
       }
-      if (speechSynth) {
-        speechSynth.cancel();
-      }
+      
+      // 음성 파일 정리
+      voiceAudioCache.forEach((audio) => {
+        if (!audio.paused) {
+          audio.pause();
+        }
+      });
+      
       stopSlideshow();
     });
   </script>
