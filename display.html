@@ -21,6 +21,45 @@
       position: relative;
     }
 
+    /* 오디오 활성화 버튼 */
+    .audio-gate {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+      font-size: 6vw;
+      color: white;
+    }
+
+    .audio-gate.hidden {
+      display: none;
+    }
+
+    .start-button {
+      font-size: 8vw;
+      font-weight: 900;
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 3vh 6vw;
+      border-radius: 25px;
+      margin-top: 4vh;
+      cursor: pointer;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
     /* 호출화면 스타일 */
     .call-screen {
       display: block;
@@ -317,7 +356,14 @@
     }
   </style>
 </head>
-<body onclick="enableAudio()">
+<body>
+  <!-- 오디오 활성화 게이트 -->
+  <div id="audioGate" class="audio-gate">
+    <div>🔊 통빱 호출벨 시스템</div>
+    <div style="font-size: 4vw; margin-top: 2vh;">음성 안내를 들으려면 아래 버튼을 눌러주세요</div>
+    <button id="startAudioBtn" class="start-button">🎵 음성 활성화</button>
+  </div>
+
   <!-- 호출화면 -->
   <div id="callScreen" class="call-screen hidden">
     <div id="message">안녕하세요! 통빱 입니다</div>
@@ -356,8 +402,6 @@
     </div>
   </div>
 
-  <audio id="ding" src="dingdong.mp3" preload="auto" style="display: none;"></audio>
-
   <script>
     let ws;
     let audioEnabled = false;
@@ -367,35 +411,134 @@
     let slideIndex = 0;
     let slideTimer = null;
     let fullscreenTimer = null;
+    let audioCache = new Map(); // 오디오 캐시
 
-    // 숫자 음성 재생 (단순화 - 캐시 없음)
-    function speakNumber(number) {
-      if (!audioEnabled) {
-        console.warn("🔇 오디오가 아직 활성화되지 않음");
-        return;
+    // 오디오 관리 클래스
+    class SmartTVAudioManager {
+      constructor() {
+        this.audioInstances = new Map();
+        this.hasUserInteraction = false;
+        this.maxCacheSize = 10; // 최대 10개 음성 파일 캐시
       }
 
-      const num = parseInt(number);
-      console.log(`🎤 음성 재생 시도: ${num}번`);
-      
-      // 매번 새로운 오디오 객체 생성
-      const voiceAudio = new Audio(`voice/${num}번.mp3`);
-      voiceAudio.volume = 1.0;
-      
-      voiceAudio.addEventListener('canplay', () => {
-        voiceAudio.play().then(() => {
-          console.log(`🎤 음성 재생 성공: ${num}번`);
-        }).catch(error => {
-          console.error(`🎤 음성 재생 실패: ${num}번 -`, error.message);
+      // 오디오 인스턴스 생성 및 캐시
+      createAudioInstance(number) {
+        const cacheKey = `voice_${number}`;
+        
+        if (this.audioInstances.has(cacheKey)) {
+          const cached = this.audioInstances.get(cacheKey);
+          // 재사용을 위해 초기화
+          cached.currentTime = 0;
+          return cached;
+        }
+
+        const audio = new Audio();
+        audio.src = `voice/${number}번.mp3`;
+        audio.preload = 'metadata'; // 스마트TV에서 메모리 절약
+        audio.volume = 1.0;
+
+        // 에러 처리
+        audio.addEventListener('error', (e) => {
+          console.error(`🎤 음성 파일 로드 실패: voice/${number}번.mp3`, e);
+          this.audioInstances.delete(cacheKey);
         });
+
+        // 메모리 관리를 위한 캐시 크기 제한
+        if (this.audioInstances.size >= this.maxCacheSize) {
+          const firstKey = this.audioInstances.keys().next().value;
+          const oldAudio = this.audioInstances.get(firstKey);
+          oldAudio.src = '';
+          oldAudio.load();
+          this.audioInstances.delete(firstKey);
+          console.log(`🗑️ 오래된 음성 캐시 제거: ${firstKey}`);
+        }
+
+        this.audioInstances.set(cacheKey, audio);
+        return audio;
+      }
+
+      // 음성 재생
+      async playVoice(number) {
+        if (!this.hasUserInteraction) {
+          console.warn("🔇 사용자 상호작용 없음 - 음성 재생 불가");
+          return false;
+        }
+
+        try {
+          const audio = this.createAudioInstance(number);
+          console.log(`🎤 음성 재생 시도: ${number}번`);
+          
+          await audio.play();
+          console.log(`🎤 음성 재생 성공: ${number}번`);
+          return true;
+        } catch (error) {
+          console.error(`🎤 음성 재생 실패: ${number}번 -`, error.message);
+          return false;
+        }
+      }
+
+      // 모든 오디오 정리
+      cleanup() {
+        this.audioInstances.forEach((audio, key) => {
+          audio.pause();
+          audio.src = '';
+          audio.load();
+        });
+        this.audioInstances.clear();
+        console.log('🗑️ 모든 오디오 캐시 정리 완료');
+      }
+    }
+
+    // 전역 오디오 매니저 생성
+    const audioManager = new SmartTVAudioManager();
+
+    // 오디오 활성화 게이트
+    function initializeAudioGate() {
+      const audioGate = document.getElementById('audioGate');
+      const startBtn = document.getElementById('startAudioBtn');
+
+      startBtn.addEventListener('click', async function() {
+        console.log('🎵 사용자가 음성 활성화 버튼 클릭');
+        
+        // 사용자 상호작용 플래그 설정
+        audioManager.hasUserInteraction = true;
+        audioEnabled = true;
+
+        // 테스트 음성 재생
+        try {
+          const testAudio = new Audio();
+          testAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAAAQklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+          await testAudio.play();
+          console.log('🔊 오디오 테스트 성공');
+        } catch (e) {
+          console.log('⚠️ 오디오 테스트 실패:', e.message);
+        }
+
+        // 게이트 숨기기
+        audioGate.classList.add('hidden');
+        
+        // 현재 모드에 따라 화면 표시
+        if (currentMode === 'WAITING') {
+          switchToWaitingMode();
+        } else {
+          switchToCallMode();
+        }
+      }, { once: true });
+
+      // 키보드/리모컨 지원
+      startBtn.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+          startBtn.click();
+        }
       });
-      
-      voiceAudio.addEventListener('error', () => {
-        console.warn(`⚠️ 음성 파일 로드 실패: voice/${num}번.mp3`);
-      });
-      
-      // 로드 시작
-      voiceAudio.load();
+    }
+
+    // 숫자 음성 재생 (개선된 버전)
+    async function speakNumber(number) {
+      const success = await audioManager.playVoice(number);
+      if (!success) {
+        console.warn(`⚠️ 음성 재생 실패: ${number}번`);
+      }
     }
 
     // 전체화면 호출 표시
@@ -409,10 +552,10 @@
       
       fullscreenDiv.classList.add('active');
       
-      // 바로 음성 재생 (딩동 소리 제거됨)
+      // 음성 재생 - 약간의 지연 후
       setTimeout(() => {
         speakNumber(number);
-      }, 500);
+      }, 800);
 
       // 5초 후 원래 화면으로 복귀
       if (fullscreenTimer) {
@@ -430,7 +573,6 @@
     // 슬라이드쇼 관리 - 단일 이미지로 변경
     const slides = document.querySelectorAll('.slide');
     
-    // 단일 슬라이드이므로 자동 전환 없음
     function showSlide(index) {
       // 슬라이드가 1개뿐이므로 별도 처리 불필요
     }
@@ -440,7 +582,6 @@
     }
 
     function startSlideshow() {
-      // 슬라이드가 1개뿐이므로 타이머 불필요
       console.log("📺 단일 이미지 대기화면 표시");
     }
 
@@ -470,24 +611,6 @@
       document.getElementById('callScreen').classList.remove('hidden');
       stopSlideshow();
       console.log('📢 호출화면 모드로 전환');
-    }
-
-    function enableAudio() {
-      if (!audioEnabled) {
-        const promises = [];
-        
-        try {
-          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          promises.push(audioContext.resume());
-        } catch (e) {
-          console.warn("AudioContext 초기화 실패:", e);
-        }
-        
-        Promise.allSettled(promises).then(() => {
-          audioEnabled = true;
-          console.log("🔊 오디오 활성화 완료");
-        });
-      }
     }
 
     function connectWebSocket() {
@@ -604,16 +727,6 @@
       console.log("📝 로테이션 메시지 기능 비활성화됨");
     }
 
-    // setInterval(updateRotatingMessage, 5000); // 비활성화
-
-    ['mousedown', 'mouseup', 'touchstart', 'touchend', 'keydown', 'scroll'].forEach(eventType => {
-      document.addEventListener(eventType, () => {
-        if (!audioEnabled) {
-          enableAudio();
-        }
-      }, { once: true });
-    });
-
     function showMessage(msg) {
       if (currentMode !== 'CALL') return;
       
@@ -654,28 +767,18 @@
       }
     }
 
-    function playSound() {
-      // 딩동 소리 제거됨 - 함수는 남겨둠 (혹시 나중에 필요할 수도)
-      console.log("🔕 딩동 소리 비활성화됨");
-    }
-
-    // 페이지 로드 시 WebSocket 연결
+    // 페이지 로드 시 초기화
     document.addEventListener('DOMContentLoaded', () => {
-      console.log("📄 페이지 로드됨 - 대기화면으로 시작");
+      console.log("📄 페이지 로드됨 - 오디오 게이트 표시");
+      
+      // 오디오 게이트 초기화
+      initializeAudioGate();
+      
+      // WebSocket 연결
       connectWebSocket();
       
-      // 대기화면으로 시작
+      // 대기화면으로 시작 (오디오 게이트 뒤에 숨어있음)
       switchToWaitingMode();
-      
-      setTimeout(() => {
-        const clickEvent = new MouseEvent('click', {
-          view: window,
-          bubbles: true,
-          cancelable: true
-        });
-        document.body.dispatchEvent(clickEvent);
-        console.log("🤖 자동 클릭으로 오디오 활성화 시도");
-      }, 1000);
     });
 
     window.addEventListener('beforeunload', () => {
@@ -688,6 +791,9 @@
       if (fullscreenTimer) {
         clearTimeout(fullscreenTimer);
       }
+      
+      // 오디오 정리
+      audioManager.cleanup();
       
       stopSlideshow();
     });
