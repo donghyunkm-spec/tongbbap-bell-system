@@ -1,18 +1,14 @@
 {
   "name": "tongbbap-bell-system",
   "version": "2.0.0",
-  "description": "통빱 음식점 호출벨 시스템 - 1호점 & 2호점",
+  "description": "통빱 음식점 호출벨 시스템 - 통합 서버 (3루점 & 1루점)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "start:both": "concurrently \"node server.js\" \"node server1.js\"",
-    "dev": "concurrently \"node server.js\" \"node server1.js\"",
-    "store1": "node server.js",
-    "store2": "node server1.js",
-    "test": "echo \"두 매장 서버 실행 테스트\""
+    "dev": "node server.js",
+    "test": "echo \"통합 서버 실행 테스트\""
   },
   "dependencies": {
-    "concurrently": "^8.2.2",
     "express": "^4.18.2",
     "ws": "^8.14.2"
   },
@@ -25,7 +21,8 @@
     "websocket",
     "multi-store",
     "통빱",
-    "호출벨"
+    "호출벨",
+    "unified-server"
   ],
   "author": "통빱",
   "license": "MIT",
@@ -33,9 +30,5 @@
     "type": "git",
     "url": "통빱 호출벨 시스템"
   },
-  "homepage": "통빱 음식점 호출벨 관리 시스템",
-  "config": {
-    "store1_port": 3000,
-    "store2_port": 3001
-  }
+  "homepage": "통빱 음식점 호출벨 관리 시스템"
 }
