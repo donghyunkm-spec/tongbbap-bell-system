@@ -203,7 +203,7 @@
       gap: 1.5vh;
     }
 
-    /* 전체화면 호출 스타일 - 새로 추가 */
+    /* 전체화면 호출 스타일 */
     .fullscreen-call {
       position: fixed;
       top: 0;
@@ -238,6 +238,46 @@
       margin-top: 2vh;
       text-shadow: 0 0 30px rgba(0,0,0,0.3);
       animation: messageSlideUp 0.8s ease-out 0.2s both;
+    }
+
+    /* 재고소진 마감 전체화면 스타일 */
+    .fullscreen-closed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #8b0000, #dc143c);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      animation: fullscreenPulse 0.5s ease-in-out;
+    }
+
+    .fullscreen-closed.active {
+      display: flex;
+    }
+
+    .closed-title {
+      font-size: 12vw;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 0 30px rgba(0,0,0,0.3);
+      animation: messageSlideUp 0.8s ease-out 0.2s both;
+      margin-bottom: 4vh;
+      text-align: center;
+    }
+
+    .closed-message {
+      font-size: 6vw;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 0 30px rgba(0,0,0,0.3);
+      animation: messageSlideUp 0.8s ease-out 0.4s both;
+      text-align: center;
+      line-height: 1.3;
     }
 
     @keyframes fullscreenPulse {
@@ -389,10 +429,16 @@
     </div>
   </div>
 
-  <!-- 전체화면 호출 - 새로 추가 -->
+  <!-- 전체화면 호출 -->
   <div id="fullscreenCall" class="fullscreen-call">
     <div id="fullscreenNumber" class="fullscreen-number"></div>
     <div id="fullscreenMessage" class="fullscreen-message">번 손님 주문 나왔습니다!</div>
+  </div>
+
+  <!-- 재고소진 마감 전체화면 -->
+  <div id="fullscreenClosed" class="fullscreen-closed">
+    <div class="closed-title">재고 소진</div>
+    <div class="closed-message">금일 재고소진으로 인해<br>마감합니다.<br><br>대단히 죄송합니다.</div>
   </div>
 
   <!-- 대기화면 -->
@@ -543,6 +589,9 @@
 
     // 전체화면 호출 표시
     function showFullscreenCall(number) {
+      // 마감 상태면 호출 표시 안함
+      if (isClosedForDay) return;
+      
       const fullscreenDiv = document.getElementById('fullscreenCall');
       const numberDiv = document.getElementById('fullscreenNumber');
       const messageDiv = document.getElementById('fullscreenMessage');
@@ -570,6 +619,41 @@
       console.log(`📺 전체화면 호출 표시: ${number}번`);
     }
 
+    // 재고소진 마감 전체화면 표시
+    function showClosedScreen() {
+      const closedDiv = document.getElementById('fullscreenClosed');
+      closedDiv.classList.add('active');
+      
+      // 호출 화면과 대기 화면 숨기기
+      document.getElementById('callScreen').classList.add('hidden');
+      document.getElementById('waitingScreen').classList.remove('active');
+      
+      console.log('🚫 재고소진 마감 전체화면 표시');
+      
+      // 마감 상태 플래그 설정
+      isClosedForDay = true;
+      
+      // 마감 화면은 수동으로 제거하기 전까지 계속 유지
+    }
+
+    // 마감 화면 제거 (서버에서 기본 메시지 복구시)
+    function hideClosedScreen() {
+      const closedDiv = document.getElementById('fullscreenClosed');
+      closedDiv.classList.remove('active');
+      
+      console.log('🔄 마감 화면 제거');
+      
+      // 마감 상태 플래그 해제
+      isClosedForDay = false;
+      
+      // 현재 모드에 따라 적절한 화면 표시
+      if (currentMode === 'WAITING') {
+        switchToWaitingMode();
+      } else {
+        switchToCallMode();
+      }
+    }
+
     // 슬라이드쇼 관리 - 단일 이미지로 변경
     const slides = document.querySelectorAll('.slide');
     
@@ -591,6 +675,9 @@
 
     // 모드 전환 함수
     function switchToWaitingMode() {
+      // 마감 상태면 모드 전환 안함
+      if (isClosedForDay) return;
+      
       currentMode = 'WAITING';
       document.getElementById('callScreen').classList.add('hidden');
       document.getElementById('waitingScreen').classList.add('active');
@@ -606,6 +693,9 @@
     }
 
     function switchToCallMode() {
+      // 마감 상태면 모드 전환 안함
+      if (isClosedForDay) return;
+      
       currentMode = 'CALL';
       document.getElementById('waitingScreen').classList.remove('active');
       document.getElementById('callScreen').classList.remove('hidden');
@@ -728,30 +818,40 @@
     }
 
     function showMessage(msg) {
-      if (currentMode !== 'CALL') return;
-      
       console.log("💬 메시지 표시:", msg);
-      const msgBox = document.getElementById("message");
-      msgBox.innerText = msg;
-
+      
+      // 재고소진 마감 메시지 체크
       if (msg.includes('재고소진') && msg.includes('마감')) {
-        console.log("🚫 하루 마감 처리됨");
-        isClosedForDay = true;
+        console.log("🚫 재고소진 마감 메시지 - 전체화면 표시");
+        showClosedScreen();
         return;
       }
+      
+      // 기본 메시지로 복구 체크
+      if (msg === '안녕하세요! 통빱 입니다' && isClosedForDay) {
+        console.log("🔄 기본 메시지 복구 - 마감 화면 제거");
+        hideClosedScreen();
+        return;
+      }
+      
+      // 마감 상태가 아닐 때만 일반 메시지 표시
+      if (!isClosedForDay && currentMode === 'CALL') {
+        const msgBox = document.getElementById("message");
+        msgBox.innerText = msg;
 
-      if (msg.includes('삼겹살만') || msg.includes('국수만')) {
-        setTimeout(() => {
-          if (!isClosedForDay) {
-            msgBox.innerText = '안녕하세요! 통빱 입니다';
-          }
-        }, 20000);
-      } else {
-        setTimeout(() => {
-          if (!isClosedForDay) {
-            msgBox.innerText = '안녕하세요! 통빱 입니다';
-          }
-        }, 10000);
+        if (msg.includes('삼겹살만') || msg.includes('국수만')) {
+          setTimeout(() => {
+            if (!isClosedForDay) {
+              msgBox.innerText = '안녕하세요! 통빱 입니다';
+            }
+          }, 20000);
+        } else {
+          setTimeout(() => {
+            if (!isClosedForDay) {
+              msgBox.innerText = '안녕하세요! 통빱 입니다';
+            }
+          }, 10000);
+        }
       }
     }
 
