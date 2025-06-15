@@ -356,7 +356,7 @@
     </div>
   </div>
 
-  <audio id="ding" src="dingdong.mp3" preload="auto"></audio>
+  <audio id="ding" src="dingdong.mp3" preload="auto" style="display: none;"></audio>
 
   <script>
     let ws;
@@ -367,9 +367,8 @@
     let slideIndex = 0;
     let slideTimer = null;
     let fullscreenTimer = null;
-    let voiceAudioCache = new Map(); // 음성 파일 캐시
 
-    // 숫자 음성 재생 (필요할 때만 로드)
+    // 숫자 음성 재생 (단순화 - 캐시 없음)
     function speakNumber(number) {
       if (!audioEnabled) {
         console.warn("🔇 오디오가 아직 활성화되지 않음");
@@ -377,55 +376,26 @@
       }
 
       const num = parseInt(number);
+      console.log(`🎤 음성 재생 시도: ${num}번`);
       
-      // 기존 재생 중인 음성 정지
-      voiceAudioCache.forEach((audio) => {
-        if (!audio.paused) {
-          audio.pause();
-          audio.currentTime = 0;
-        }
-      });
-
-      // 캐시에서 확인
-      let voiceAudio = voiceAudioCache.get(num);
+      // 매번 새로운 오디오 객체 생성
+      const voiceAudio = new Audio(`voice/${num}번.mp3`);
+      voiceAudio.volume = 1.0;
       
-      if (voiceAudio) {
-        // 캐시에 있으면 바로 재생
-        voiceAudio.currentTime = 0;
+      voiceAudio.addEventListener('canplay', () => {
         voiceAudio.play().then(() => {
-          console.log(`🎤 음성 재생 (캐시): ${num}번`);
+          console.log(`🎤 음성 재생 성공: ${num}번`);
         }).catch(error => {
           console.error(`🎤 음성 재생 실패: ${num}번 -`, error.message);
         });
-      } else {
-        // 캐시에 없으면 새로 로드 후 재생
-        voiceAudio = new Audio(`voice/${num}번.mp3`);
-        voiceAudio.volume = 1.0;
-        
-        voiceAudio.addEventListener('canplay', () => {
-          voiceAudio.play().then(() => {
-            console.log(`🎤 음성 재생 (새로 로드): ${num}번`);
-            
-            // 재생 성공하면 캐시에 저장 (최대 10개까지만)
-            if (voiceAudioCache.size >= 10) {
-              // 가장 오래된 것 제거
-              const firstKey = voiceAudioCache.keys().next().value;
-              voiceAudioCache.delete(firstKey);
-            }
-            voiceAudioCache.set(num, voiceAudio);
-            
-          }).catch(error => {
-            console.error(`🎤 음성 재생 실패: ${num}번 -`, error.message);
-          });
-        });
-        
-        voiceAudio.addEventListener('error', () => {
-          console.warn(`⚠️ 음성 파일 없음: voice/${num}번.mp3`);
-        });
-        
-        // 로드 시작
-        voiceAudio.load();
-      }
+      });
+      
+      voiceAudio.addEventListener('error', () => {
+        console.warn(`⚠️ 음성 파일 로드 실패: voice/${num}번.mp3`);
+      });
+      
+      // 로드 시작
+      voiceAudio.load();
     }
 
     // 전체화면 호출 표시
@@ -439,10 +409,10 @@
       
       fullscreenDiv.classList.add('active');
       
-      // 벨소리 후 2초 뒤에 음성 재생 (겹치지 않도록 더 늘림)
+      // 바로 음성 재생 (딩동 소리 제거됨)
       setTimeout(() => {
         speakNumber(number);
-      }, 2000);
+      }, 500);
 
       // 5초 후 원래 화면으로 복귀
       if (fullscreenTimer) {
@@ -513,27 +483,9 @@
           console.warn("AudioContext 초기화 실패:", e);
         }
         
-        const ding = document.getElementById("ding");
-        if (ding) {
-          ding.muted = true;
-          promises.push(ding.play());
-        }
-        
         Promise.allSettled(promises).then(() => {
-          if (ding) {
-            ding.muted = false;
-            ding.volume = 0.8; // 벨소리 볼륨 원래대로 복구
-          }
-          
           audioEnabled = true;
           console.log("🔊 오디오 활성화 완료");
-          
-          setTimeout(() => {
-            if (ding && !ding.muted) {
-              ding.currentTime = 0;
-              ding.play().catch(console.warn);
-            }
-          }, 100);
         });
       }
     }
@@ -595,14 +547,8 @@
               const latestNumber = data.list[data.list.length - 1];
               showFullscreenCall(latestNumber);
             }
-            
-            // 벨소리는 음성 재생 후에 (순서 조정)
-            setTimeout(() => {
-              playSound();
-            }, 100);
           } else if (data.type === "MSG") {
             showMessage(data.text);
-            playSound();
           } else if (data.type === "TIME") {
             updateTimes(data.sam, data.noodle);
           }
@@ -717,21 +663,8 @@
     }
 
     function playSound() {
-      if (!audioEnabled) {
-        console.warn("🔇 오디오가 아직 활성화되지 않음");
-        return;
-      }
-      
-      const ding = document.getElementById("ding");
-      if (ding) {
-        ding.currentTime = 0;
-        ding.play().then(() => {
-          console.log("🔊 알림음 재생됨");
-        }).catch(err => {
-          console.warn("🔇 오디오 재생 실패:", err.message);
-          audioEnabled = false;
-        });
-      }
+      // 딩동 소리 제거됨 - 함수는 남겨둠 (혹시 나중에 필요할 수도)
+      console.log("🔕 딩동 소리 비활성화됨");
     }
 
     // 페이지 로드 시 WebSocket 연결
@@ -765,13 +698,6 @@
       if (fullscreenTimer) {
         clearTimeout(fullscreenTimer);
       }
-      
-      // 음성 파일 정리
-      voiceAudioCache.forEach((audio) => {
-        if (!audio.paused) {
-          audio.pause();
-        }
-      });
       
       stopSlideshow();
     });
