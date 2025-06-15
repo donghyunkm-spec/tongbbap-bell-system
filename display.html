@@ -323,7 +323,7 @@
     <div id="message">안녕하세요! 통빱 입니다</div>
     <div id="numbers"></div>
     
-    <div id="rotatingGuide"></div>
+    <div id="rotatingGuide" style="display: none;"></div>
 
     <div id="footer-section">
       <div id="fixedTimes">
@@ -600,19 +600,11 @@
     let currentMessageIndex = 0;
     
     function updateRotatingMessage() {
-      if (currentMode !== 'CALL') return;
-      
-      const guideEl = document.getElementById("rotatingGuide");
-      guideEl.innerText = rotatingMessages[currentMessageIndex];
-      currentMessageIndex = (currentMessageIndex + 1) % rotatingMessages.length;
-      
-      if (!audioEnabled) {
-        const clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
-        document.body.dispatchEvent(clickEvent);
-      }
+      // 로테이션 메시지 기능 비활성화
+      console.log("📝 로테이션 메시지 기능 비활성화됨");
     }
 
-    setInterval(updateRotatingMessage, 5000);
+    // setInterval(updateRotatingMessage, 5000); // 비활성화
 
     ['mousedown', 'mouseup', 'touchstart', 'touchend', 'keydown', 'scroll'].forEach(eventType => {
       document.addEventListener(eventType, () => {
@@ -674,8 +666,6 @@
       
       // 대기화면으로 시작
       switchToWaitingMode();
-      
-      updateRotatingMessage();
       
       setTimeout(() => {
         const clickEvent = new MouseEvent('click', {
