@@ -164,6 +164,79 @@
       gap: 1.5vh;
     }
 
+    /* 전체화면 호출 스타일 - 새로 추가 */
+    .fullscreen-call {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fullscreenPulse 0.5s ease-in-out;
+    }
+
+    .fullscreen-call.active {
+      display: flex;
+    }
+
+    .fullscreen-number {
+      font-size: 50vw;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 0 50px rgba(0,0,0,0.3);
+      animation: numberBounce 0.6s ease-out;
+    }
+
+    .fullscreen-message {
+      font-size: 8vw;
+      font-weight: 700;
+      color: white;
+      margin-top: 2vh;
+      text-shadow: 0 0 30px rgba(0,0,0,0.3);
+      animation: messageSlideUp 0.8s ease-out 0.2s both;
+    }
+
+    @keyframes fullscreenPulse {
+      0% {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes numberBounce {
+      0% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+      60% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes messageSlideUp {
+      0% {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
     /* 대기화면 스타일 */
     .waiting-screen {
       display: none;
@@ -234,8 +307,6 @@
       transform: scale(1.2);
     }
 
-    /* 동영상 슬라이드 스타일 - 제거됨 */
-
     /* 접근성 개선 */
     @media (prefers-reduced-motion: reduce) {
       * {
@@ -272,6 +343,12 @@
     </div>
   </div>
 
+  <!-- 전체화면 호출 - 새로 추가 -->
+  <div id="fullscreenCall" class="fullscreen-call">
+    <div id="fullscreenNumber" class="fullscreen-number"></div>
+    <div id="fullscreenMessage" class="fullscreen-message">번 손님 주문 나왔습니다!</div>
+  </div>
+
   <!-- 대기화면 -->
   <div id="waitingScreen" class="waiting-screen active">
     <div class="slide active" id="slide1">
@@ -289,6 +366,182 @@
     let currentMode = 'WAITING'; // 시작은 대기화면
     let slideIndex = 0;
     let slideTimer = null;
+    let speechSynth = null;
+    let fullscreenTimer = null;
+
+    // 음성 합성 초기화
+    function initSpeech() {
+      if ('speechSynthesis' in window) {
+        speechSynth = window.speechSynthesis;
+        console.log("🎤 음성 합성 초기화됨");
+      } else {
+        console.warn("🔇 음성 합성을 지원하지 않는 브라우저");
+      }
+    }
+
+    // 숫자를 자연스럽게 읽기 위한 변환 함수
+    function convertNumberToNaturalKorean(number) {
+      const num = parseInt(number);
+      
+      // 일의 자리 한국어 변환 (십의 자리에서 사용)
+      const onesKorean = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+      
+      if (num < 10) {
+        return `${num}번`;
+      } else if (num < 20) {
+        const ones = num % 10;
+        if (ones === 0) {
+          return `십번`;
+        } else {
+          return `십${onesKorean[ones]}번`;
+        }
+      } else if (num < 100) {
+        const tens = Math.floor(num / 10);
+        const ones = num % 10;
+        if (ones === 0) {
+          return `${tens}십번`;
+        } else {
+          return `${tens}십${onesKorean[ones]}번`;
+        }
+      } else if (num < 200) {
+        const remainder = num % 100;
+        if (remainder === 0) {
+          return `백번`;
+        } else if (remainder < 10) {
+          return `백${onesKorean[remainder]}번`;
+        } else if (remainder < 20) {
+          const ones = remainder % 10;
+          if (ones === 0) {
+            return `백십번`;
+          } else {
+            return `백십${onesKorean[ones]}번`;
+          }
+        } else {
+          const tens = Math.floor(remainder / 10);
+          const ones = remainder % 10;
+          if (ones === 0) {
+            return `백${tens}십번`;
+          } else {
+            return `백${tens}십${onesKorean[ones]}번`;
+          }
+        }
+      } else if (num < 1000) {
+        const hundreds = Math.floor(num / 100);
+        const remainder = num % 100;
+        
+        if (remainder === 0) {
+          return `${onesKorean[hundreds]}백번`;
+        } else if (remainder < 10) {
+          return `${onesKorean[hundreds]}백${onesKorean[remainder]}번`;
+        } else if (remainder < 20) {
+          const ones = remainder % 10;
+          if (ones === 0) {
+            return `${onesKorean[hundreds]}백십번`;
+          } else {
+            return `${onesKorean[hundreds]}백십${onesKorean[ones]}번`;
+          }
+        } else {
+          const tens = Math.floor(remainder / 10);
+          const ones = remainder % 10;
+          if (ones === 0) {
+            return `${onesKorean[hundreds]}백${tens}십번`;
+          } else {
+            return `${onesKorean[hundreds]}백${tens}십${onesKorean[ones]}번`;
+          }
+        }
+      } else {
+        return `${num}번`; // 1000 이상은 그냥 숫자로
+      }
+    }
+
+    // 숫자 음성 읽기
+    function speakNumber(number) {
+      if (!speechSynth || !audioEnabled) {
+        console.warn("🔇 음성 합성 사용 불가");
+        return;
+      }
+
+      // 기존 음성 정지
+      speechSynth.cancel();
+
+      const naturalNumber = convertNumberToNaturalKorean(number);
+      
+      // 더 큰 소리를 위해 여러 번 반복해서 말하기
+      const messages = [
+        `${naturalNumber} 손님 주문 나왔습니다`,
+        `${naturalNumber} 손님 주문 나왔습니다`  // 두 번 반복
+      ];
+
+      messages.forEach((text, index) => {
+        setTimeout(() => {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ko-KR';
+          utterance.rate = 0.6;  // 더 천천히 (명확하게)
+          utterance.pitch = 2.0; // 최대 높은 톤
+          utterance.volume = 1.0; // 최대 음량
+
+          // 한국어 음성 우선 선택
+          if (speechSynth.getVoices().length > 0) {
+            const voices = speechSynth.getVoices();
+            const koreanVoice = voices.find(voice => 
+              voice.lang.includes('ko') || 
+              voice.name.includes('Korean') ||
+              voice.name.includes('한국')
+            );
+            if (koreanVoice) {
+              utterance.voice = koreanVoice;
+            }
+          }
+
+          utterance.onstart = () => {
+            console.log(`🎤 음성 재생 시작 (${index + 1}/2): ${naturalNumber}`);
+          };
+
+          utterance.onend = () => {
+            console.log(`🎤 음성 재생 완료 (${index + 1}/2): ${naturalNumber}`);
+          };
+
+          utterance.onerror = (event) => {
+            console.error("🎤 음성 재생 오류:", event.error);
+          };
+
+          try {
+            speechSynth.speak(utterance);
+          } catch (error) {
+            console.error("🎤 음성 재생 실패:", error);
+          }
+        }, index * 100); // 100ms 간격으로 실행
+      });
+    }
+
+    // 전체화면 호출 표시
+    function showFullscreenCall(number) {
+      const fullscreenDiv = document.getElementById('fullscreenCall');
+      const numberDiv = document.getElementById('fullscreenNumber');
+      const messageDiv = document.getElementById('fullscreenMessage');
+
+      numberDiv.textContent = number;
+      messageDiv.textContent = `${number}번 손님 주문 나왔습니다!`;
+      
+      fullscreenDiv.classList.add('active');
+      
+      // 벨소리 후 1.5초 뒤에 음성 읽기 (겹치지 않도록)
+      setTimeout(() => {
+        speakNumber(number);
+      }, 1500);
+
+      // 5초 후 원래 화면으로 복귀
+      if (fullscreenTimer) {
+        clearTimeout(fullscreenTimer);
+      }
+      
+      fullscreenTimer = setTimeout(() => {
+        fullscreenDiv.classList.remove('active');
+        console.log(`📺 전체화면 호출 종료: ${number}번`);
+      }, 5000);
+
+      console.log(`📺 전체화면 호출 표시: ${number}번`);
+    }
 
     // 슬라이드쇼 관리 - 단일 이미지로 변경
     const slides = document.querySelectorAll('.slide');
@@ -316,6 +569,13 @@
       currentMode = 'WAITING';
       document.getElementById('callScreen').classList.add('hidden');
       document.getElementById('waitingScreen').classList.add('active');
+      
+      // 전체화면 호출도 숨기기
+      document.getElementById('fullscreenCall').classList.remove('active');
+      if (fullscreenTimer) {
+        clearTimeout(fullscreenTimer);
+      }
+      
       startSlideshow();
       console.log('📺 대기화면 모드로 전환');
     }
@@ -348,10 +608,11 @@
         Promise.allSettled(promises).then(() => {
           if (ding) {
             ding.muted = false;
-            ding.volume = 0.8;
+            ding.volume = 0.8; // 벨소리 볼륨 원래대로 복구
           }
           
           audioEnabled = true;
+          initSpeech(); // 음성 합성 초기화
           console.log("🔊 오디오 활성화 완료");
           
           setTimeout(() => {
@@ -415,7 +676,17 @@
           // 호출 모드일 때만 호출 관련 메시지 처리
           if (data.type === "CALL" && Array.isArray(data.list)) {
             updateNumbers(data.list);
-            playSound();
+            
+            // 새로 추가된 번호가 있으면 전체화면으로 표시
+            if (data.list.length > 0) {
+              const latestNumber = data.list[data.list.length - 1];
+              showFullscreenCall(latestNumber);
+            }
+            
+            // 벨소리는 음성 재생 후에 (순서 조정)
+            setTimeout(() => {
+              playSound();
+            }, 100);
           } else if (data.type === "MSG") {
             showMessage(data.text);
             playSound();
@@ -577,6 +848,12 @@
       }
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
+      }
+      if (fullscreenTimer) {
+        clearTimeout(fullscreenTimer);
+      }
+      if (speechSynth) {
+        speechSynth.cancel();
       }
       stopSlideshow();
     });
