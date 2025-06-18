@@ -7,21 +7,35 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-let displayClients = new Map();
-let inputClients = new Map();
-let currentNumbers = [];
-let currentDisplayMode = 'WAITING'; // 기본값을 대기화면으로 설정
+// 매장별 데이터 분리
+const stores = {
+  '3ru': {
+    displayClients: new Map(),
+    inputClients: new Map(),
+    currentNumbers: [],
+    currentDisplayMode: 'WAITING',
+    name: '3루점'
+  },
+  '1ru': {
+    displayClients: new Map(),
+    inputClients: new Map(),
+    currentNumbers: [],
+    currentDisplayMode: 'WAITING',
+    name: '1루점'
+  }
+};
 
 const PORT = process.env.PORT || 3000;
 
-function addClient(clientMap, ws, req) {
+function addClient(store, clientMap, ws, req) {
   const clientInfo = {
     ws: ws,
     ip: req.socket.remoteAddress,
     userAgent: req.headers['user-agent'] || 'Unknown',
     connectTime: new Date(),
     lastPing: new Date(),
-    isAlive: true
+    isAlive: true,
+    store: store
   };
   clientMap.set(ws, clientInfo);
   return clientInfo;
@@ -31,51 +45,78 @@ function removeClient(clientMap, ws) {
   return clientMap.delete(ws);
 }
 
-function getClientInfo(clientMap, ws) {
-  return clientMap.get(ws);
+function getClientInfo(ws) {
+  // 모든 매장에서 클라이언트 찾기
+  for (const storeKey in stores) {
+    const store = stores[storeKey];
+    if (store.displayClients.has(ws)) {
+      return { client: store.displayClients.get(ws), store: storeKey, type: 'display' };
+    }
+    if (store.inputClients.has(ws)) {
+      return { client: store.inputClients.get(ws), store: storeKey, type: 'input' };
+    }
+  }
+  return null;
 }
 
 app.get('/health', (req, res) => {
   const now = new Date();
-  const displayStats = Array.from(displayClients.values()).map(client => ({
-    ip: client.ip,
-    connected: Math.floor((now - client.connectTime) / 1000) + 's',
-    lastPing: Math.floor((now - client.lastPing) / 1000) + 's ago',
-    alive: client.isAlive
-  }));
+  const result = {};
   
-  const inputStats = Array.from(inputClients.values()).map(client => ({
-    ip: client.ip,
-    connected: Math.floor((now - client.connectTime) / 1000) + 's',
-    lastPing: Math.floor((now - client.lastPing) / 1000) + 's ago',
-    alive: client.isAlive
-  }));
+  for (const storeKey in stores) {
+    const store = stores[storeKey];
+    const displayStats = Array.from(store.displayClients.values()).map(client => ({
+      ip: client.ip,
+      connected: Math.floor((now - client.connectTime) / 1000) + 's',
+      lastPing: Math.floor((now - client.lastPing) / 1000) + 's ago',
+      alive: client.isAlive
+    }));
+    
+    const inputStats = Array.from(store.inputClients.values()).map(client => ({
+      ip: client.ip,
+      connected: Math.floor((now - client.connectTime) / 1000) + 's',
+      lastPing: Math.floor((now - client.lastPing) / 1000) + 's ago',
+      alive: client.isAlive
+    }));
+
+    result[store.name] = {
+      currentMode: store.currentDisplayMode,
+      displays: {
+        count: store.displayClients.size,
+        clients: displayStats
+      },
+      inputs: {
+        count: store.inputClients.size,
+        clients: inputStats
+      },
+      currentNumbers: store.currentNumbers
+    };
+  }
 
   res.json({ 
-    status: 'ok', 
+    status: 'ok',
     timestamp: now.toISOString(),
-    currentMode: currentDisplayMode,
-    displays: {
-      count: displayClients.size,
-      clients: displayStats
-    },
-    inputs: {
-      count: inputClients.size,
-      clients: inputStats
-    },
-    currentNumbers: currentNumbers
+    stores: result
   });
 });
 
 app.get('/status', (req, res) => {
+  const result = {};
+  for (const storeKey in stores) {
+    const store = stores[storeKey];
+    result[store.name] = {
+      currentMode: store.currentDisplayMode,
+      displays: store.displayClients.size,
+      inputs: store.inputClients.size,
+      currentNumbers: store.currentNumbers
+    };
+  }
+
   res.json({
     server: 'running',
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    currentMode: currentDisplayMode,
-    displays: displayClients.size,
-    inputs: inputClients.size,
-    currentNumbers: currentNumbers,
+    stores: result,
     timestamp: new Date().toISOString()
   });
 });
@@ -84,223 +125,221 @@ const HEARTBEAT_INTERVAL = 15000;
 const CLIENT_TIMEOUT = 60000;
 
 function heartbeat() {
-  console.log(`💓 하트비트 체크 시작 - Display: ${displayClients.size}, Input: ${inputClients.size}, Mode: ${currentDisplayMode}`);
+  console.log(`💓 하트비트 체크 시작`);
   
-  const deadDisplays = [];
-  displayClients.forEach((clientInfo, ws) => {
-    if (ws.readyState === WebSocket.OPEN) {
-      if (clientInfo.isAlive === false) {
-        console.log(`💀 Display 클라이언트 응답 없음 (${clientInfo.ip}) - 연결 종료`);
-        ws.terminate();
-        deadDisplays.push(ws);
-      } else {
-        clientInfo.isAlive = false;
-        try {
-          ws.send(JSON.stringify({ type: 'PING', timestamp: Date.now() }));
-        } catch (error) {
-          console.error(`❌ Display 클라이언트 PING 전송 실패 (${clientInfo.ip}):`, error.message);
+  for (const storeKey in stores) {
+    const store = stores[storeKey];
+    console.log(`   ${store.name} - Display: ${store.displayClients.size}, Input: ${store.inputClients.size}`);
+    
+    const deadDisplays = [];
+    store.displayClients.forEach((clientInfo, ws) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        if (clientInfo.isAlive === false) {
+          console.log(`💀 ${store.name} Display 응답 없음 (${clientInfo.ip})`);
+          ws.terminate();
           deadDisplays.push(ws);
+        } else {
+          clientInfo.isAlive = false;
+          try {
+            ws.send(JSON.stringify({ type: 'PING', timestamp: Date.now() }));
+          } catch (error) {
+            console.error(`❌ ${store.name} Display PING 실패:`, error.message);
+            deadDisplays.push(ws);
+          }
         }
-      }
-    } else {
-      console.log(`🔌 Display 클라이언트 연결 끊김 (${clientInfo.ip})`);
-      deadDisplays.push(ws);
-    }
-  });
-
-  const deadInputs = [];
-  inputClients.forEach((clientInfo, ws) => {
-    if (ws.readyState === WebSocket.OPEN) {
-      if (clientInfo.isAlive === false) {
-        console.log(`💀 Input 클라이언트 응답 없음 (${clientInfo.ip}) - 연결 종료`);
-        ws.terminate();
-        deadInputs.push(ws);
       } else {
-        clientInfo.isAlive = false;
-        try {
-          ws.send(JSON.stringify({ type: 'PING', timestamp: Date.now() }));
-        } catch (error) {
-          console.error(`❌ Input 클라이언트 PING 전송 실패 (${clientInfo.ip}):`, error.message);
-          deadInputs.push(ws);
-        }
+        deadDisplays.push(ws);
       }
-    } else {
-      console.log(`🔌 Input 클라이언트 연결 끊김 (${clientInfo.ip})`);
-      deadInputs.push(ws);
-    }
-  });
+    });
 
-  deadDisplays.forEach(ws => {
-    removeClient(displayClients, ws);
-  });
-  deadInputs.forEach(ws => {
-    removeClient(inputClients, ws);
-  });
+    const deadInputs = [];
+    store.inputClients.forEach((clientInfo, ws) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        if (clientInfo.isAlive === false) {
+          console.log(`💀 ${store.name} Input 응답 없음 (${clientInfo.ip})`);
+          ws.terminate();
+          deadInputs.push(ws);
+        } else {
+          clientInfo.isAlive = false;
+          try {
+            ws.send(JSON.stringify({ type: 'PING', timestamp: Date.now() }));
+          } catch (error) {
+            console.error(`❌ ${store.name} Input PING 실패:`, error.message);
+            deadInputs.push(ws);
+          }
+        }
+      } else {
+        deadInputs.push(ws);
+      }
+    });
 
-  if (deadDisplays.length > 0) {
-    console.log(`📺 디스플레이 클라이언트 ${deadDisplays.length}개 정리됨`);
-    if (displayClients.size === 0) {
-      notifyInputClients({ type: 'DISPLAY_OFF', reason: 'all_disconnected' });
+    deadDisplays.forEach(ws => removeClient(store.displayClients, ws));
+    deadInputs.forEach(ws => removeClient(store.inputClients, ws));
+
+    if (deadDisplays.length > 0) {
+      console.log(`📺 ${store.name} 디스플레이 ${deadDisplays.length}개 정리됨`);
+      if (store.displayClients.size === 0) {
+        notifyInputClients(storeKey, { type: 'DISPLAY_OFF', reason: 'all_disconnected' });
+      }
     }
   }
-
-  console.log(`💓 하트비트 완료 - Display: ${displayClients.size}, Input: ${inputClients.size}`);
 }
 
 const heartbeatTimer = setInterval(heartbeat, HEARTBEAT_INTERVAL);
 
 function cleanupOldConnections() {
   const now = Date.now();
-  const oldDisplays = [];
-  const oldInputs = [];
+  
+  for (const storeKey in stores) {
+    const store = stores[storeKey];
+    const oldDisplays = [];
+    const oldInputs = [];
 
-  displayClients.forEach((clientInfo, ws) => {
-    if (now - clientInfo.lastPing.getTime() > CLIENT_TIMEOUT) {
-      console.log(`🗑️ 오래된 Display 연결 정리 (${clientInfo.ip})`);
-      oldDisplays.push(ws);
+    store.displayClients.forEach((clientInfo, ws) => {
+      if (now - clientInfo.lastPing.getTime() > CLIENT_TIMEOUT) {
+        oldDisplays.push(ws);
+      }
+    });
+
+    store.inputClients.forEach((clientInfo, ws) => {
+      if (now - clientInfo.lastPing.getTime() > CLIENT_TIMEOUT) {
+        oldInputs.push(ws);
+      }
+    });
+
+    oldDisplays.forEach(ws => {
+      ws.terminate();
+      removeClient(store.displayClients, ws);
+    });
+
+    oldInputs.forEach(ws => {
+      ws.terminate();
+      removeClient(store.inputClients, ws);
+    });
+
+    if (oldDisplays.length > 0 && store.displayClients.size === 0) {
+      notifyInputClients(storeKey, { type: 'DISPLAY_OFF', reason: 'timeout_cleanup' });
     }
-  });
-
-  inputClients.forEach((clientInfo, ws) => {
-    if (now - clientInfo.lastPing.getTime() > CLIENT_TIMEOUT) {
-      console.log(`🗑️ 오래된 Input 연결 정리 (${clientInfo.ip})`);
-      oldInputs.push(ws);
-    }
-  });
-
-  oldDisplays.forEach(ws => {
-    ws.terminate();
-    removeClient(displayClients, ws);
-  });
-
-  oldInputs.forEach(ws => {
-    ws.terminate();
-    removeClient(inputClients, ws);
-  });
-
-  if (oldDisplays.length > 0 && displayClients.size === 0) {
-    notifyInputClients({ type: 'DISPLAY_OFF', reason: 'timeout_cleanup' });
   }
 }
 
 const cleanupTimer = setInterval(cleanupOldConnections, 5 * 60 * 1000);
 
-// 정적 파일 제공 (이미지, CSS, JS 등)
+// 정적 파일 제공
 app.use(express.static(__dirname));
 
 // === 라우팅 설정 ===
-// 메인 페이지 - 통빱 3루점 호출 시스템
+// 3루점 시스템
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'input.html'));
 });
 
-// 통빱 1루점 호출 시스템
-app.get('/1ru', (req, res) => {
-  res.sendFile(path.join(__dirname, 'input1.html'));
+app.get('/input.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'input.html'));
 });
 
-// 통빱 3루점 디스플레이 화면
 app.get('/display.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'display.html'));
 });
 
-// 통빱 1루점 디스플레이 화면
+// 1루점 시스템  
+app.get('/1ru', (req, res) => {
+  res.sendFile(path.join(__dirname, 'input1.html'));
+});
+
+app.get('/input1.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'input1.html'));
+});
+
 app.get('/display1.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'display1.html'));
-});
-
-// 추가적인 라우팅 (별칭)
-app.get('/3ru', (req, res) => {
-  res.sendFile(path.join(__dirname, 'input.html'));
-});
-
-app.get('/1ru/display', (req, res) => {
-  res.sendFile(path.join(__dirname, 'display1.html'));
-});
-
-app.get('/3ru/display', (req, res) => {
-  res.sendFile(path.join(__dirname, 'display.html'));
 });
 
 wss.on('connection', (ws, req) => {
   const clientIP = req.socket.remoteAddress;
   const userAgent = req.headers['user-agent'] || 'Unknown';
-  console.log(`🔗 새 클라이언트 연결됨: ${clientIP} (${userAgent.split(' ')[0]})`);
-
-  let clientInfo = {
-    ip: clientIP,
-    userAgent: userAgent,
-    connectTime: new Date(),
-    lastPing: new Date(),
-    isAlive: true,
-    type: 'unknown'
-  };
+  console.log(`🔗 새 클라이언트 연결: ${clientIP}`);
 
   ws.on('message', (data) => {
     const message = data.toString();
     console.log(`📩 받은 메시지 (${clientIP}):`, message);
 
+    // PONG 응답 처리
     if (message.startsWith('{') && message.includes('PONG')) {
       try {
         const pongData = JSON.parse(message);
         if (pongData.type === 'PONG') {
-          const info = getClientInfo(displayClients, ws) || getClientInfo(inputClients, ws);
-          if (info) {
-            info.isAlive = true;
-            info.lastPing = new Date();
-            console.log(`🏓 PONG 받음 (${clientIP})`);
+          const clientInfo = getClientInfo(ws);
+          if (clientInfo && clientInfo.client) {
+            clientInfo.client.isAlive = true;
+            clientInfo.client.lastPing = new Date();
+            console.log(`🏓 ${stores[clientInfo.store].name} PONG 받음 (${clientIP})`);
           }
           return;
         }
-      } catch (e) {
-        // JSON이 아닌 경우 무시
-      }
+      } catch (e) {}
     }
 
+    // 매장 구분해서 디스플레이/입력 클라이언트 등록
     if (message === 'DISPLAY') {
-      clientInfo.type = 'display';
-      clientInfo = addClient(displayClients, ws, req);
-      console.log(`📺 디스플레이 등록됨 (${clientIP}) - 총 ${displayClients.size}개`);
-      notifyInputClients({ 
+      // URL로 매장 구분 (Referer 헤더 사용)
+      const referer = req.headers.referer || '';
+      let storeKey = '3ru'; // 기본값
+      
+      if (referer.includes('display1.html')) {
+        storeKey = '1ru';
+      }
+      
+      const store = stores[storeKey];
+      const clientInfo = addClient(storeKey, store.displayClients, ws, req);
+      console.log(`📺 ${store.name} 디스플레이 등록: ${clientIP} (총 ${store.displayClients.size}개)`);
+      
+      notifyInputClients(storeKey, { 
         type: 'DISPLAY_ON', 
-        count: displayClients.size,
+        count: store.displayClients.size,
         timestamp: new Date().toISOString()
       });
       
-      // 현재 모드 전송
       try {
         ws.send(JSON.stringify({
           type: 'MODE',
-          mode: currentDisplayMode,
+          mode: store.currentDisplayMode,
           timestamp: new Date().toISOString()
         }));
       } catch (error) {
-        console.error(`❌ 디스플레이에 모드 전송 실패:`, error.message);
+        console.error(`❌ ${store.name} 모드 전송 실패:`, error.message);
       }
       
-      // 호출 모드이고 현재 번호가 있으면 전송
-      if (currentDisplayMode === 'CALL' && currentNumbers.length > 0) {
+      if (store.currentDisplayMode === 'CALL' && store.currentNumbers.length > 0) {
         try {
           ws.send(JSON.stringify({
             type: 'CALL',
-            list: [...currentNumbers],
+            list: [...store.currentNumbers],
             timestamp: new Date().toISOString()
           }));
         } catch (error) {
-          console.error(`❌ 디스플레이에 현재 번호 전송 실패:`, error.message);
+          console.error(`❌ ${store.name} 번호 전송 실패:`, error.message);
         }
       }
       
     } else if (message === 'INPUT') {
-      clientInfo.type = 'input';
-      clientInfo = addClient(inputClients, ws, req);
-      console.log(`📱 입력 클라이언트 등록됨 (${clientIP}) - 총 ${inputClients.size}개`);
+      // URL로 매장 구분 (Referer 헤더 사용)
+      const referer = req.headers.referer || '';
+      let storeKey = '3ru'; // 기본값
+      
+      if (referer.includes('input1.html') || referer.includes('/1ru')) {
+        storeKey = '1ru';
+      }
+      
+      const store = stores[storeKey];
+      const clientInfo = addClient(storeKey, store.inputClients, ws, req);
+      console.log(`📱 ${store.name} 입력 클라이언트 등록: ${clientIP} (총 ${store.inputClients.size}개)`);
       
       try {
-        if (displayClients.size > 0) {
+        if (store.displayClients.size > 0) {
           ws.send(JSON.stringify({ 
             type: 'DISPLAY_ON', 
-            count: displayClients.size,
+            count: store.displayClients.size,
             timestamp: new Date().toISOString()
           }));
         } else {
@@ -311,48 +350,60 @@ wss.on('connection', (ws, req) => {
           }));
         }
         
-        if (currentNumbers.length > 0) {
+        if (store.currentNumbers.length > 0) {
           ws.send(JSON.stringify({ 
             type: 'CALL', 
-            list: [...currentNumbers],
+            list: [...store.currentNumbers],
             timestamp: new Date().toISOString()
           }));
         }
       } catch (error) {
-        console.error(`❌ 입력 클라이언트에 상태 전송 실패:`, error.message);
+        console.error(`❌ ${store.name} 입력 상태 전송 실패:`, error.message);
       }
       
     } else {
-      processMessage(message, clientIP);
+      // 메시지 처리 시 클라이언트가 어느 매장인지 확인
+      const clientInfo = getClientInfo(ws);
+      if (clientInfo) {
+        processMessage(clientInfo.store, message, clientIP);
+      }
     }
   });
 
   ws.on('close', (code, reason) => {
-    const wasDisplay = removeClient(displayClients, ws);
-    const wasInput = removeClient(inputClients, ws);
-    
-    console.log(`❌ 클라이언트 연결 해제됨: ${clientIP} (코드: ${code}, 이유: ${reason})`);
-    
-    if (wasDisplay) {
-      console.log(`📺 디스플레이 해제됨 - 남은 개수: ${displayClients.size}`);
-      if (displayClients.size === 0) {
-        notifyInputClients({ 
-          type: 'DISPLAY_OFF', 
-          reason: 'disconnected',
-          timestamp: new Date().toISOString()
-        });
+    const clientInfo = getClientInfo(ws);
+    if (clientInfo) {
+      const store = stores[clientInfo.store];
+      const wasDisplay = removeClient(store.displayClients, ws);
+      const wasInput = removeClient(store.inputClients, ws);
+      
+      console.log(`❌ ${store.name} 클라이언트 해제: ${clientIP}`);
+      
+      if (wasDisplay) {
+        console.log(`📺 ${store.name} 디스플레이 해제 - 남은 개수: ${store.displayClients.size}`);
+        if (store.displayClients.size === 0) {
+          notifyInputClients(clientInfo.store, { 
+            type: 'DISPLAY_OFF', 
+            reason: 'disconnected',
+            timestamp: new Date().toISOString()
+          });
+        }
       }
-    }
-    
-    if (wasInput) {
-      console.log(`📱 입력 클라이언트 해제됨 - 남은 개수: ${inputClients.size}`);
+      
+      if (wasInput) {
+        console.log(`📱 ${store.name} 입력 클라이언트 해제 - 남은 개수: ${store.inputClients.size}`);
+      }
     }
   });
 
   ws.on('error', (err) => {
     console.error(`⚠️ WebSocket 에러 (${clientIP}):`, err.message);
-    removeClient(displayClients, ws);
-    removeClient(inputClients, ws);
+    // 에러 시 모든 매장에서 클라이언트 제거
+    for (const storeKey in stores) {
+      const store = stores[storeKey];
+      removeClient(store.displayClients, ws);
+      removeClient(store.inputClients, ws);
+    }
   });
 
   setTimeout(() => {
@@ -360,19 +411,20 @@ wss.on('connection', (ws, req) => {
       try {
         ws.send(JSON.stringify({ type: 'PING', timestamp: Date.now() }));
       } catch (error) {
-        console.error(`❌ 초기 PING 전송 실패 (${clientIP}):`, error.message);
+        console.error(`❌ 초기 PING 실패 (${clientIP}):`, error.message);
       }
     }
   }, 1000);
 });
 
-function processMessage(message, clientIP) {
+function processMessage(storeKey, message, clientIP) {
+  const store = stores[storeKey];
   let responseData = null;
 
   if (message.startsWith('MODE:')) {
     const mode = message.substring(5);
     if (mode === 'WAITING' || mode === 'CALL') {
-      currentDisplayMode = mode;
+      store.currentDisplayMode = mode;
       responseData = {
         type: 'MODE',
         mode: mode,
@@ -380,55 +432,54 @@ function processMessage(message, clientIP) {
         triggeredBy: clientIP
       };
       
-      console.log(`🔄 디스플레이 모드 변경: ${mode} (${clientIP})`);
+      console.log(`🔄 ${store.name} 모드 변경: ${mode} (${clientIP})`);
       
-      // 호출 모드로 전환 시 현재 번호도 함께 전송
-      if (mode === 'CALL' && currentNumbers.length > 0) {
+      if (mode === 'CALL' && store.currentNumbers.length > 0) {
         setTimeout(() => {
           const callData = {
             type: 'CALL',
-            list: [...currentNumbers],
+            list: [...store.currentNumbers],
             timestamp: new Date().toISOString()
           };
-          broadcastToDisplays(JSON.stringify(callData));
+          broadcastToDisplays(storeKey, JSON.stringify(callData));
         }, 100);
       }
     }
   } else if (message.startsWith('CALL:')) {
     const number = parseInt(message.split(':')[1]);
     if (!isNaN(number)) {
-      if (!currentNumbers.includes(number)) {
-        currentNumbers.push(number);
+      if (!store.currentNumbers.includes(number)) {
+        store.currentNumbers.push(number);
         
-        if (currentNumbers.length > 5) {
-          currentNumbers.shift();
+        if (store.currentNumbers.length > 5) {
+          store.currentNumbers.shift();
         }
       }
       
       responseData = {
         type: 'CALL',
-        list: [...currentNumbers],
+        list: [...store.currentNumbers],
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
       
-      console.log(`📢 호출 요청: ${number} (${clientIP}) - 현재 목록: [${currentNumbers.join(', ')}]`);
+      console.log(`📢 ${store.name} 호출: ${number} (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
     }
   } else if (message.startsWith('SEQUENCE:')) {
     const numbersStr = message.substring(9);
     const newNumbers = numbersStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
     
     if (newNumbers.length > 0) {
-      currentNumbers = newNumbers.slice(0, 5);
+      store.currentNumbers = newNumbers.slice(0, 5);
       
       responseData = {
         type: 'CALL',
-        list: [...currentNumbers],
+        list: [...store.currentNumbers],
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
       
-      console.log(`📢 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
+      console.log(`📢 ${store.name} 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
     }
   } else if (message.startsWith('MSG:')) {
     const text = message.substring(4);
@@ -439,7 +490,7 @@ function processMessage(message, clientIP) {
       triggeredBy: clientIP
     };
     
-    console.log(`💬 메시지 전송: "${text}" (${clientIP})`);
+    console.log(`💬 ${store.name} 메시지: "${text}" (${clientIP})`);
   } else if (message.startsWith('TIME:')) {
     const parts = message.split(':');
     if (parts.length >= 3) {
@@ -454,11 +505,11 @@ function processMessage(message, clientIP) {
           triggeredBy: clientIP
         };
         
-        console.log(`⏱ 시간 업데이트: 삼겹살 ${sam}분, 국수 ${noodle}분 (${clientIP})`);
+        console.log(`⏱ ${store.name} 시간 업데이트: 삼겹살 ${sam}분, 국수 ${noodle}분 (${clientIP})`);
       }
     }
   } else if (message === 'CLEAR') {
-    currentNumbers = [];
+    store.currentNumbers = [];
     responseData = {
       type: 'CALL',
       list: [],
@@ -466,30 +517,31 @@ function processMessage(message, clientIP) {
       triggeredBy: clientIP
     };
     
-    console.log(`🗑️ 모든 번호 지움 (${clientIP})`);
+    console.log(`🗑️ ${store.name} 모든 번호 지움 (${clientIP})`);
   }
 
   if (responseData) {
-    const sent = broadcastToDisplays(JSON.stringify(responseData));
-    console.log(`📡 ${sent}개 디스플레이에 브로드캐스트 완료`);
+    const sent = broadcastToDisplays(storeKey, JSON.stringify(responseData));
+    console.log(`📡 ${store.name} ${sent}개 디스플레이에 브로드캐스트`);
     
     if (responseData.type === 'CALL') {
-      notifyInputClients(responseData);
+      notifyInputClients(storeKey, responseData);
     }
   }
 }
 
-function broadcastToDisplays(message) {
+function broadcastToDisplays(storeKey, message) {
+  const store = stores[storeKey];
   let sentCount = 0;
   const deadClients = [];
   
-  displayClients.forEach((clientInfo, ws) => {
+  store.displayClients.forEach((clientInfo, ws) => {
     if (ws.readyState === WebSocket.OPEN) {
       try {
         ws.send(message);
         sentCount++;
       } catch (error) {
-        console.error(`❌ 디스플레이 브로드캐스트 실패 (${clientInfo.ip}):`, error.message);
+        console.error(`❌ ${store.name} 디스플레이 브로드캐스트 실패:`, error.message);
         deadClients.push(ws);
       }
     } else {
@@ -497,25 +549,23 @@ function broadcastToDisplays(message) {
     }
   });
   
-  deadClients.forEach(ws => {
-    removeClient(displayClients, ws);
-  });
-  
+  deadClients.forEach(ws => removeClient(store.displayClients, ws));
   return sentCount;
 }
 
-function notifyInputClients(data) {
+function notifyInputClients(storeKey, data) {
+  const store = stores[storeKey];
   const message = JSON.stringify(data);
   let sentCount = 0;
   const deadClients = [];
   
-  inputClients.forEach((clientInfo, ws) => {
+  store.inputClients.forEach((clientInfo, ws) => {
     if (ws.readyState === WebSocket.OPEN) {
       try {
         ws.send(message);
         sentCount++;
       } catch (error) {
-        console.error(`❌ 입력 클라이언트 알림 실패 (${clientInfo.ip}):`, error.message);
+        console.error(`❌ ${store.name} 입력 클라이언트 알림 실패:`, error.message);
         deadClients.push(ws);
       }
     } else {
@@ -523,27 +573,22 @@ function notifyInputClients(data) {
     }
   });
   
-  deadClients.forEach(ws => {
-    removeClient(inputClients, ws);
-  });
+  deadClients.forEach(ws => removeClient(store.inputClients, ws));
   
   if (sentCount > 0) {
-    console.log(`📱 ${sentCount}개 입력 클라이언트에 알림 전송`);
+    console.log(`📱 ${store.name} ${sentCount}개 입력 클라이언트에 알림`);
   }
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 통빱 호출벨 시스템 시작!`);
-  console.log(`📱 3루점 직원용: http://localhost:${PORT}/`);
-  console.log(`📱 1루점 직원용: http://localhost:${PORT}/1ru`);
+  console.log(`🚀 통빱 다중 매장 호출벨 시스템 시작!`);
+  console.log(`📱 3루점 호출: http://localhost:${PORT}/input.html`);
+  console.log(`📱 1루점 호출: http://localhost:${PORT}/input1.html`);
   console.log(`🖥️ 3루점 디스플레이: http://localhost:${PORT}/display.html`);
   console.log(`🖥️ 1루점 디스플레이: http://localhost:${PORT}/display1.html`);
   console.log(`💡 외부 접속: http://[서버IP]:${PORT}`);
   console.log(`📊 상태 확인: http://localhost:${PORT}/health`);
-  console.log(`📺 시작 모드: ${currentDisplayMode}`);
   console.log(`⏰ ${new Date().toLocaleString()}`);
-  console.log(`💓 하트비트 간격: ${HEARTBEAT_INTERVAL/1000}초`);
-  console.log(`⏱️ 클라이언트 타임아웃: ${CLIENT_TIMEOUT/1000}초`);
   
   process.on('SIGTERM', gracefulShutdown);
   process.on('SIGINT', gracefulShutdown);
@@ -560,27 +605,31 @@ server.listen(PORT, '0.0.0.0', () => {
       timestamp: new Date().toISOString()
     });
     
-    displayClients.forEach((clientInfo, ws) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        try {
-          ws.send(shutdownMessage);
-          ws.close(1001, 'Server shutting down');
-        } catch (error) {
-          console.error('클라이언트 종료 알림 실패:', error.message);
+    for (const storeKey in stores) {
+      const store = stores[storeKey];
+      
+      store.displayClients.forEach((clientInfo, ws) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.send(shutdownMessage);
+            ws.close(1001, 'Server shutting down');
+          } catch (error) {
+            console.error(`${store.name} 클라이언트 종료 알림 실패:`, error.message);
+          }
         }
-      }
-    });
-    
-    inputClients.forEach((clientInfo, ws) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        try {
-          ws.send(shutdownMessage);
-          ws.close(1001, 'Server shutting down');
-        } catch (error) {
-          console.error('클라이언트 종료 알림 실패:', error.message);
+      });
+      
+      store.inputClients.forEach((clientInfo, ws) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.send(shutdownMessage);
+            ws.close(1001, 'Server shutting down');
+          } catch (error) {
+            console.error(`${store.name} 클라이언트 종료 알림 실패:`, error.message);
+          }
         }
-      }
-    });
+      });
+    }
     
     wss.close(() => {
       console.log('🔌 WebSocket 서버 종료됨');
