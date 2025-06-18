@@ -281,13 +281,13 @@ wss.on('connection', (ws, req) => {
     }
 
     // 매장 구분해서 디스플레이/입력 클라이언트 등록
-    if (message === 'DISPLAY') {
-      // URL로 매장 구분 (Referer 헤더 사용)
-      const referer = req.headers.referer || '';
+    if (message === 'DISPLAY' || message === 'DISPLAY:3ru' || message === 'DISPLAY:1ru') {
       let storeKey = '3ru'; // 기본값
       
-      if (referer.includes('display1.html')) {
+      if (message === 'DISPLAY:1ru') {
         storeKey = '1ru';
+      } else if (message === 'DISPLAY:3ru') {
+        storeKey = '3ru';
       }
       
       const store = stores[storeKey];
@@ -322,13 +322,13 @@ wss.on('connection', (ws, req) => {
         }
       }
       
-    } else if (message === 'INPUT') {
-      // URL로 매장 구분 (Referer 헤더 사용)
-      const referer = req.headers.referer || '';
+    } else if (message === 'INPUT' || message === 'INPUT:3ru' || message === 'INPUT:1ru') {
       let storeKey = '3ru'; // 기본값
       
-      if (referer.includes('input1.html') || referer.includes('/1ru')) {
+      if (message === 'INPUT:1ru') {
         storeKey = '1ru';
+      } else if (message === 'INPUT:3ru') {
+        storeKey = '3ru';
       }
       
       const store = stores[storeKey];

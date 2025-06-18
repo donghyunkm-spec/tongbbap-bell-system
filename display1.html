@@ -350,28 +350,6 @@
       display: block;
     }
 
-    .slide-indicator {
-      position: absolute;
-      bottom: 3vh;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 1vw;
-    }
-
-    .indicator-dot {
-      width: 1.5vw;
-      height: 1.5vw;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.5);
-      transition: all 0.3s ease;
-    }
-
-    .indicator-dot.active {
-      background: #ffd700;
-      transform: scale(1.2);
-    }
-
     /* 안드로이드 TV 성능 최적화 */
     @media (prefers-reduced-motion: reduce) {
       * {
@@ -442,6 +420,9 @@
     let fullscreenTimer = null;
     let audioCache = new Map(); // 오디오 캐시
 
+    // 1루점 매장 코드
+    const STORE_CODE = '1ru';
+
     // 안드로이드 TV용 스마트 오디오 관리 클래스
     class AndroidTVAudioManager {
       constructor() {
@@ -481,7 +462,7 @@
 
         // 에러 처리
         audio.addEventListener('error', (e) => {
-          console.error(`🎤 음성 파일 로드 실패: voice/${number}번.mp3`, e);
+          console.error(`🎤 ${STORE_CODE} 음성 파일 로드 실패: voice/${number}번.mp3`, e);
           this.audioInstances.delete(cacheKey);
         });
 
@@ -493,7 +474,7 @@
           oldAudio.src = '';
           oldAudio.load();
           this.audioInstances.delete(firstKey);
-          console.log(`🗑️ 오래된 음성 캐시 제거: ${firstKey}`);
+          console.log(`🗑️ ${STORE_CODE} 오래된 음성 캐시 제거: ${firstKey}`);
         }
 
         this.audioInstances.set(cacheKey, audio);
@@ -503,13 +484,13 @@
       // 음성 재생 (안드로이드 TV 최적화)
       async playVoice(number) {
         if (!this.hasUserInteraction) {
-          console.warn("🔇 사용자 상호작용 없음 - 음성 재생 불가");
+          console.warn(`🔇 ${STORE_CODE} 사용자 상호작용 없음 - 음성 재생 불가`);
           return false;
         }
 
         try {
           const audio = this.createAudioInstance(number);
-          console.log(`🎤 음성 재생 시도: ${number}번`);
+          console.log(`🎤 ${STORE_CODE} 음성 재생 시도: ${number}번`);
           
           // 안드로이드 TV 특별 처리
           if (this.isAndroidTV) {
@@ -518,10 +499,10 @@
           }
           
           await audio.play();
-          console.log(`🎤 음성 재생 성공: ${number}번`);
+          console.log(`🎤 ${STORE_CODE} 음성 재생 성공: ${number}번`);
           return true;
         } catch (error) {
-          console.error(`🎤 음성 재생 실패: ${number}번 -`, error.message);
+          console.error(`🎤 ${STORE_CODE} 음성 재생 실패: ${number}번 -`, error.message);
           return false;
         }
       }
@@ -534,7 +515,7 @@
           audio.load();
         });
         this.audioInstances.clear();
-        console.log('🗑️ 모든 오디오 캐시 정리 완료');
+        console.log(`🗑️ ${STORE_CODE} 모든 오디오 캐시 정리 완료`);
       }
     }
 
@@ -569,7 +550,7 @@
       });
 
       async function activateAudio() {
-        console.log('🎵 사용자가 음성 활성화');
+        console.log(`🎵 ${STORE_CODE} 사용자가 음성 활성화`);
         
         audioManager.hasUserInteraction = true;
         audioEnabled = true;
@@ -579,9 +560,9 @@
           const testAudio = new Audio();
           testAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAAAQElGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
           await testAudio.play();
-          console.log('🔊 오디오 테스트 성공');
+          console.log(`🔊 ${STORE_CODE} 오디오 테스트 성공`);
         } catch (e) {
-          console.log('⚠️ 오디오 테스트 실패:', e.message);
+          console.log(`⚠️ ${STORE_CODE} 오디오 테스트 실패:`, e.message);
         }
 
         // 게이트 숨기기
@@ -600,7 +581,7 @@
     async function speakNumber(number) {
       const success = await audioManager.playVoice(number);
       if (!success) {
-        console.warn(`⚠️ 음성 재생 실패: ${number}번`);
+        console.warn(`⚠️ ${STORE_CODE} 음성 재생 실패: ${number}번`);
       }
     }
 
@@ -629,10 +610,10 @@
       
       fullscreenTimer = setTimeout(() => {
         fullscreenDiv.classList.remove('active');
-        console.log(`📺 전체화면 호출 종료: ${number}번`);
+        console.log(`📺 ${STORE_CODE} 전체화면 호출 종료: ${number}번`);
       }, 5000);
 
-      console.log(`📺 전체화면 호출 표시: ${number}번`);
+      console.log(`📺 ${STORE_CODE} 전체화면 호출 표시: ${number}번`);
     }
 
     // 재고소진 마감 전체화면 표시
@@ -643,7 +624,7 @@
       document.getElementById('callScreen').classList.add('hidden');
       document.getElementById('waitingScreen').classList.remove('active');
       
-      console.log('🚫 재고소진 마감 전체화면 표시');
+      console.log(`🚫 ${STORE_CODE} 재고소진 마감 전체화면 표시`);
       isClosedForDay = true;
     }
 
@@ -652,7 +633,7 @@
       const closedDiv = document.getElementById('fullscreenClosed');
       closedDiv.classList.remove('active');
       
-      console.log('🔄 마감 화면 제거');
+      console.log(`🔄 ${STORE_CODE} 마감 화면 제거`);
       isClosedForDay = false;
       
       if (currentMode === 'WAITING') {
@@ -664,7 +645,7 @@
 
     // 대기화면 관리
     function startSlideshow() {
-      console.log("📺 대기화면 표시");
+      console.log(`📺 ${STORE_CODE} 대기화면 표시`);
     }
 
     function stopSlideshow() {
@@ -685,7 +666,7 @@
       }
       
       startSlideshow();
-      console.log('📺 대기화면 모드로 전환');
+      console.log(`📺 ${STORE_CODE} 대기화면 모드로 전환`);
     }
 
     function switchToCallMode() {
@@ -695,7 +676,7 @@
       document.getElementById('waitingScreen').classList.remove('active');
       document.getElementById('callScreen').classList.remove('hidden');
       stopSlideshow();
-      console.log('📢 호출화면 모드로 전환');
+      console.log(`📢 ${STORE_CODE} 호출화면 모드로 전환`);
     }
 
     // WebSocket 연결
@@ -708,35 +689,35 @@
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${location.host}`;
       
-      console.log('WebSocket 연결 시도:', wsUrl);
+      console.log(`${STORE_CODE} WebSocket 연결 시도:`, wsUrl);
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log("✅ WebSocket 연결됨");
-        ws.send("DISPLAY");
+        console.log(`✅ ${STORE_CODE} WebSocket 연결됨`);
+        ws.send(`DISPLAY:${STORE_CODE}`); // 매장 코드 포함해서 전송
       };
 
       ws.onclose = (event) => {
-        console.warn("❌ 연결 끊김. 코드:", event.code, "이유:", event.reason);
+        console.warn(`❌ ${STORE_CODE} 연결 끊김. 코드:`, event.code, "이유:", event.reason);
         
         reconnectTimer = setTimeout(() => {
-          console.log("🔄 재연결 시도...");
+          console.log(`🔄 ${STORE_CODE} 재연결 시도...`);
           connectWebSocket();
         }, 3000);
       };
 
       ws.onerror = (err) => {
-        console.error("⚠️ WebSocket 에러:", err);
+        console.error(`⚠️ ${STORE_CODE} WebSocket 에러:`, err);
       };
 
       ws.onmessage = (event) => {
-        console.log("📩 받은 메시지:", event.data);
+        console.log(`📩 ${STORE_CODE} 받은 메시지:`, event.data);
         
         let data;
         try {
           data = JSON.parse(event.data);
         } catch (e) {
-          console.warn("❗ JSON 파싱 실패:", event.data, e);
+          console.warn(`❗ ${STORE_CODE} JSON 파싱 실패:`, event.data, e);
           return;
         }
 
@@ -770,7 +751,7 @@
     function updateNumbers(numbers) {
       if (currentMode !== 'CALL') return;
       
-      console.log("📊 번호 업데이트:", numbers);
+      console.log(`📊 ${STORE_CODE} 번호 업데이트:`, numbers);
       const container = document.getElementById("numbers");
       const currentNumbers = Array.from(container.children).map(child => child.innerText);
       
@@ -797,16 +778,16 @@
     }
 
     function showMessage(msg) {
-      console.log("💬 메시지 표시:", msg);
+      console.log(`💬 ${STORE_CODE} 메시지 표시:`, msg);
       
       if (msg.includes('재고소진') && msg.includes('마감')) {
-        console.log("🚫 재고소진 마감 메시지 - 전체화면 표시");
+        console.log(`🚫 ${STORE_CODE} 재고소진 마감 메시지 - 전체화면 표시`);
         showClosedScreen();
         return;
       }
       
       if (msg === '안녕하세요! 통빱 입니다' && isClosedForDay) {
-        console.log("🔄 기본 메시지 복구 - 마감 화면 제거");
+        console.log(`🔄 ${STORE_CODE} 기본 메시지 복구 - 마감 화면 제거`);
         hideClosedScreen();
         return;
       }
@@ -834,7 +815,7 @@
     function updateTimes(sam, noodle) {
       if (currentMode !== 'CALL') return;
       
-      console.log("⏱ 시간 업데이트:", sam, noodle);
+      console.log(`⏱ ${STORE_CODE} 시간 업데이트:`, sam, noodle);
       if (sam !== undefined) {
         document.getElementById("samTime").innerText = sam;
       }
@@ -845,11 +826,11 @@
 
     // 페이지 로드 시 초기화
     document.addEventListener('DOMContentLoaded', () => {
-      console.log("📄 페이지 로드됨 - 안드로이드 TV 최적화 모드");
+      console.log(`📄 ${STORE_CODE} 페이지 로드됨 - 안드로이드 TV 최적화 모드`);
       
       // 안드로이드 TV 감지 로그
       if (audioManager.isAndroidTV) {
-        console.log("📱 안드로이드 TV 환경 감지됨");
+        console.log(`📱 ${STORE_CODE} 안드로이드 TV 환경 감지됨`);
       }
       
       initializeAudioGate();

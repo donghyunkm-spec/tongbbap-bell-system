@@ -188,7 +188,7 @@
     🔄 서버 재연결 중... 잠시만 기다려 주세요
   </div>
 
-  <div class="header">🍖 통빱 3루 호출벨 🍜</div>
+  <div class="header">🍖 통빱 3루점 호출벨 🍜</div>
   
   <div id="connectionInfo">연결 상태 확인 중...</div>
   <div id="displayStatus" class="status-disconnected">디스플레이 상태 확인 중...</div>
@@ -217,7 +217,7 @@
       <button class="btn-orange btn-flex" onclick="sendNoodleTime()">⏱ 국수 시간</button>
     </div>
 
-    <div id="status">호출벨 시스템 준비됨</div>
+    <div id="status">3루점 호출벨 시스템 준비됨</div>
 
     <button class="btn-dark-red" onclick="sendClosedMessage()">🚫 재고 소진 마감</button>
     <button class="btn-green" onclick="sendWelcomeMessage()">🔄 기본 메시지로 복구</button>
@@ -231,6 +231,9 @@
   <audio id="alert" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSqW3/LNeCQEJoO+8+KVQQAJT6/h3rNSEwc7iNb94HQ7BQFM1O+9czCZvpyMnf3mgJFyRBFh3+/8JQEBS9XvuiEEAQECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/" preload="auto"></audio>
 
   <script>
+    // 3루점 매장 코드
+    const STORE_CODE = '3ru';
+
     // WebSocket 관리 클래스
     class WebSocketManager {
       constructor() {
@@ -254,33 +257,33 @@
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') {
             // 포그라운드로 돌아왔을 때
-            console.log('📱 앱이 포그라운드로 돌아옴');
+            console.log(`📱 ${STORE_CODE} 앱이 포그라운드로 돌아옴`);
             this.handleForeground();
           } else {
             // 백그라운드로 갔을 때
-            console.log('📱 앱이 백그라운드로 이동');
+            console.log(`📱 ${STORE_CODE} 앱이 백그라운드로 이동`);
             this.handleBackground();
           }
         });
 
         // 페이지 포커스/블러 이벤트
         window.addEventListener('focus', () => {
-          console.log('🎯 페이지 포커스 됨');
+          console.log(`🎯 ${STORE_CODE} 페이지 포커스 됨`);
           this.handleForeground();
         });
 
         window.addEventListener('blur', () => {
-          console.log('😴 페이지 블러 됨');
+          console.log(`😴 ${STORE_CODE} 페이지 블러 됨`);
         });
 
         // 온라인/오프라인 감지
         window.addEventListener('online', () => {
-          console.log('🌐 인터넷 연결됨');
+          console.log(`🌐 ${STORE_CODE} 인터넷 연결됨`);
           this.handleOnline();
         });
 
         window.addEventListener('offline', () => {
-          console.log('📵 인터넷 연결 끊김');
+          console.log(`📵 ${STORE_CODE} 인터넷 연결 끊김`);
           this.handleOffline();
         });
       }
@@ -288,7 +291,7 @@
       handleForeground() {
         // 연결 상태 확인 및 재연결
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-          console.log('🔄 포그라운드 복귀 - 재연결 시도');
+          console.log(`🔄 ${STORE_CODE} 포그라운드 복귀 - 재연결 시도`);
           this.reconnect();
         } else {
           // 연결이 살아있는지 확인
@@ -327,7 +330,7 @@
         const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${location.host}`;
         
-        console.log(`🔗 WebSocket 연결 시도 (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts}):`, wsUrl);
+        console.log(`🔗 ${STORE_CODE} WebSocket 연결 시도 (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts}):`, wsUrl);
         
         this.updateConnectionInfo('연결 중...', true);
         this.isManualClose = false;
@@ -336,21 +339,21 @@
           this.ws = new WebSocket(wsUrl);
           this.setupWebSocketEvents();
         } catch (error) {
-          console.error('❌ WebSocket 생성 실패:', error);
+          console.error(`❌ ${STORE_CODE} WebSocket 생성 실패:`, error);
           this.scheduleReconnect();
         }
       }
 
       setupWebSocketEvents() {
         this.ws.onopen = () => {
-          console.log("✅ WebSocket 연결됨");
+          console.log(`✅ ${STORE_CODE} WebSocket 연결됨`);
           this.reconnectAttempts = 0;
-          this.ws.send("INPUT");
+          this.ws.send(`INPUT:${STORE_CODE}`); // 매장 코드 포함해서 전송
           this.updateConnectionInfo('연결됨', false);
           this.hideOfflineIndicator();
           this.startHeartbeat();
           this.lastPongTime = Date.now();
-          setStatus("✅ 서버 연결됨");
+          setStatus(`✅ ${STORE_CODE} 서버 연결됨`);
         };
 
         this.ws.onmessage = (event) => {
@@ -361,17 +364,17 @@
             
             // Pong 응답 처리
             if (data.type === 'PONG') {
-              console.log('🏓 Pong 받음');
+              console.log(`🏓 ${STORE_CODE} Pong 받음`);
               return;
             }
             
             if (data.type === 'DISPLAY_ON') {
               isDisplayConnected = true;
-              displayStatusBox.innerText = "✅ 디스플레이 연결됨";
+              displayStatusBox.innerText = `✅ ${STORE_CODE} 디스플레이 연결됨`;
               displayStatusBox.className = "status-connected";
             } else if (data.type === 'DISPLAY_OFF') {
               isDisplayConnected = false;
-              displayStatusBox.innerText = "❌ 디스플레이 연결 끊김";
+              displayStatusBox.innerText = `❌ ${STORE_CODE} 디스플레이 연결 끊김`;
               displayStatusBox.className = "status-disconnected";
               playAlert();
             } else if (data.type === 'CALL' && Array.isArray(data.list)) {
@@ -379,21 +382,21 @@
               updateCurrentNumbersDisplay();
             }
           } catch (e) {
-            console.log("비JSON 메시지:", event.data);
+            console.log(`${STORE_CODE} 비JSON 메시지:`, event.data);
           }
         };
 
         this.ws.onerror = (error) => {
-          console.error("❌ WebSocket 에러:", error);
-          setStatus("❌ 서버 연결 실패");
+          console.error(`❌ ${STORE_CODE} WebSocket 에러:`, error);
+          setStatus(`❌ ${STORE_CODE} 서버 연결 실패`);
         };
 
         this.ws.onclose = (event) => {
-          console.log("❌ WebSocket 연결 끊김:", event.code, event.reason);
+          console.log(`❌ ${STORE_CODE} WebSocket 연결 끊김:`, event.code, event.reason);
           this.stopHeartbeat();
           
           if (!this.isManualClose) {
-            setStatus("⚠️ 서버 연결 끊김");
+            setStatus(`⚠️ ${STORE_CODE} 서버 연결 끊김`);
             this.updateConnectionInfo('연결 끊김', false);
             this.scheduleReconnect();
           }
@@ -402,9 +405,9 @@
 
       scheduleReconnect() {
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-          console.error(`❌ 최대 재연결 시도 횟수 초과 (${this.maxReconnectAttempts})`);
+          console.error(`❌ ${STORE_CODE} 최대 재연결 시도 횟수 초과 (${this.maxReconnectAttempts})`);
           this.updateConnectionInfo('연결 실패 - 새로고침 필요', false);
-          setStatus("❌ 연결 실패 - 새로고침해주세요");
+          setStatus(`❌ ${STORE_CODE} 연결 실패 - 새로고침해주세요`);
           return;
         }
 
@@ -421,7 +424,7 @@
       }
 
       reconnect() {
-        console.log('🔄 재연결 시도');
+        console.log(`🔄 ${STORE_CODE} 재연결 시도`);
         this.connect();
       }
 
@@ -432,7 +435,7 @@
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             // 마지막 pong으로부터 너무 오랜 시간이 지났으면 재연결
             if (Date.now() - this.lastPongTime > 240000) { // 4분 (2분 하트비트 × 2)
-              console.warn('🚨 하트비트 타임아웃 - 재연결');
+              console.warn(`🚨 ${STORE_CODE} 하트비트 타임아웃 - 재연결`);
               this.reconnect();
               return;
             }
@@ -440,9 +443,9 @@
             // Ping 전송
             try {
               this.ws.send(JSON.stringify({ type: 'PING' }));
-              console.log('🏓 Ping 전송');
+              console.log(`🏓 ${STORE_CODE} Ping 전송`);
             } catch (error) {
-              console.error('❌ Ping 전송 실패:', error);
+              console.error(`❌ ${STORE_CODE} Ping 전송 실패:`, error);
               this.reconnect();
             }
           }
@@ -461,8 +464,8 @@
           this.ws.send(message);
           return true;
         } else {
-          console.warn('⚠️ WebSocket이 연결되지 않음 - 재연결 시도');
-          setStatus("⚠️ 연결 끊김 - 재연결 중...");
+          console.warn(`⚠️ ${STORE_CODE} WebSocket이 연결되지 않음 - 재연결 시도`);
+          setStatus(`⚠️ ${STORE_CODE} 연결 끊김 - 재연결 중...`);
           this.reconnect();
           return false;
         }
@@ -470,7 +473,7 @@
 
       updateConnectionInfo(text, isPulse) {
         const info = document.getElementById('connectionInfo');
-        info.textContent = `🔗 ${text}`;
+        info.textContent = `🔗 ${STORE_CODE} ${text}`;
         if (isPulse) {
           info.classList.add('pulse');
         } else {
@@ -534,23 +537,11 @@
 
     function checkDisplayAndNotify() {
       if (!isDisplayConnected) {
-        setStatus("⚠️ 디스플레이 연결 끊김 - 호출이 전달되지 않을 수 있습니다");
+        setStatus(`⚠️ ${STORE_CODE} 디스플레이 연결 끊김 - 호출이 전달되지 않을 수 있습니다`);
         playAlert();
         return false;
       }
       return true;
-    }
-
-    function sendCall() {
-      if (!checkDisplayAndNotify()) return;
-      
-      const num = parseInt(document.getElementById("callNumber").value);
-      if (!isNaN(num) && num >= 1 && num <= 700) {
-        if (wsManager.send(`CALL:${num}`)) {
-          setStatus(`📢 ${num}번 호출됨`);
-          document.getElementById("callNumber").value = '';
-        }
-      }
     }
 
     function sendSequenceCall() {
@@ -565,7 +556,7 @@
         }
         
         if (wsManager.send(`SEQUENCE:${sequence.join(',')}`)) {
-          setStatus(`📢 연속 호출: ${sequence.join(', ')}`);
+          setStatus(`📢 ${STORE_CODE} 연속 호출: ${sequence.join(', ')}`);
           document.getElementById("sequenceNumber").value = '';
         }
       } else {
@@ -575,7 +566,7 @@
 
     function clearAllNumbers() {
       if (wsManager.send('CLEAR')) {
-        setStatus('🗑️ 모든 호출번호 지워짐');
+        setStatus(`🗑️ ${STORE_CODE} 모든 호출번호 지워짐`);
       }
     }
 
@@ -583,31 +574,31 @@
       if (!checkDisplayAndNotify()) return;
       
       if (wsManager.send(`MSG:${text}`)) {
-        setStatus(`💬 메시지 전송: ${text}`);
+        setStatus(`💬 ${STORE_CODE} 메시지 전송: ${text}`);
       }
     }
 
     function sendClosedMessage() {
       if (wsManager.send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`)) {
-        setStatus('🚫 재고 소진 마감 메시지 전송됨');
+        setStatus(`🚫 ${STORE_CODE} 재고 소진 마감 메시지 전송됨`);
       }
     }
 
     function sendWelcomeMessage() {
       if (wsManager.send(`MSG:안녕하세요! 통빱 입니다`)) {
-        setStatus('🔄 기본 메시지로 복구됨');
+        setStatus(`🔄 ${STORE_CODE} 기본 메시지로 복구됨`);
       }
     }
 
     function setWaitingMode() {
       if (wsManager.send('MODE:WAITING')) {
-        setStatus('📺 대기화면 모드로 전환됨');
+        setStatus(`📺 ${STORE_CODE} 대기화면 모드로 전환됨`);
       }
     }
 
     function setCallMode() {
       if (wsManager.send('MODE:CALL')) {
-        setStatus('📢 호출화면 모드로 전환됨');
+        setStatus(`📢 ${STORE_CODE} 호출화면 모드로 전환됨`);
       }
     }
 
@@ -616,7 +607,7 @@
       const noodle = parseInt(document.getElementById("noodleTime").value);
       if (!isNaN(sam) && !isNaN(noodle)) {
         if (wsManager.send(`TIME:${sam}:${noodle}`)) {
-          setStatus(`⏱ 삼겹살 예상시간: ${sam}분`);
+          setStatus(`⏱ ${STORE_CODE} 삼겹살 예상시간: ${sam}분`);
         }
       }
     }
@@ -626,7 +617,7 @@
       const noodle = parseInt(document.getElementById("noodleTime").value);
       if (!isNaN(sam) && !isNaN(noodle)) {
         if (wsManager.send(`TIME:${sam}:${noodle}`)) {
-          setStatus(`⏱ 국수 예상시간: ${noodle}분`);
+          setStatus(`⏱ ${STORE_CODE} 국수 예상시간: ${noodle}분`);
         }
       }
     }
