@@ -10,7 +10,7 @@ const wss = new WebSocket.Server({ server });
 let displayClients = new Map();
 let inputClients = new Map();
 let currentNumbers = [];
-let currentDisplayMode = 'WAITING';
+let currentDisplayMode = 'WAITING'; // 기본값을 대기화면으로 설정
 
 const PORT = process.env.PORT || 3000;
 
@@ -185,30 +185,41 @@ function cleanupOldConnections() {
 
 const cleanupTimer = setInterval(cleanupOldConnections, 5 * 60 * 1000);
 
-// 정적 파일 제공
+// 정적 파일 제공 (이미지, CSS, JS 등)
 app.use(express.static(__dirname));
 
-// 라우트 설정
+// === 라우팅 설정 ===
+// 메인 페이지 - 통빱 3루점 호출 시스템
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'input.html')); // 3루점 기본
-});
-
-// 3루점 (기존)
-app.get('/3ru', (req, res) => {
   res.sendFile(path.join(__dirname, 'input.html'));
 });
 
-app.get('/display.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'display.html'));
-});
-
-// 1루점 (새로 추가)
+// 통빱 1루점 호출 시스템
 app.get('/1ru', (req, res) => {
   res.sendFile(path.join(__dirname, 'input1.html'));
 });
 
+// 통빱 3루점 디스플레이 화면
+app.get('/display.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'display.html'));
+});
+
+// 통빱 1루점 디스플레이 화면
 app.get('/display1.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'display1.html'));
+});
+
+// 추가적인 라우팅 (별칭)
+app.get('/3ru', (req, res) => {
+  res.sendFile(path.join(__dirname, 'input.html'));
+});
+
+app.get('/1ru/display', (req, res) => {
+  res.sendFile(path.join(__dirname, 'display1.html'));
+});
+
+app.get('/3ru/display', (req, res) => {
+  res.sendFile(path.join(__dirname, 'display.html'));
 });
 
 wss.on('connection', (ws, req) => {
@@ -522,10 +533,10 @@ function notifyInputClients(data) {
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 통빱 호출벨 시스템 시작! (통합 서버)`);
-  console.log(`📱 3루점 직원용: http://localhost:${PORT}/3ru`);
-  console.log(`🖥️ 3루점 디스플레이: http://localhost:${PORT}/display.html`);
+  console.log(`🚀 통빱 호출벨 시스템 시작!`);
+  console.log(`📱 3루점 직원용: http://localhost:${PORT}/`);
   console.log(`📱 1루점 직원용: http://localhost:${PORT}/1ru`);
+  console.log(`🖥️ 3루점 디스플레이: http://localhost:${PORT}/display.html`);
   console.log(`🖥️ 1루점 디스플레이: http://localhost:${PORT}/display1.html`);
   console.log(`💡 외부 접속: http://[서버IP]:${PORT}`);
   console.log(`📊 상태 확인: http://localhost:${PORT}/health`);
