@@ -543,6 +543,18 @@
       }
       return true;
     }
+	
+	function sendCall() {
+      if (!checkDisplayAndNotify()) return;
+      
+      const num = parseInt(document.getElementById("callNumber").value);
+      if (!isNaN(num) && num >= 1 && num <= 700) {
+        if (wsManager.send(`CALL:${num}`)) {
+          setStatus(`📢 ${STORE_CODE} ${num}번 호출됨`);
+          document.getElementById("callNumber").value = '';
+        }
+      }
+    }
 
     function sendSequenceCall() {
       if (!checkDisplayAndNotify()) return;
