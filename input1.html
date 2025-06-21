@@ -68,6 +68,13 @@
       padding: 1.5vh 0;
     }
 
+    /* 호출 버튼 크기 키우기 */
+    .btn-call {
+      font-size: 6vw !important;
+      padding: 2vh 0 !important;
+      margin: 1vh 0 !important;
+    }
+
     .row {
       display: flex;
       gap: 1.5vw;
@@ -211,24 +218,15 @@
   <div class="content-wrapper">
     <div class="row">
       <input type="number" id="callNumber" class="input-short" placeholder="번호" min="1" max="700" />
-      <button class="btn-orange btn-flex" onclick="sendCall()">📢 호출</button>
+      <button class="btn-orange btn-flex btn-call" onclick="sendCall()">📢 호출</button>
     </div>
 
     <div class="row">
-      <input type="number" id="sequenceNumber" class="input-short" placeholder="끝번호" min="5" max="700" />
-      <button class="btn-orange btn-flex" onclick="sendSequenceCall()">📢 연속 5개 호출</button>
+      <input type="number" id="sequenceNumber" class="input-short" placeholder="번호" min="1" max="700" />
+      <button class="btn-orange btn-flex" onclick="sendSequenceCall()">📢 ~번 손님까지 드립니다</button>
     </div>
 
     <button class="btn-red" onclick="clearAllNumbers()">🗑️ 모든 호출번호 지우기</button>
-
-    <div class="row">
-      <input type="number" id="samTime" class="input-short" placeholder="삼겹살" value="5" />
-      <button class="btn-orange btn-flex" onclick="sendSamTime()">⏱ 삼겹살 시간</button>
-    </div>
-    <div class="row">
-      <input type="number" id="noodleTime" class="input-short" placeholder="국수" value="5" />
-      <button class="btn-orange btn-flex" onclick="sendNoodleTime()">⏱ 국수 시간</button>
-    </div>
 
     <div id="status">1루점 호출벨 시스템 준비됨</div>
 
@@ -558,20 +556,14 @@
     function sendSequenceCall() {
       if (!checkDisplayAndNotify()) return;
       
-      const endNum = parseInt(document.getElementById("sequenceNumber").value);
-      if (!isNaN(endNum) && endNum >= 5 && endNum <= 700) {
-        const startNum = endNum - 4;
-        const sequence = [];
-        for (let i = startNum; i <= endNum; i++) {
-          sequence.push(i);
-        }
-        
-        if (wsManager.send(`SEQUENCE:${sequence.join(',')}`)) {
-          setStatus(`📢 ${STORE_CODE} 연속 호출: ${sequence.join(', ')}`);
+      const targetNum = parseInt(document.getElementById("sequenceNumber").value);
+      if (!isNaN(targetNum) && targetNum >= 1 && targetNum <= 700) {
+        if (wsManager.send(`MSG:${targetNum}번 손님까지 드립니다`)) {
+          setStatus(`📢 ${STORE_CODE} ${targetNum}번 손님까지 드립니다 메시지 전송`);
           document.getElementById("sequenceNumber").value = '';
         }
       } else {
-        setStatus(`❌ 5 이상의 번호를 입력해주세요`);
+        setStatus(`❌ 1~700 사이의 번호를 입력해주세요`);
       }
     }
 
@@ -610,26 +602,6 @@
     function setCallMode() {
       if (wsManager.send('MODE:CALL')) {
         setStatus(`📢 ${STORE_CODE} 호출화면 모드로 전환됨`);
-      }
-    }
-
-    function sendSamTime() {
-      const sam = parseInt(document.getElementById("samTime").value);
-      const noodle = parseInt(document.getElementById("noodleTime").value);
-      if (!isNaN(sam) && !isNaN(noodle)) {
-        if (wsManager.send(`TIME:${sam}:${noodle}`)) {
-          setStatus(`⏱ ${STORE_CODE} 삼겹살 예상시간: ${sam}분`);
-        }
-      }
-    }
-
-    function sendNoodleTime() {
-      const sam = parseInt(document.getElementById("samTime").value);
-      const noodle = parseInt(document.getElementById("noodleTime").value);
-      if (!isNaN(sam) && !isNaN(noodle)) {
-        if (wsManager.send(`TIME:${sam}:${noodle}`)) {
-          setStatus(`⏱ ${STORE_CODE} 국수 예상시간: ${noodle}분`);
-        }
       }
     }
 
