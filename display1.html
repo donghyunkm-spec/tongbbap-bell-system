@@ -761,7 +761,7 @@
       }
       
       if (!isClosedForDay && currentMode === 'CALL') {
-        // "손님까지 드립니다" 메시지는 번호 영역에 표시
+        // "손님까지 드립니다" 메시지는 번호 영역에 오른쪽으로 표시
         if (msg.includes('손님까지 드립니다')) {
           const numbersContainer = document.getElementById("numbers");
           numbersContainer.innerHTML = '';
@@ -782,6 +782,8 @@
             text-align: center;
             line-height: 1.2;
             min-height: 15vh;
+            margin-left: 40vw;
+            max-width: 55vw;
           `;
           messageBox.innerText = msg;
           numbersContainer.appendChild(messageBox);
@@ -796,7 +798,7 @@
             console.log(`🔊 ${STORE_CODE} ${number}번 음성 재생 예정`);
           }
           
-          console.log(`📢 ${STORE_CODE} 번호 영역에 메시지 표시: ${msg}`);
+          console.log(`📢 ${STORE_CODE} 번호 영역 오른쪽에 메시지 표시: ${msg}`);
           return;
         }
         
