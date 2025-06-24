@@ -19,14 +19,12 @@
       overflow: hidden;
       min-height: 100vh;
       position: relative;
-      /* 안드로이드 TV 최적화 */
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
     }
 
-    /* 오디오 활성화 버튼 - 리모컨 지원 강화 */
     .audio-gate {
       position: fixed;
       top: 0;
@@ -58,7 +56,6 @@
       margin-top: 4vh;
       cursor: pointer;
       animation: pulse 2s infinite;
-      /* 안드로이드 TV 리모컨 포커스 */
       outline: 3px solid transparent;
       transition: all 0.3s ease;
     }
@@ -74,7 +71,6 @@
       50% { transform: scale(1.05); }
     }
 
-    /* 호출화면 스타일 */
     .call-screen {
       display: block;
     }
@@ -153,20 +149,6 @@
       }
     }
 
-    #rotatingGuide {
-      font-size: 4.5vw;
-      font-weight: 400;
-      margin-top: 6vh;
-      margin-bottom: 2vh;
-      color: rgba(255, 255, 255, 0.9);
-      text-align: center;
-      white-space: normal;
-      word-break: keep-all;
-      padding: 0 2vw;
-      max-width: 90vw;
-    }
-
-    /* 전체화면 호출 스타일 */
     .fullscreen-call {
       position: fixed;
       top: 0;
@@ -203,7 +185,6 @@
       animation: messageSlideUp 0.8s ease-out 0.2s both;
     }
 
-    /* 재고소진 마감 전체화면 스타일 */
     .fullscreen-closed {
       position: fixed;
       top: 0;
@@ -279,7 +260,6 @@
       }
     }
 
-    /* 대기화면 스타일 */
     .waiting-screen {
       display: none;
       position: fixed;
@@ -327,7 +307,6 @@
       display: block;
     }
 
-    /* 안드로이드 TV 성능 최적화 */
     @media (prefers-reduced-motion: reduce) {
       * {
         animation-duration: 0.01ms !important;
@@ -336,7 +315,6 @@
       }
     }
 
-    /* 안드로이드 TV 메모리 최적화 */
     .optimized {
       will-change: auto;
       transform: translateZ(0);
@@ -356,8 +334,6 @@
   <div id="callScreen" class="call-screen hidden">
     <div id="message">안녕하세요! 통빱 1루점입니다</div>
     <div id="numbers"></div>
-    
-    <div id="rotatingGuide" style="display: none;"></div>
   </div>
 
   <!-- 전체화면 호출 -->
@@ -384,11 +360,8 @@
     let audioEnabled = false;
     let reconnectTimer = null;
     let isClosedForDay = false;
-    let currentMode = 'WAITING'; // 시작은 대기화면
-    let slideIndex = 0;
-    let slideTimer = null;
+    let currentMode = 'WAITING';
     let fullscreenTimer = null;
-    let audioCache = new Map(); // 오디오 캐시
 
     // 1루점 매장 코드
     const STORE_CODE = '1ru';
@@ -398,18 +371,16 @@
       constructor() {
         this.audioInstances = new Map();
         this.hasUserInteraction = false;
-        this.maxCacheSize = 8; // 안드로이드 TV 메모리 절약
+        this.maxCacheSize = 8;
         this.isAndroidTV = this.detectAndroidTV();
       }
 
-      // 안드로이드 TV 감지
       detectAndroidTV() {
         const userAgent = navigator.userAgent.toLowerCase();
         return userAgent.includes('android') && 
                (userAgent.includes('tv') || userAgent.includes('television'));
       }
 
-      // 오디오 인스턴스 생성 및 캐시 (안드로이드 TV 최적화)
       createAudioInstance(number) {
         const cacheKey = `voice_${number}`;
         
@@ -421,22 +392,19 @@
 
         const audio = new Audio();
         audio.src = `voice/${number}번.mp3`;
-        audio.preload = 'none'; // 안드로이드 TV 메모리 절약
+        audio.preload = 'none';
         audio.volume = 1.0;
 
-        // 안드로이드 TV 최적화 설정
         if (this.isAndroidTV) {
           audio.loop = false;
           audio.autoplay = false;
         }
 
-        // 에러 처리
         audio.addEventListener('error', (e) => {
           console.error(`🎤 ${STORE_CODE} 음성 파일 로드 실패: voice/${number}번.mp3`, e);
           this.audioInstances.delete(cacheKey);
         });
 
-        // 메모리 관리 강화
         if (this.audioInstances.size >= this.maxCacheSize) {
           const firstKey = this.audioInstances.keys().next().value;
           const oldAudio = this.audioInstances.get(firstKey);
@@ -451,7 +419,6 @@
         return audio;
       }
 
-      // 음성 재생 (안드로이드 TV 최적화)
       async playVoice(number) {
         if (!this.hasUserInteraction) {
           console.warn(`🔇 ${STORE_CODE} 사용자 상호작용 없음 - 음성 재생 불가`);
@@ -462,10 +429,9 @@
           const audio = this.createAudioInstance(number);
           console.log(`🎤 ${STORE_CODE} 음성 재생 시도: ${number}번`);
           
-          // 안드로이드 TV 특별 처리
           if (this.isAndroidTV) {
-            audio.load(); // 명시적 로드
-            await new Promise(resolve => setTimeout(resolve, 100)); // 짧은 지연
+            audio.load();
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
           
           await audio.play();
@@ -477,7 +443,6 @@
         }
       }
 
-      // 모든 오디오 정리
       cleanup() {
         this.audioInstances.forEach((audio, key) => {
           audio.pause();
@@ -489,29 +454,22 @@
       }
     }
 
-    // 전역 오디오 매니저 생성
     const audioManager = new AndroidTVAudioManager();
 
-    // 오디오 활성화 게이트 (안드로이드 TV 리모컨 지원)
     function initializeAudioGate() {
       const audioGate = document.getElementById('audioGate');
       const startBtn = document.getElementById('startAudioBtn');
 
-      // 포커스 자동 설정
       startBtn.focus();
-
-      // 클릭 이벤트
       startBtn.addEventListener('click', activateAudio);
 
-      // 키보드/리모컨 지원 강화
       startBtn.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.keyCode === 13 || e.keyCode === 23) { // 안드로이드 TV 확인 버튼
+        if (e.key === 'Enter' || e.keyCode === 13 || e.keyCode === 23) {
           e.preventDefault();
           activateAudio();
         }
       });
 
-      // 전역 키 이벤트 (리모컨 지원)
       document.addEventListener('keydown', function(e) {
         if (!audioEnabled && (e.key === 'Enter' || e.keyCode === 13 || e.keyCode === 23)) {
           e.preventDefault();
@@ -525,7 +483,6 @@
         audioManager.hasUserInteraction = true;
         audioEnabled = true;
 
-        // 테스트 음성 재생
         try {
           const testAudio = new Audio();
           testAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAAAQElGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
@@ -535,10 +492,8 @@
           console.log(`⚠️ ${STORE_CODE} 오디오 테스트 실패:`, e.message);
         }
 
-        // 게이트 숨기기
         audioGate.classList.add('hidden');
         
-        // 현재 모드에 따라 화면 표시
         if (currentMode === 'WAITING') {
           switchToWaitingMode();
         } else {
@@ -547,7 +502,6 @@
       }
     }
 
-    // 숫자 음성 재생
     async function speakNumber(number) {
       const success = await audioManager.playVoice(number);
       if (!success) {
@@ -555,7 +509,6 @@
       }
     }
 
-    // 전체화면 호출 표시
     function showFullscreenCall(number) {
       if (isClosedForDay) return;
       
@@ -568,12 +521,10 @@
       
       fullscreenDiv.classList.add('active');
       
-      // 음성 재생 - 약간의 지연 후
       setTimeout(() => {
         speakNumber(number);
       }, 800);
 
-      // 5초 후 원래 화면으로 복귀
       if (fullscreenTimer) {
         clearTimeout(fullscreenTimer);
       }
@@ -586,7 +537,6 @@
       console.log(`📺 ${STORE_CODE} 전체화면 호출 표시: ${number}번`);
     }
 
-    // 재고소진 마감 전체화면 표시
     function showClosedScreen() {
       const closedDiv = document.getElementById('fullscreenClosed');
       closedDiv.classList.add('active');
@@ -598,7 +548,6 @@
       isClosedForDay = true;
     }
 
-    // 마감 화면 제거
     function hideClosedScreen() {
       const closedDiv = document.getElementById('fullscreenClosed');
       closedDiv.classList.remove('active');
@@ -613,16 +562,6 @@
       }
     }
 
-    // 대기화면 관리
-    function startSlideshow() {
-      console.log(`📺 ${STORE_CODE} 대기화면 표시`);
-    }
-
-    function stopSlideshow() {
-      // 단일 이미지이므로 특별한 처리 없음
-    }
-
-    // 모드 전환 함수
     function switchToWaitingMode() {
       if (isClosedForDay) return;
       
@@ -635,7 +574,6 @@
         clearTimeout(fullscreenTimer);
       }
       
-      startSlideshow();
       console.log(`📺 ${STORE_CODE} 대기화면 모드로 전환`);
     }
 
@@ -645,11 +583,9 @@
       currentMode = 'CALL';
       document.getElementById('waitingScreen').classList.remove('active');
       document.getElementById('callScreen').classList.remove('hidden');
-      stopSlideshow();
       console.log(`📢 ${STORE_CODE} 호출화면 모드로 전환`);
     }
 
-    // WebSocket 연결
     function connectWebSocket() {
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
@@ -664,7 +600,7 @@
 
       ws.onopen = () => {
         console.log(`✅ ${STORE_CODE} WebSocket 연결됨`);
-        ws.send(`DISPLAY:${STORE_CODE}`); // 매장 코드 포함해서 전송
+        ws.send('DISPLAY:1ru');
       };
 
       ws.onclose = (event) => {
@@ -691,13 +627,25 @@
           return;
         }
 
+        if (data.type === "PING") {
+          try {
+            ws.send(JSON.stringify({ type: 'PONG' }));
+          } catch (error) {
+            console.error(`❌ ${STORE_CODE} PONG 전송 실패:`, error);
+          }
+          return;
+        }
+
         if (data.type === "MODE") {
           if (data.mode === "WAITING") {
             switchToWaitingMode();
           } else if (data.mode === "CALL") {
             switchToCallMode();
           }
-        } else if (currentMode === 'CALL') {
+          return;
+        }
+
+        if (currentMode === 'CALL') {
           if (data.type === "CALL" && Array.isArray(data.list)) {
             updateNumbers(data.list);
             
@@ -708,10 +656,6 @@
           } else if (data.type === "MSG") {
             showMessage(data.text);
           }
-        }
-        
-        if (data.type === "PING") {
-          ws.send(JSON.stringify({ type: 'PONG' }));
         }
       };
     }
@@ -727,7 +671,7 @@
       
       numbers.forEach((num, index) => {
         const box = document.createElement("div");
-        box.className = "numBox optimized"; // 최적화 클래스 추가
+        box.className = "numBox optimized";
         
         if (numbers.length >= 8) {
           box.classList.add('very-small');
@@ -761,7 +705,6 @@
       }
       
       if (!isClosedForDay && currentMode === 'CALL') {
-        // "손님까지 드립니다" 메시지는 번호 영역에 오른쪽으로 표시
         if (msg.includes('손님까지 드립니다')) {
           const numbersContainer = document.getElementById("numbers");
           numbersContainer.innerHTML = '';
@@ -788,7 +731,6 @@
           messageBox.innerText = msg;
           numbersContainer.appendChild(messageBox);
           
-          // 번호 추출해서 소리 재생
           const numberMatch = msg.match(/(\d+)번 손님까지 드립니다/);
           if (numberMatch) {
             const number = parseInt(numberMatch[1]);
@@ -802,7 +744,6 @@
           return;
         }
         
-        // 일반 메시지는 상단 메시지 박스에 표시
         const msgBox = document.getElementById("message");
         msgBox.innerText = msg;
 
@@ -822,11 +763,9 @@
       }
     }
 
-    // 페이지 로드 시 초기화
     document.addEventListener('DOMContentLoaded', () => {
       console.log(`📄 ${STORE_CODE} 페이지 로드됨 - 안드로이드 TV 최적화 모드`);
       
-      // 안드로이드 TV 감지 로그
       if (audioManager.isAndroidTV) {
         console.log(`📱 ${STORE_CODE} 안드로이드 TV 환경 감지됨`);
       }
@@ -836,7 +775,6 @@
       switchToWaitingMode();
     });
 
-    // 정리
     window.addEventListener('beforeunload', () => {
       if (ws) {
         ws.close();
@@ -849,15 +787,13 @@
       }
       
       audioManager.cleanup();
-      stopSlideshow();
     });
 
-    // 안드로이드 TV 메모리 관리
     setInterval(() => {
       if (window.gc && typeof window.gc === 'function') {
-        window.gc(); // 가비지 컬렉션 강제 실행 (개발 모드에서만)
+        window.gc();
       }
-    }, 300000); // 5분마다
+    }, 300000);
   </script>
 </body>
 </html>
