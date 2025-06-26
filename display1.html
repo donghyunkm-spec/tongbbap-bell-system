@@ -98,7 +98,7 @@
       flex-direction: column;
       align-items: center;
       margin-top: 4vh;
-      gap: 1.5vw;
+      gap: 2vh; /* 줄 간격을 늘림 */
       min-height: 28vh;
       perspective: 1000px;
     }
@@ -109,6 +109,7 @@
       align-items: center;
       gap: 1.5vw;
       width: 100%;
+      flex-wrap: nowrap; /* 줄바꿈 방지 */
     }
 
     .numBox {
@@ -696,33 +697,33 @@
       
       container.innerHTML = '';
       
-      // 최대 10개 번호 표시, 5개씩 두 줄로 나눔
+      // 확실히 2줄로 나누기: 첫 번째 줄 5개, 두 번째 줄 5개
       const firstRowNumbers = numbers.slice(0, 5);
       const secondRowNumbers = numbers.slice(5, 10);
       
       // 첫 번째 줄 생성
-      const row1 = document.createElement("div");
-      row1.className = "number-row";
+      if (firstRowNumbers.length > 0) {
+        const row1 = document.createElement("div");
+        row1.className = "number-row";
+        
+        firstRowNumbers.forEach((num) => {
+          const box = createNumberBox(num, currentNumbers, numbers.length);
+          row1.appendChild(box);
+        });
+        
+        container.appendChild(row1);
+      }
       
-      // 두 번째 줄 생성
-      const row2 = document.createElement("div");
-      row2.className = "number-row";
-      
-      // 첫 번째 줄에 번호 추가
-      firstRowNumbers.forEach((num, index) => {
-        const box = createNumberBox(num, currentNumbers, numbers.length);
-        row1.appendChild(box);
-      });
-      
-      // 두 번째 줄에 번호 추가
-      secondRowNumbers.forEach((num, index) => {
-        const box = createNumberBox(num, currentNumbers, numbers.length);
-        row2.appendChild(box);
-      });
-      
-      // 컨테이너에 줄 추가
-      container.appendChild(row1);
+      // 두 번째 줄 생성 (6개 이상일 때만)
       if (secondRowNumbers.length > 0) {
+        const row2 = document.createElement("div");
+        row2.className = "number-row";
+        
+        secondRowNumbers.forEach((num) => {
+          const box = createNumberBox(num, currentNumbers, numbers.length);
+          row2.appendChild(box);
+        });
+        
         container.appendChild(row2);
       }
     }
