@@ -139,68 +139,21 @@
       }
     }
 
-    #rotatingGuide {
-      font-size: 4.5vw;
-      font-weight: 400;
-      margin-top: 6vh;
-      margin-bottom: 2vh;
-      color: rgba(255, 255, 255, 0.9);
-      text-align: center;
-      white-space: normal;
-      word-break: keep-all;
-      padding: 0 2vw;
-      max-width: 90vw;
-    }
-
-    #fixedTimes {
-      font-size: 4.2vw;
-      font-weight: 600;
-      color: #ffd700;
-      text-align: center;
-      white-space: pre-line;
-    }
-
-    #footer {
-      width: 100%;
-      display: flex;
-      justify-content: space-around;
-      font-size: 7vw;
-      color: white;
-    }
-
-    .footer-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.95);
-      color: #1a1a1a;
-      padding: 2.5vh 3vw;
-      border-radius: 20px;
-      font-weight: 700;
-      width: 18vw;
-      min-height: 14vh;
-      border: 2px solid rgba(255, 255, 255, 0.4);
-    }
-
-    .footer-icon {
-      font-size: 4vw;
-      font-weight: 900;
-      margin-bottom: 0.8vh;
-    }
-
-    .footer-arrow {
-      font-size: 6vw;
-    }
-
-    #footer-section {
+    .status-indicator {
       position: absolute;
-      bottom: 2vh;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.5vh;
+      bottom: 5vh;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #4CAF50;
+      color: white;
+      font-size: 6vw;
+      font-weight: 900;
+      padding: 1.5vh 4vw;
+      border-radius: 15px;
+      animation: pulse 2s infinite;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      z-index: 100;
     }
 
     /* 전체화면 호출 스타일 */
@@ -408,25 +361,7 @@
   <div id="callScreen" class="call-screen hidden">
     <div id="message">안녕하세요! 통빱 입니다</div>
     <div id="numbers"></div>
-    
-    <div id="rotatingGuide" style="display: none;"></div>
-
-    <div id="footer-section">
-      <div id="fixedTimes">
-        삼겹살 예상 수령 시간: <span id="samTime">5</span>분  
-        국수 예상 수령 시간: <span id="noodleTime">5</span>분
-      </div>
-      <div id="footer" style="display: flex; justify-content: space-between; width: 98%; margin: 0 auto; position: absolute; bottom: 2vh; left: 1%; right: 1%;">
-        <div class="footer-box">
-          <div class="footer-icon">픽업</div>
-          <div class="footer-arrow">⬇</div>
-        </div>
-        <div class="footer-box">
-          <div class="footer-icon">주문</div>
-          <div class="footer-arrow">⬇</div>
-        </div>
-      </div>
-    </div>
+    <div class="status-indicator">영업중</div>
   </div>
 
   <!-- 전체화면 호출 -->
@@ -763,8 +698,6 @@
             }
           } else if (data.type === "MSG") {
             showMessage(data.text);
-          } else if (data.type === "TIME") {
-            updateTimes(data.sam, data.noodle);
           }
         }
         
@@ -806,18 +739,6 @@
       });
     }
 
-    const rotatingMessages = [
-      "📋 픽업 시 영수증을 가지고 와주세요",
-      "🍽️ 주문메뉴에 따라 조리시간이 다릅니다 양해 부탁 드립니다"
-    ];
-
-    let currentMessageIndex = 0;
-    
-    function updateRotatingMessage() {
-      // 로테이션 메시지 기능 비활성화
-      console.log(`📝 ${STORE_CODE} 로테이션 메시지 기능 비활성화됨`);
-    }
-
     function showMessage(msg) {
       console.log(`💬 ${STORE_CODE} 메시지 표시:`, msg);
       
@@ -853,18 +774,6 @@
             }
           }, 10000);
         }
-      }
-    }
-
-    function updateTimes(sam, noodle) {
-      if (currentMode !== 'CALL') return;
-      
-      console.log(`⏱ ${STORE_CODE} 시간 업데이트:`, sam, noodle);
-      if (sam !== undefined) {
-        document.getElementById("samTime").innerText = sam;
-      }
-      if (noodle !== undefined) {
-        document.getElementById("noodleTime").innerText = noodle;
       }
     }
 
