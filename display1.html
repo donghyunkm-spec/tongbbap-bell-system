@@ -81,19 +81,17 @@
 
     #message {
       font-size: 5vw;
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 2.5vh 3vw;
-      border-radius: 25px;
-      margin-top: 3vh;
-      min-height: 7vh;
-      display: block;
-	  margin-left: auto;
-	  margin-right: auto;
-	  width: fit-content;
-      z-index: 1000;
-      position: relative;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 2.5vh 3vw;
+  border-radius: 25px;
+  min-height: 7vh;
+  position: absolute;        /* absolute 포지셔닝 사용 */
+  top: 3vh;                  /* 상단에서 3vh */
+  left: 50%;                 /* 왼쪽에서 50% */
+  transform: translateX(-50%); /* 자신의 너비만큼 왼쪽으로 이동 */
+  z-index: 1000;
     }
 
     #numbers {
