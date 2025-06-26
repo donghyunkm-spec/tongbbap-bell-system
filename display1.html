@@ -79,30 +79,34 @@
       display: none;
     }
 
-    #message {
-      font-size: 5vw;
+    /* #message를 원래대로 되돌리고 */
+#message {
+  font-size: 5vw;
   font-weight: 700;
   background: rgba(255, 255, 255, 0.1);
   border: 2px solid rgba(255, 255, 255, 0.2);
   padding: 2.5vh 3vw;
   border-radius: 25px;
+  margin-top: 3vh;
   min-height: 7vh;
-  position: absolute;        /* absolute 포지셔닝 사용 */
-  top: 3vh;                  /* 상단에서 3vh */
-  left: 50%;                 /* 왼쪽에서 50% */
-  transform: translateX(-50%); /* 자신의 너비만큼 왼쪽으로 이동 */
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
   z-index: 1000;
-    }
+  position: relative;
+}
 
-    #numbers {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 4vh;
-      gap: 2vh; /* 줄 간격을 늘림 */
-      min-height: 28vh;
-      perspective: 1000px;
-    }
+/* #numbers의 margin-top을 조정해서 균형 맞추기 */
+#numbers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 6vh;  /* 4vh에서 6vh로 증가 */
+  gap: 2vh;
+  min-height: 28vh;
+  perspective: 1000px;
+}
     
     .number-row {
       display: flex;
