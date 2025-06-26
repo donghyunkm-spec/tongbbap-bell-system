@@ -122,7 +122,7 @@ app.get('/status', (req, res) => {
 });
 
 const HEARTBEAT_INTERVAL = 15000;
-const CLIENT_TIMEOUT = 60000;
+const CLIENT_TIMEOUT = 300000;
 
 function heartbeat() {
   console.log(`💓 하트비트 체크 시작`);
