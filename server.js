@@ -451,7 +451,12 @@ function processMessage(storeKey, message, clientIP) {
       if (!store.currentNumbers.includes(number)) {
         store.currentNumbers.push(number);
         
-        if (store.currentNumbers.length > 5) {
+        // 1루점은 10개까지 표시
+        if (storeKey === '1ru' && store.currentNumbers.length > 10) {
+          store.currentNumbers.shift();
+        } 
+        // 3루점은 기존대로 5개까지만 표시
+        else if (storeKey === '3ru' && store.currentNumbers.length > 5) {
           store.currentNumbers.shift();
         }
       }
@@ -470,7 +475,14 @@ function processMessage(storeKey, message, clientIP) {
     const newNumbers = numbersStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
     
     if (newNumbers.length > 0) {
-      store.currentNumbers = newNumbers.slice(0, 5);
+      // 1루점은 최대 10개
+      if (storeKey === '1ru') {
+        store.currentNumbers = newNumbers.slice(0, 10);
+      }
+      // 3루점은 기존대로 최대 5개
+      else if (storeKey === '3ru') {
+        store.currentNumbers = newNumbers.slice(0, 5);
+      }
       
       responseData = {
         type: 'CALL',
