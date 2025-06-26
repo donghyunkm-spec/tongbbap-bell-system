@@ -495,14 +495,48 @@ function processMessage(storeKey, message, clientIP) {
     }
   } else if (message.startsWith('MSG:')) {
     const text = message.substring(4);
-    responseData = {
-      type: 'MSG',
-      text: text,
-      timestamp: new Date().toISOString(),
-      triggeredBy: clientIP
-    };
     
-    console.log(`💬 ${store.name} 메시지: "${text}" (${clientIP})`);
+    // "X번 손님까지 드립니다" 메시지 특별 처리
+    const serveUntilMatch = text.match(/(\d+)번 손님까지 드립니다/);
+    if (serveUntilMatch) {
+      const targetNumber = parseInt(serveUntilMatch[1]);
+      
+      // 해당 번호를 호출 목록에 추가
+      if (!store.currentNumbers.includes(targetNumber)) {
+        store.currentNumbers.push(targetNumber);
+        
+        // 1루점은 10개까지 표시
+        if (storeKey === '1ru' && store.currentNumbers.length > 10) {
+          store.currentNumbers.shift();
+        } 
+        // 3루점은 기존대로 5개까지만 표시
+        else if (storeKey === '3ru' && store.currentNumbers.length > 5) {
+          store.currentNumbers.shift();
+        }
+      }
+      
+      // 디스플레이에는 특별한 타입으로 전송
+      responseData = {
+        type: 'SERVE_UNTIL',
+        text: text,
+        number: targetNumber,
+        currentNumbers: [...store.currentNumbers],
+        timestamp: new Date().toISOString(),
+        triggeredBy: clientIP
+      };
+      
+      console.log(`🍽️ ${store.name} ${targetNumber}번 손님까지 서빙: "${text}" (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
+    } else {
+      // 일반 메시지 처리
+      responseData = {
+        type: 'MSG',
+        text: text,
+        timestamp: new Date().toISOString(),
+        triggeredBy: clientIP
+      };
+      
+      console.log(`💬 ${store.name} 메시지: "${text}" (${clientIP})`);
+    }
   } else if (message.startsWith('TIME:')) {
     const parts = message.split(':');
     if (parts.length >= 3) {
@@ -536,8 +570,12 @@ function processMessage(storeKey, message, clientIP) {
     const sent = broadcastToDisplays(storeKey, JSON.stringify(responseData));
     console.log(`📡 ${store.name} ${sent}개 디스플레이에 브로드캐스트`);
     
-    if (responseData.type === 'CALL') {
-      notifyInputClients(storeKey, responseData);
+    if (responseData.type === 'CALL' || responseData.type === 'SERVE_UNTIL') {
+      notifyInputClients(storeKey, {
+        type: 'CALL',
+        list: [...store.currentNumbers],
+        timestamp: responseData.timestamp
+      });
     }
   }
 }

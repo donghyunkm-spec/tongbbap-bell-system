@@ -681,6 +681,8 @@
               const latestNumber = data.list[data.list.length - 1];
               showFullscreenCall(latestNumber);
             }
+          } else if (data.type === "SERVE_UNTIL") {
+            showServeUntilMessage(data.text, data.number);
           } else if (data.type === "MSG") {
             showMessage(data.text);
           }
@@ -688,11 +690,71 @@
       };
     }
 
+    // "X번 손님까지 드립니다" 메시지 표시
+    function showServeUntilMessage(message, number) {
+      if (isClosedForDay) return;
+      
+      console.log(`🍽️ ${STORE_CODE} 서빙 메시지 표시: ${message}`);
+      
+      // 호출 번호 컨테이너 숨기기
+      const numbersContainer = document.getElementById("numbers");
+      numbersContainer.style.display = 'none';
+      
+      // 기존 서빙 메시지가 있으면 제거
+      const existingServeMessage = document.getElementById('serveUntilMessage');
+      if (existingServeMessage) {
+        existingServeMessage.remove();
+      }
+      
+      // 서빙 메시지 박스 생성
+      const messageBox = document.createElement("div");
+      messageBox.id = 'serveUntilMessage';
+      messageBox.style.cssText = `
+        background: #4CAF50;
+        color: white;
+        font-family: 'Noto Sans KR', sans-serif;
+        font-size: 8vw;
+        font-weight: 900;
+        padding: 4vh 5vw;
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: newNumberEntry 0.6s ease-out;
+        text-align: center;
+        line-height: 1.2;
+        min-height: 20vh;
+        margin: 0 auto;
+        max-width: 80vw;
+        margin-top: 4vh;
+      `;
+      messageBox.innerText = message;
+      
+      // 메시지를 호출 번호 자리에 추가
+      numbersContainer.parentNode.insertBefore(messageBox, numbersContainer);
+      
+      // 음성 재생
+      setTimeout(() => {
+        speakNumber(number);
+      }, 800);
+      
+      console.log(`🔊 ${STORE_CODE} ${number}번 음성 재생`);
+    }
+
     function updateNumbers(numbers) {
       if (currentMode !== 'CALL') return;
       
       console.log(`📊 ${STORE_CODE} 번호 업데이트:`, numbers);
+      
+      // 서빙 메시지가 있으면 제거하고 번호 컨테이너 다시 표시
+      const existingServeMessage = document.getElementById('serveUntilMessage');
+      if (existingServeMessage) {
+        existingServeMessage.remove();
+      }
+      
       const container = document.getElementById("numbers");
+      container.style.display = 'flex'; // 번호 컨테이너 다시 표시
+      
       const currentNumbers = Array.from(container.querySelectorAll('.numBox')).map(child => child.innerText);
       
       container.innerHTML = '';
@@ -764,62 +826,6 @@
       }
       
       if (!isClosedForDay && currentMode === 'CALL') {
-        // "~번 손님까지 드립니다" 메시지 처리
-        if (msg.includes('손님까지 드립니다')) {
-          const numberMatch = msg.match(/(\d+)번 손님까지 드립니다/);
-          if (numberMatch) {
-            const targetNumber = parseInt(numberMatch[1]);
-            
-            // 특별 메시지 표시를 위한 박스 생성
-            const messageBox = document.createElement("div");
-            messageBox.style.cssText = `
-              background: #4CAF50;
-              color: white;
-              font-family: 'Noto Sans KR', sans-serif;
-              font-size: 8vw;
-              font-weight: 900;
-              padding: 4vh 5vw;
-              border-radius: 25px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              animation: newNumberEntry 0.6s ease-out;
-              text-align: center;
-              line-height: 1.2;
-              min-height: 15vh;
-              margin: 0 auto;
-              max-width: 80vw;
-              margin-top: 2vh;
-            `;
-            messageBox.innerText = msg;
-            
-            // 메시지를 번호 아래에 추가
-            const messageContainer = document.createElement("div");
-            messageContainer.style.cssText = "width: 100%; text-align: center; margin-top: 3vh;";
-            messageContainer.appendChild(messageBox);
-            
-            // 기존 번호는 유지하고 메시지만 추가
-            const numbersContainer = document.getElementById("numbers");
-            numbersContainer.parentNode.insertBefore(messageContainer, numbersContainer.nextSibling);
-            
-            // 음성 재생 - XX번 손님까지 드립니다
-            setTimeout(() => {
-              speakNumber(targetNumber);
-            }, 800);
-            
-            console.log(`🔊 ${STORE_CODE} ${targetNumber}번 음성 재생 예정`);
-            
-            // 5초 후 메시지 제거
-            setTimeout(() => {
-              if (messageContainer && messageContainer.parentNode) {
-                messageContainer.parentNode.removeChild(messageContainer);
-              }
-            }, 5000);
-            
-            return;
-          }
-        }
-        
         const msgBox = document.getElementById("message");
         msgBox.innerText = msg;
 
