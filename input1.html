@@ -135,13 +135,15 @@
 
     #currentNumbers {
       background-color: #f0f0f0;
-      padding: 0.8vh 1.5vw;
+      padding: 1.2vh 2vw;
       border-radius: 6px;
-      margin: 0.3vh 0;
-      font-size: 3.5vw;
+      margin: 0.5vh 0;
+      font-size: 4.5vw; /* 더 큰 폰트 사이즈 */
       text-align: center;
-      min-height: 2.5vh;
+      min-height: 3.5vh;
       flex-shrink: 0;
+      font-weight: bold; /* 굵게 표시 */
+      border: 2px solid #ddd; /* 테두리 추가 */
     }
 
     .content-wrapper {
@@ -252,7 +254,7 @@
         this.reconnectTimer = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 50;
-        this.reconnectInterval = 120000; // 2분
+        this.reconnectInterval = 300000; // 5분으로 변경
         this.heartbeatTimer = null;
         this.heartbeatInterval = 120000; // 2분마다 ping
         this.lastPongTime = Date.now();
