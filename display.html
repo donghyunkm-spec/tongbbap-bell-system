@@ -63,6 +63,7 @@
     /* 호출화면 스타일 */
     .call-screen {
       display: block;
+      padding-top: 12vh; /* 상단 패딩 추가 */
     }
 
     .call-screen.hidden {
@@ -71,26 +72,30 @@
 
     #message {
       font-size: 5vw;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  padding: 2.5vh 3vw;
-  border-radius: 25px;
-  min-height: 7vh;
-  position: absolute;        /* absolute 포지셔닝 사용 */
-  top: 3vh;                  /* 상단에서 3vh */
-  transform: translateX(-50%); /* 자신의 너비만큼 왼쪽으로 이동 */
-  z-index: 1000;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      padding: 2.5vh 3vw;
+      border-radius: 25px;
+      min-height: 7vh;
+      position: absolute;
+      top: 2vh;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1500; /* z-index 증가 */
+      white-space: nowrap; /* 줄바꿈 방지 */
+      width: auto; /* 자동 너비 */
     }
 
     #numbers {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-top: 4vh;
+      margin-top: 20vh; /* 15vh에서 20vh로 증가 */
       gap: 1.5vw;
       min-height: 20vh;
       perspective: 1000px;
+      z-index: 1000;
     }
 
     .numBox {
@@ -108,6 +113,7 @@
       justify-content: center;
       flex-shrink: 0;
       position: relative;
+      z-index: 1000; /* z-index 추가 */
     }
 
     .numBox.small {
@@ -140,10 +146,13 @@
     }
 
     .status-indicator {
-      position: absolute;
+      position: fixed; /* absolute 대신 fixed 사용 */
       bottom: 5vh;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0; /* left: 50% 대신 left: 0 */
+      right: 0; /* right: 0 추가 */
+      margin: 0 auto; /* 좌우 마진 auto */
+      transform: none; /* transform 제거 */
+      width: fit-content; /* 내용에 맞는 너비 */
       background-color: #4CAF50;
       color: white;
       font-size: 6vw;
@@ -154,6 +163,7 @@
       text-shadow: 0 2px 4px rgba(0,0,0,0.3);
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       z-index: 100;
+      text-align: center;
     }
 
     /* 전체화면 호출 스타일 */

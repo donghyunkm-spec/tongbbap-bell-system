@@ -79,34 +79,30 @@
       display: none;
     }
 
-    /* #message를 원래대로 되돌리고 */
-#message {
-  font-size: 5vw;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  padding: 2.5vh 3vw;
-  border-radius: 25px;
-  margin-top: 3vh;
-  min-height: 7vh;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  width: fit-content;
-  z-index: 1000;
-  position: relative;
-}
+    #message {
+      font-size: 5vw;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      padding: 2.5vh 3vw;
+      border-radius: 25px;
+      margin: 3vh auto 0; /* 단순화된 마진 */
+      min-height: 7vh;
+      display: inline-block; /* inline-block으로 변경 */
+      text-align: center;
+      max-width: 90%; /* 최대 너비 제한 */
+      z-index: 1000;
+    }
 
-/* #numbers의 margin-top을 조정해서 균형 맞추기 */
-#numbers {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 6vh;  /* 4vh에서 6vh로 증가 */
-  gap: 2vh;
-  min-height: 28vh;
-  perspective: 1000px;
-}
+    #numbers {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 6vh;
+      gap: 2vh;
+      min-height: 28vh;
+      perspective: 1000px;
+    }
     
     .number-row {
       display: flex;
@@ -239,10 +235,13 @@
     }
 
     .status-indicator {
-      position: absolute;
+      position: fixed; /* absolute 대신 fixed 사용 */
       bottom: 5vh;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0; /* left: 50% 대신 left: 0 */
+      right: 0; /* right: 0 추가 */
+      margin: 0 auto; /* 좌우 마진 auto */
+      transform: none; /* transform 제거 */
+      width: fit-content; /* 내용에 맞는 너비 */
       background-color: #4CAF50;
       color: white;
       font-size: 6vw;
@@ -253,6 +252,7 @@
       text-shadow: 0 2px 4px rgba(0,0,0,0.3);
       box-shadow: 0 4px 8px rgba(0,0,0,0.2);
       z-index: 100;
+      text-align: center;
     }
 
     @keyframes fullscreenPulse {
