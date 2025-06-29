@@ -493,6 +493,17 @@ function processMessage(storeKey, message, clientIP) {
       
       console.log(`📢 ${store.name} 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
     }
+  } else if (message.startsWith('STATUS:')) {
+    // 새로 추가된 STATUS 메시지 처리
+    const text = message.substring(7);
+    responseData = {
+      type: 'STATUS',
+      text: text,
+      timestamp: new Date().toISOString(),
+      triggeredBy: clientIP
+    };
+    
+    console.log(`📍 ${store.name} 상태표시기 업데이트: "${text}" (${clientIP})`);
   } else if (message.startsWith('MSG:')) {
     const text = message.substring(4);
     

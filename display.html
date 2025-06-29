@@ -371,7 +371,7 @@
   <div id="callScreen" class="call-screen hidden">
     <div id="message">안녕하세요! 통빱 입니다</div>
     <div id="numbers"></div>
-    <div class="status-indicator">김치말이국수 판매 중입니다</div>
+    <div id="statusIndicator" class="status-indicator">김치말이국수 판매 중입니다</div>
   </div>
 
   <!-- 전체화면 호출 -->
@@ -600,6 +600,15 @@
       }
     }
 
+    // 하단 상태 표시기 업데이트
+    function updateStatusIndicator(text) {
+      if (currentMode === 'CALL' && !isClosedForDay) {
+        const statusIndicator = document.getElementById('statusIndicator');
+        statusIndicator.innerText = text;
+        console.log(`📍 ${STORE_CODE} 하단 상태 표시기 업데이트: ${text}`);
+      }
+    }
+
     // 슬라이드쇼 관리 - 단일 이미지로 변경
     const slides = document.querySelectorAll('.slide');
     
@@ -708,6 +717,9 @@
             }
           } else if (data.type === "MSG") {
             showMessage(data.text);
+          } else if (data.type === "STATUS") {
+            // 새로운 STATUS 타입 처리
+            updateStatusIndicator(data.text);
           }
         }
         
