@@ -553,7 +553,7 @@
       
       fullscreenDiv.classList.add('active');
       
-      // 음성 재생 - 항상 최근 번호 음성 재생
+      // 음성 재생 - 호출된 번호의 음성 재생
       setTimeout(() => {
         speakNumber(number);
       }, 500);
@@ -682,7 +682,11 @@
           if (data.type === "CALL" && Array.isArray(data.list)) {
             updateNumbers(data.list);
             
-            if (data.list.length > 0) {
+            // 호출된 번호 정보가 있으면 그 번호로 전체화면 표시
+            if (data.calledNumber) {
+              showFullscreenCall(data.calledNumber);
+            } else if (data.list.length > 0) {
+              // 호출된 번호 정보가 없으면 마지막 번호로 표시 (기존 동작)
               const latestNumber = data.list[data.list.length - 1];
               showFullscreenCall(latestNumber);
             }

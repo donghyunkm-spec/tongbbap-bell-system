@@ -546,12 +546,31 @@
     function sendCall() {
       if (!checkDisplayAndNotify()) return;
       
-      const num = parseInt(document.getElementById("callNumber").value);
-      if (!isNaN(num) && num >= 1 && num <= 700) {
+      const callNumberInput = document.getElementById("callNumber");
+      const num = parseInt(callNumberInput.value);
+      
+      // 번호가 입력되지 않았을 때 마지막 번호 호출
+      if (isNaN(num) || callNumberInput.value.trim() === '') {
+        if (currentNumbers.length > 0) {
+          if (wsManager.send('CALL_LAST')) {
+            const lastNumber = currentNumbers[currentNumbers.length - 1];
+            setStatus(`📢 ${STORE_CODE} 마지막 번호 재호출: ${lastNumber}번`);
+            callNumberInput.value = '';
+          }
+        } else {
+          setStatus(`⚠️ 호출할 번호가 없습니다`);
+        }
+        return;
+      }
+      
+      // 정상적인 번호 호출
+      if (num >= 1 && num <= 700) {
         if (wsManager.send(`CALL:${num}`)) {
           setStatus(`📢 ${STORE_CODE} ${num}번 호출됨`);
-          document.getElementById("callNumber").value = '';
+          callNumberInput.value = '';
         }
+      } else {
+        setStatus(`❌ 1~700 사이의 번호를 입력해주세요`);
       }
     }
 

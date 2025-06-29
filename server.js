@@ -448,7 +448,10 @@ function processMessage(storeKey, message, clientIP) {
   } else if (message.startsWith('CALL:')) {
     const number = parseInt(message.split(':')[1]);
     if (!isNaN(number)) {
-      if (!store.currentNumbers.includes(number)) {
+      // 이미 목록에 있는 번호인지 확인
+      const isExistingNumber = store.currentNumbers.includes(number);
+      
+      if (!isExistingNumber) {
         store.currentNumbers.push(number);
         
         // 1루점은 10개까지 표시
@@ -461,14 +464,31 @@ function processMessage(storeKey, message, clientIP) {
         }
       }
       
+      // 호출된 번호 정보를 추가로 전달
       responseData = {
         type: 'CALL',
         list: [...store.currentNumbers],
+        calledNumber: number, // 실제 호출된 번호 추가
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
       
       console.log(`📢 ${store.name} 호출: ${number} (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
+    }
+  } else if (message.startsWith('CALL_LAST')) {
+    // 빈 칸으로 호출 버튼 눌렀을 때 마지막 번호 호출
+    if (store.currentNumbers.length > 0) {
+      const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
+      
+      responseData = {
+        type: 'CALL',
+        list: [...store.currentNumbers],
+        calledNumber: lastNumber, // 마지막 번호를 호출된 번호로 설정
+        timestamp: new Date().toISOString(),
+        triggeredBy: clientIP
+      };
+      
+      console.log(`📢 ${store.name} 마지막 번호 재호출: ${lastNumber} (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
     }
   } else if (message.startsWith('SEQUENCE:')) {
     const numbersStr = message.substring(9);
@@ -484,9 +504,13 @@ function processMessage(storeKey, message, clientIP) {
         store.currentNumbers = newNumbers.slice(0, 5);
       }
       
+      // 연속 호출에서는 마지막 번호를 호출된 번호로 설정
+      const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
+      
       responseData = {
         type: 'CALL',
         list: [...store.currentNumbers],
+        calledNumber: lastNumber, // 연속 호출의 마지막 번호
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
@@ -494,16 +518,16 @@ function processMessage(storeKey, message, clientIP) {
       console.log(`📢 ${store.name} 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
     }
   } else if (message.startsWith('STATUS:')) {
-    // 새로 추가된 STATUS 메시지 처리
-    const text = message.substring(7);
+    // STATUS 메시지 처리 추가 (하단 상태 표시기 업데이트)
+    const statusText = message.substring(7);
     responseData = {
       type: 'STATUS',
-      text: text,
+      text: statusText,
       timestamp: new Date().toISOString(),
       triggeredBy: clientIP
     };
     
-    console.log(`📍 ${store.name} 상태표시기 업데이트: "${text}" (${clientIP})`);
+    console.log(`📊 ${store.name} 상태 메시지: "${statusText}" (${clientIP})`);
   } else if (message.startsWith('MSG:')) {
     const text = message.substring(4);
     
