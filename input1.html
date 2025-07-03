@@ -82,6 +82,22 @@
       width: 100%;
     }
 
+    /* 3개 버튼을 1/3씩 나누는 스타일 */
+    .row-three-buttons {
+      display: flex;
+      gap: 1vw;
+      align-items: center;
+      width: 100%;
+      margin-top: 1vh;
+    }
+
+    .btn-third {
+      flex: 1;
+      font-size: 3.5vw !important;
+      padding: 1.5vh 0.5vw !important;
+      margin: 0 !important;
+    }
+
     .input-short {
       width: 22%;
       font-size: 4.5vw;
@@ -231,6 +247,12 @@
     <button class="btn-red" onclick="clearAllNumbers()">🗑️ 모든 호출번호 지우기</button>
 
     <div id="status">1루점 호출벨 시스템 준비됨</div>
+
+    <!-- 2개로 나눈 버튼들 (하단 상태표시기 변경) -->
+    <div class="row-three-buttons">
+      <button class="btn-orange btn-third" onclick="sendClosedStatusMessage()">⚠️ 재고소진</button>
+      <button class="btn-green btn-third" onclick="sendDefaultStatusMessage()">🔄 기본상태</button>
+    </div>
 
     <button class="btn-dark-red" onclick="sendClosedMessage()">🚫 재고 소진 마감</button>
     <button class="btn-green" onclick="sendWelcomeMessage()">🔄 기본 메시지로 복구</button>
@@ -599,6 +621,19 @@
       
       if (wsManager.send(`MSG:${text}`)) {
         setStatus(`💬 ${STORE_CODE} 메시지 전송: ${text}`);
+      }
+    }
+
+    // 하단 상태 표시기 메시지 변경 함수들
+    function sendClosedStatusMessage() {
+      if (wsManager.send(`STATUS:재고소진 마감입니다. 죄송합니다`)) {
+        setStatus(`⚠️ ${STORE_CODE} 재고소진 마감 상태로 변경됨`);
+      }
+    }
+
+    function sendDefaultStatusMessage() {
+      if (wsManager.send(`STATUS:김치말이국수 판매 중입니다`)) {
+        setStatus(`🔄 ${STORE_CODE} 기본 상태로 복구됨`);
       }
     }
 

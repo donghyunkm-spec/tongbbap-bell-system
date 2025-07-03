@@ -365,7 +365,7 @@
   <div id="callScreen" class="call-screen hidden">
     <div id="message">안녕하세요! 통빱 1루점입니다</div>
     <div id="numbers"></div>
-    <div class="status-indicator">김치말이국수 판매 중입니다</div>
+    <div id="statusIndicator" class="status-indicator">김치말이국수 판매 중입니다</div>
   </div>
 
   <!-- 전체화면 호출 -->
@@ -595,6 +595,15 @@
       }
     }
 
+    // 하단 상태 표시기 업데이트
+    function updateStatusIndicator(text) {
+      if (currentMode === 'CALL' && !isClosedForDay) {
+        const statusIndicator = document.getElementById('statusIndicator');
+        statusIndicator.innerText = text;
+        console.log(`📍 ${STORE_CODE} 하단 상태 표시기 업데이트: ${text}`);
+      }
+    }
+
     function switchToWaitingMode() {
       if (isClosedForDay) return;
       
@@ -694,6 +703,9 @@
             showServeUntilMessage(data.text, data.number);
           } else if (data.type === "MSG") {
             showMessage(data.text);
+          } else if (data.type === "STATUS") {
+            // STATUS 타입 처리 추가
+            updateStatusIndicator(data.text);
           }
         }
       };
