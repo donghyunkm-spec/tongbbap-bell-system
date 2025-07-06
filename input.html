@@ -116,6 +116,10 @@
       flex: 1;
     }
 
+    .btn-half {
+      flex: 1;
+    }
+
     #status {
       text-align: center;
       font-size: 5.5vw;
@@ -228,21 +232,28 @@
   <div id="currentNumbers">현재 호출된 번호: 없음</div>
 
   <div class="content-wrapper">
+    <!-- 호출 버튼을 두 개로 나누기 -->
     <div class="row">
       <input type="number" id="callNumber" class="input-short" placeholder="번호" min="1" max="700" />
-      <button class="btn-orange btn-flex btn-call" onclick="sendCall()">📢 호출</button>
+      <button class="btn-orange btn-half btn-call" onclick="sendCall()">📢 호출</button>
+      <button class="btn-blue btn-half btn-call" onclick="sendCallPlusOne()">📢 호출+1</button>
     </div>
 
     <div class="row">
       <input type="number" id="sequenceNumber" class="input-short" placeholder="끝번호" min="5" max="700" />
-      <button class="btn-orange btn-flex" onclick="sendSequenceCall()">📢 연속 5개 호출</button>
+      <button class="btn-orange btn-flex" onclick="sendSequenceCall()">📢 최근 5개 호출</button>
     </div>
 
     <button class="btn-red" onclick="clearAllNumbers()">🗑️ 모든 호출번호 지우기</button>
 
     <div id="status">3루점 호출벨 시스템 준비됨</div>
 
-    <!-- 2개로 나눈 버튼들 (하단 상태표시기 변경) -->
+    <div class="row">
+      <button class="btn-orange btn-flex" onclick="setWaitingMode()">📺 대기화면 시작</button>
+      <button class="btn-orange btn-flex" onclick="setCallMode()">📢 호출화면 시작</button>
+    </div>
+
+    <!-- 재고소진 관련 버튼들을 맨 밑으로 이동 -->
     <div class="row-three-buttons">
       <button class="btn-orange btn-third" onclick="sendClosedStatusMessage()">⚠️ 재고소진</button>
       <button class="btn-green btn-third" onclick="sendDefaultStatusMessage()">🔄 기본상태</button>
@@ -250,11 +261,6 @@
 
     <button class="btn-dark-red" onclick="sendFullClosedMessage()">🚫 재고소진 마감 (전체화면)</button>
     <button class="btn-green" onclick="sendWelcomeMessage()">🔄 기본 메시지로 복구 (전체화면 마감 해제)</button>
-
-    <div class="row">
-      <button class="btn-orange btn-flex" onclick="setWaitingMode()">📺 대기화면 시작</button>
-      <button class="btn-orange btn-flex" onclick="setCallMode()">📢 호출화면 시작</button>
-    </div>
   </div>
 
   <audio id="alert" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSqW3/LNeCQEJoO+8+KVQQAJT6/h3rNSEwc7iNb94HQ7BQFM1O+9czCZvpyMnf3mgJFyRBFh3+/8JQEBS9XvuiEEAQECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/" preload="auto"></audio>
@@ -272,7 +278,7 @@
         this.maxReconnectAttempts = 50; // 최대 재연결 시도 횟수
         this.reconnectInterval = 300000; // 재연결 간격 (5분)
         this.heartbeatTimer = null;
-        this.heartbeatInterval = 120000; // 2분마다 ping
+        this.heartbeatInterval = 300000; // 2분마다 ping
         this.lastPongTime = Date.now();
         this.isManualClose = false;
         
@@ -576,32 +582,75 @@
     function sendCall() {
       if (!checkDisplayAndNotify()) return;
       
-      const num = parseInt(document.getElementById("callNumber").value);
-      if (!isNaN(num) && num >= 1 && num <= 700) {
+      const callNumberInput = document.getElementById("callNumber");
+      const num = parseInt(callNumberInput.value);
+      
+      // 번호가 입력되지 않았을 때 마지막 번호 호출
+      if (isNaN(num) || callNumberInput.value.trim() === '') {
+        if (currentNumbers.length > 0) {
+          if (wsManager.send('CALL_LAST')) {
+            const lastNumber = currentNumbers[currentNumbers.length - 1];
+            setStatus(`📢 ${STORE_CODE} 마지막 번호 재호출: ${lastNumber}번`);
+            callNumberInput.value = '';
+          }
+        } else {
+          setStatus(`⚠️ 호출할 번호가 없습니다`);
+        }
+        return;
+      }
+      
+      // 정상적인 번호 호출
+      if (num >= 1 && num <= 700) {
         if (wsManager.send(`CALL:${num}`)) {
           setStatus(`📢 ${STORE_CODE} ${num}번 호출됨`);
-          document.getElementById("callNumber").value = '';
+          callNumberInput.value = '';
         }
+      } else {
+        setStatus(`❌ 1~700 사이의 번호를 입력해주세요`);
+      }
+    }
+
+    // 새로운 호출+1 기능
+    function sendCallPlusOne() {
+      if (!checkDisplayAndNotify()) return;
+      
+      if (currentNumbers.length === 0) {
+        setStatus(`⚠️ 현재 호출된 번호가 없어서 +1 호출이 불가능합니다`);
+        return;
+      }
+      
+      const lastNumber = Math.max(...currentNumbers);
+      const nextNumber = lastNumber + 1;
+      
+      if (nextNumber <= 700) {
+        if (wsManager.send(`CALL_PLUS_ONE:${nextNumber}`)) {
+          setStatus(`📢 ${STORE_CODE} 호출+1: ${nextNumber}번 호출됨`);
+        }
+      } else {
+        setStatus(`❌ 700번을 초과할 수 없습니다`);
       }
     }
 
     function sendSequenceCall() {
       if (!checkDisplayAndNotify()) return;
       
-      const endNum = parseInt(document.getElementById("sequenceNumber").value);
-      if (!isNaN(endNum) && endNum >= 5 && endNum <= 700) {
-        const startNum = endNum - 4;
-        const sequence = [];
-        for (let i = startNum; i <= endNum; i++) {
-          sequence.push(i);
+      const targetNum = parseInt(document.getElementById("sequenceNumber").value);
+      if (!isNaN(targetNum) && targetNum >= 5 && targetNum <= 700) {
+        // 새로운 로직: 입력한 번호 기준으로 최근 5개 번호 생성
+        const endNumber = targetNum;
+        const startNumber = Math.max(1, endNumber - 4); // 최소 1번부터
+        const sequenceNumbers = [];
+        
+        for (let i = startNumber; i <= endNumber; i++) {
+          sequenceNumbers.push(i);
         }
         
-        if (wsManager.send(`SEQUENCE:${sequence.join(',')}`)) {
-          setStatus(`📢 ${STORE_CODE} 연속 호출: ${sequence.join(', ')}`);
+        if (wsManager.send(`SEQUENCE_NEW:${sequenceNumbers.join(',')}`)) {
+          setStatus(`📢 ${STORE_CODE} ${sequenceNumbers.join(', ')}번 최근 5개 호출됨`);
           document.getElementById("sequenceNumber").value = '';
         }
       } else {
-        setStatus(`❌ 5 이상의 번호를 입력해주세요`);
+        setStatus(`❌ 5~700 사이의 번호를 입력해주세요`);
       }
     }
 

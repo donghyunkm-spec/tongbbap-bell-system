@@ -121,7 +121,7 @@ app.get('/status', (req, res) => {
   });
 });
 
-const HEARTBEAT_INTERVAL = 15000;
+const HEARTBEAT_INTERVAL = 300000;
 const CLIENT_TIMEOUT = 300000;
 
 function heartbeat() {
@@ -448,32 +448,51 @@ function processMessage(storeKey, message, clientIP) {
   } else if (message.startsWith('CALL:')) {
     const number = parseInt(message.split(':')[1]);
     if (!isNaN(number)) {
-      // 이미 목록에 있는 번호인지 확인
-      const isExistingNumber = store.currentNumbers.includes(number);
-      
-      if (!isExistingNumber) {
+      // 모든 매장에 기존 번호 재호출 시 순서 변경 로직 적용
+      const existingIndex = store.currentNumbers.indexOf(number);
+      if (existingIndex !== -1) {
+        // 기존 번호를 제거하고 맨 뒤에 추가
+        store.currentNumbers.splice(existingIndex, 1);
         store.currentNumbers.push(number);
-        
-        // 1루점은 10개까지 표시
-        if (storeKey === '1ru' && store.currentNumbers.length > 10) {
-          store.currentNumbers.shift();
-        } 
-        // 3루점은 기존대로 5개까지만 표시
-        else if (storeKey === '3ru' && store.currentNumbers.length > 5) {
+      } else {
+        // 새 번호 추가
+        store.currentNumbers.push(number);
+        // 3루점은 최대 5개, 1루점은 최대 10개
+        const maxNumbers = storeKey === '3ru' ? 5 : 10;
+        if (store.currentNumbers.length > maxNumbers) {
           store.currentNumbers.shift();
         }
       }
       
-      // 호출된 번호 정보를 추가로 전달
       responseData = {
         type: 'CALL',
         list: [...store.currentNumbers],
-        calledNumber: number, // 실제 호출된 번호 추가
+        calledNumber: number,
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
       
       console.log(`📢 ${store.name} 호출: ${number} (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
+    }
+  } else if (message.startsWith('CALL_PLUS_ONE:')) {
+    // 호출+1 기능 (모든 매장)
+    const number = parseInt(message.split(':')[1]);
+    if (!isNaN(number)) {
+      store.currentNumbers.push(number);
+      const maxNumbers = storeKey === '3ru' ? 5 : 10;
+      if (store.currentNumbers.length > maxNumbers) {
+        store.currentNumbers.shift();
+      }
+      
+      responseData = {
+        type: 'CALL',
+        list: [...store.currentNumbers],
+        calledNumber: number,
+        timestamp: new Date().toISOString(),
+        triggeredBy: clientIP
+      };
+      
+      console.log(`📢 ${store.name} 호출+1: ${number} (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
     }
   } else if (message.startsWith('CALL_LAST')) {
     // 빈 칸으로 호출 버튼 눌렀을 때 마지막 번호 호출
@@ -483,34 +502,48 @@ function processMessage(storeKey, message, clientIP) {
       responseData = {
         type: 'CALL',
         list: [...store.currentNumbers],
-        calledNumber: lastNumber, // 마지막 번호를 호출된 번호로 설정
+        calledNumber: lastNumber,
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
       
       console.log(`📢 ${store.name} 마지막 번호 재호출: ${lastNumber} (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
     }
-  } else if (message.startsWith('SEQUENCE:')) {
-    const numbersStr = message.substring(9);
+  } else if (message.startsWith('SEQUENCE_NEW:')) {
+    // 새로운 연속 호출 로직 (모든 매장)
+    const numbersStr = message.substring(13);
     const newNumbers = numbersStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
     
     if (newNumbers.length > 0) {
-      // 1루점은 최대 10개
-      if (storeKey === '1ru') {
-        store.currentNumbers = newNumbers.slice(0, 10);
-      }
-      // 3루점은 기존대로 최대 5개
-      else if (storeKey === '3ru') {
-        store.currentNumbers = newNumbers.slice(0, 5);
-      }
-      
-      // 연속 호출에서는 마지막 번호를 호출된 번호로 설정
+      const maxNumbers = storeKey === '3ru' ? 5 : 10;
+      store.currentNumbers = newNumbers.slice(0, maxNumbers);
       const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
       
       responseData = {
         type: 'CALL',
         list: [...store.currentNumbers],
-        calledNumber: lastNumber, // 연속 호출의 마지막 번호
+        calledNumber: lastNumber,
+        timestamp: new Date().toISOString(),
+        triggeredBy: clientIP
+      };
+      
+      console.log(`📢 ${store.name} 새로운 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
+    }
+  } else if (message.startsWith('SEQUENCE:')) {
+    // 기존 연속 호출 (호환성 유지)
+    const numbersStr = message.substring(9);
+    const newNumbers = numbersStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+    
+    if (newNumbers.length > 0) {
+      const maxNumbers = storeKey === '3ru' ? 5 : 10;
+      store.currentNumbers = newNumbers.slice(0, maxNumbers);
+      
+      const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
+      
+      responseData = {
+        type: 'CALL',
+        list: [...store.currentNumbers],
+        calledNumber: lastNumber,
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
@@ -518,7 +551,6 @@ function processMessage(storeKey, message, clientIP) {
       console.log(`📢 ${store.name} 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
     }
   } else if (message.startsWith('STATUS:')) {
-    // STATUS 메시지 처리 추가 (하단 상태 표시기 업데이트)
     const statusText = message.substring(7);
     responseData = {
       type: 'STATUS',
@@ -531,23 +563,19 @@ function processMessage(storeKey, message, clientIP) {
   } else if (message.startsWith('MSG:')) {
     const text = message.substring(4);
     
-    // "X번 손님까지 드립니다" 메시지 특별 처리 (1루점만)
     if (storeKey === '1ru') {
       const serveUntilMatch = text.match(/(\d+)번 손님까지 드립니다/);
       if (serveUntilMatch) {
         const targetNumber = parseInt(serveUntilMatch[1]);
         
-        // 해당 번호를 호출 목록에 추가
         if (!store.currentNumbers.includes(targetNumber)) {
           store.currentNumbers.push(targetNumber);
           
-          // 1루점은 10개까지 표시
           if (store.currentNumbers.length > 10) {
             store.currentNumbers.shift();
           }
         }
         
-        // 디스플레이에는 특별한 타입으로 전송
         responseData = {
           type: 'SERVE_UNTIL',
           text: text,
@@ -559,7 +587,6 @@ function processMessage(storeKey, message, clientIP) {
         
         console.log(`🍽️ ${store.name} ${targetNumber}번 손님까지 서빙: "${text}" (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
       } else {
-        // 일반 메시지 처리
         responseData = {
           type: 'MSG',
           text: text,
@@ -570,7 +597,6 @@ function processMessage(storeKey, message, clientIP) {
         console.log(`💬 ${store.name} 메시지: "${text}" (${clientIP})`);
       }
     } else {
-      // 3루점은 일반 메시지만 처리
       responseData = {
         type: 'MSG',
         text: text,
@@ -581,7 +607,6 @@ function processMessage(storeKey, message, clientIP) {
       console.log(`💬 ${store.name} 메시지: "${text}" (${clientIP})`);
     }
   } else if (message.startsWith('TIME:') && storeKey === '1ru') {
-    // TIME 메시지는 1루점만 처리
     const parts = message.split(':');
     if (parts.length >= 3) {
       const sam = parseInt(parts[1]);
