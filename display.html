@@ -711,12 +711,16 @@
             updateNumbers(data.list);
             
             // 수정: calledNumber 속성이 있으면 그 번호 사용, 없으면 마지막 번호 사용
-            if (data.calledNumber) {
-              showFullscreenCall(data.calledNumber);
-            } else if (data.list.length > 0) {
-              const latestNumber = data.list[data.list.length - 1];
-              showFullscreenCall(latestNumber);
-            }
+            if (data.calledNumbers && Array.isArray(data.calledNumbers)) {
+			  // 연속 번호 음성 재생
+			  showFullscreenCallSequence(data.calledNumbers);
+			} else if (data.calledNumber) {
+			  // 단일 번호 호출
+			  showFullscreenCall(data.calledNumber);
+			} else if (data.list.length > 0) {
+			  const latestNumber = data.list[data.list.length - 1];
+			  showFullscreenCall(latestNumber);
+			}
           } else if (data.type === "MSG") {
             showMessage(data.text);
           } else if (data.type === "STATUS") {

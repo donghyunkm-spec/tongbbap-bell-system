@@ -692,13 +692,17 @@
             updateNumbers(data.list);
             
             // 호출된 번호 정보가 있으면 그 번호로 전체화면 표시
-            if (data.calledNumber) {
-              showFullscreenCall(data.calledNumber);
-            } else if (data.list.length > 0) {
-              // 호출된 번호 정보가 없으면 마지막 번호로 표시 (기존 동작)
-              const latestNumber = data.list[data.list.length - 1];
-              showFullscreenCall(latestNumber);
-            }
+			// 수정 후 코드  
+			if (data.calledNumbers && Array.isArray(data.calledNumbers)) {
+			  // 연속 번호 음성 재생
+			  showFullscreenCallSequence(data.calledNumbers);
+			} else if (data.calledNumber) {
+			  // 단일 번호 호출
+			  showFullscreenCall(data.calledNumber);
+			} else if (data.list.length > 0) {
+			  const latestNumber = data.list[data.list.length - 1];
+			  showFullscreenCall(latestNumber);
+			}
           } else if (data.type === "SERVE_UNTIL") {
             showServeUntilMessage(data.text, data.number);
           } else if (data.type === "MSG") {

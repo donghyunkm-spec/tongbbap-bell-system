@@ -511,24 +511,25 @@ function processMessage(storeKey, message, clientIP) {
     }
   } else if (message.startsWith('SEQUENCE_NEW:')) {
     // 새로운 연속 호출 로직 (모든 매장)
-    const numbersStr = message.substring(13);
-    const newNumbers = numbersStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
-    
-    if (newNumbers.length > 0) {
-      const maxNumbers = storeKey === '3ru' ? 5 : 10;
-      store.currentNumbers = newNumbers.slice(0, maxNumbers);
-      const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
-      
-      responseData = {
-        type: 'CALL',
-        list: [...store.currentNumbers],
-        calledNumber: lastNumber,
-        timestamp: new Date().toISOString(),
-        triggeredBy: clientIP
-      };
-      
-      console.log(`📢 ${store.name} 새로운 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
-    }
+	  const numbersStr = message.substring(13);
+	  const newNumbers = numbersStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+	  
+	  if (newNumbers.length > 0) {
+		const maxNumbers = storeKey === '3ru' ? 5 : 10;
+		store.currentNumbers = newNumbers.slice(0, maxNumbers);
+		const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
+		
+		responseData = {
+		  type: 'CALL',
+		  list: [...store.currentNumbers],
+		  calledNumber: lastNumber,
+		  calledNumbers: [...store.currentNumbers], // 🔥 이 줄 추가
+		  timestamp: new Date().toISOString(),
+		  triggeredBy: clientIP
+		};
+		
+		console.log(`📢 ${store.name} 새로운 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
+	  }
   } else if (message.startsWith('SEQUENCE:')) {
     // 기존 연속 호출 (호환성 유지)
     const numbersStr = message.substring(9);
