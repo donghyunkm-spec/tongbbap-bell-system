@@ -569,6 +569,62 @@
 
       console.log(`📺 ${STORE_CODE} 전체화면 호출 표시: ${number}번`);
     }
+	
+	// 연속 번호 음성 재생 함수 (display1.html에 추가)
+	function showFullscreenCallSequence(numbers) {
+	  if (isClosedForDay || !Array.isArray(numbers) || numbers.length === 0) return;
+	  
+	  console.log(`📢 ${STORE_CODE} 연속 호출 음성 재생:`, numbers);
+	  
+	  let currentIndex = 0;
+	  
+	  function playNextNumber() {
+		if (currentIndex >= numbers.length) {
+		  console.log(`🎤 ${STORE_CODE} 연속 음성 재생 완료`);
+		  return;
+		}
+		
+		const number = numbers[currentIndex];
+		
+		// 전체화면 표시
+		const fullscreenDiv = document.getElementById('fullscreenCall');
+		const numberDiv = document.getElementById('fullscreenNumber');
+		const messageDiv = document.getElementById('fullscreenMessage');
+
+		numberDiv.textContent = number;
+		messageDiv.textContent = `${number}번 손님 주문 나왔습니다!`;
+		fullscreenDiv.classList.add('active');
+		
+		// 음성 재생
+		setTimeout(() => {
+		  speakNumber(number);
+		}, 500);
+		
+		currentIndex++;
+		
+		// 다음 번호 재생 (3초 간격)
+		setTimeout(() => {
+		  if (currentIndex < numbers.length) {
+			playNextNumber();
+		  } else {
+			// 모든 음성 재생 완료 후 전체화면 닫기
+			setTimeout(() => {
+			  fullscreenDiv.classList.remove('active');
+			  console.log(`📺 ${STORE_CODE} 연속 호출 전체화면 종료`);
+			}, 3000);
+		  }
+		}, 3000);
+	  }
+	  
+	  // 기존 타이머가 있으면 클리어
+	  if (fullscreenTimer) {
+		clearTimeout(fullscreenTimer);
+		fullscreenTimer = null;
+	  }
+	  
+	  // 연속 재생 시작
+	  playNextNumber();
+	}
 
     function showClosedScreen() {
       const closedDiv = document.getElementById('fullscreenClosed');
