@@ -173,6 +173,25 @@
       border: 3px solid #ddd; /* 더 굵은 테두리 */
     }
 
+    /* 재고소진 상태 안내 추가 */
+    #closedStatusNotice {
+      background-color: #dc3545;
+      color: white;
+      padding: 1vh 2vw;
+      border-radius: 6px;
+      margin: 0.5vh 0;
+      font-size: 4.5vw;
+      text-align: center;
+      font-weight: bold;
+      border: 3px solid #a71e2a;
+      display: none; /* 기본적으로 숨김 */
+      animation: pulse 2s infinite;
+    }
+
+    #closedStatusNotice.show {
+      display: block;
+    }
+
     .content-wrapper {
       flex: 1;
       display: flex;
@@ -230,6 +249,9 @@
   <div id="displayStatus" class="status-disconnected">디스플레이 상태 확인 중...</div>
 
   <div id="currentNumbers">현재 호출된 번호: 없음</div>
+  
+  <!-- 재고소진 상태 안내 추가 -->
+  <div id="closedStatusNotice">⚠️ 재고소진마감 문구 표시중 ⚠️</div>
 
   <div class="content-wrapper">
     <!-- 호출 버튼을 두 개로 나누기 -->
@@ -268,6 +290,9 @@
   <script>
     // 3루점 매장 코드
     const STORE_CODE = '3ru';
+
+    // 재고소진 상태 추적
+    let isClosedStatusActive = false;
 
     // 비밀번호 확인 함수
     function checkPassword() {
@@ -555,6 +580,7 @@
     const statusBox = document.getElementById("status");
     const displayStatusBox = document.getElementById("displayStatus");
     const currentNumbersBox = document.getElementById("currentNumbers");
+    const closedStatusNotice = document.getElementById("closedStatusNotice");
     let currentNumbers = [];
     let isDisplayConnected = false;
 
@@ -566,6 +592,15 @@
         currentNumbersBox.innerText = "현재 호출된 번호: 없음";
       } else {
         currentNumbersBox.innerText = `현재 호출된 번호: ${currentNumbers.join(', ')}`;
+      }
+    }
+
+    // 재고소진 상태 표시 업데이트
+    function updateClosedStatusDisplay() {
+      if (isClosedStatusActive) {
+        closedStatusNotice.classList.add('show');
+      } else {
+        closedStatusNotice.classList.remove('show');
       }
     }
 
@@ -688,6 +723,8 @@
       
       if (wsManager.send(`STATUS:재고소진 마감입니다. 죄송합니다`)) {
         setStatus(`⚠️ ${STORE_CODE} 재고소진 마감 상태로 변경됨`);
+        isClosedStatusActive = true;
+        updateClosedStatusDisplay();
       }
     }
 
@@ -699,6 +736,8 @@
       
       if (wsManager.send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`)) {
         setStatus(`🚫 ${STORE_CODE} 전체화면 재고소진 마감 메시지 전송됨`);
+        isClosedStatusActive = true;
+        updateClosedStatusDisplay();
       }
     }
 
@@ -706,12 +745,16 @@
     function sendDefaultStatusMessage() {
       if (wsManager.send(`STATUS:김치말이국수 판매 중입니다`)) {
         setStatus(`🔄 ${STORE_CODE} 기본 상태로 복구됨`);
+        isClosedStatusActive = false;
+        updateClosedStatusDisplay();
       }
     }
 
     function sendWelcomeMessage() {
       if (wsManager.send(`MSG:안녕하세요! 통빱 입니다`)) {
         setStatus(`🔄 ${STORE_CODE} 기본 메시지로 복구됨 (전체화면 마감 해제)`);
+        isClosedStatusActive = false;
+        updateClosedStatusDisplay();
       }
     }
 

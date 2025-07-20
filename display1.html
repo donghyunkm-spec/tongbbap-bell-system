@@ -255,6 +255,34 @@
       text-align: center;
     }
 
+    /* 재고소진 상태일 때 빨간색 배경 */
+    .status-indicator.closed {
+      background-color: #dc3545;
+    }
+
+    /* 재고소진 안내 문구 */
+    .status-notice {
+      position: fixed;
+      bottom: 15vh; /* 상태 표시기 위에 배치 */
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: fit-content;
+      background-color: rgba(220, 53, 69, 0.9);
+      color: white;
+      font-size: 4vw;
+      font-weight: 700;
+      padding: 1vh 3vw;
+      border-radius: 10px;
+      text-align: center;
+      z-index: 101;
+      display: none; /* 기본적으로 숨김 */
+    }
+
+    .status-notice.show {
+      display: block;
+    }
+
     @keyframes fullscreenPulse {
       0% {
         opacity: 0;
@@ -655,8 +683,20 @@
     function updateStatusIndicator(text) {
       if (currentMode === 'CALL' && !isClosedForDay) {
         const statusIndicator = document.getElementById('statusIndicator');
+        const statusNotice = document.getElementById('statusNotice');
+        
         statusIndicator.innerText = text;
-        console.log(`📍 ${STORE_CODE} 하단 상태 표시기 업데이트: ${text}`);
+        
+        // 재고소진 관련 메시지면 빨간색 배경과 안내 문구 표시
+        if (text.includes('재고소진') || text.includes('마감')) {
+          statusIndicator.classList.add('closed');
+          statusNotice.classList.add('show');
+          console.log(`📍 ${STORE_CODE} 재고소진 상태 표시기 업데이트: ${text}`);
+        } else {
+          statusIndicator.classList.remove('closed');
+          statusNotice.classList.remove('show');
+          console.log(`📍 ${STORE_CODE} 일반 상태 표시기 업데이트: ${text}`);
+        }
       }
     }
 
@@ -681,6 +721,14 @@
       currentMode = 'CALL';
       document.getElementById('waitingScreen').classList.remove('active');
       document.getElementById('callScreen').classList.remove('hidden');
+      
+      // 기본 상태로 초기화
+      const statusIndicator = document.getElementById('statusIndicator');
+      const statusNotice = document.getElementById('statusNotice');
+      statusIndicator.innerText = '김치말이국수 판매 중입니다';
+      statusIndicator.classList.remove('closed');
+      statusNotice.classList.remove('show');
+      
       console.log(`📢 ${STORE_CODE} 호출화면 모드로 전환`);
     }
 
