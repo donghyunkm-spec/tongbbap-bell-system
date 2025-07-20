@@ -260,17 +260,17 @@
     <div id="status">1루점 호출벨 시스템 준비됨</div>
 
     <div class="row">
-      <button class="btn-orange btn-flex" onclick="setWaitingMode()">📺 대기화면 시작</button>
+      <button class="btn-orange btn-flex" onclick="setWaitingModeWithPassword()">📺 대기화면 시작</button>
       <button class="btn-orange btn-flex" onclick="setCallMode()">📢 호출화면 시작</button>
     </div>
 
     <!-- 재고소진 관련 버튼들을 맨 밑으로 이동 -->
     <div class="row-three-buttons">
-      <button class="btn-orange btn-third" onclick="sendClosedStatusMessage()">⚠️ 재고소진</button>
+      <button class="btn-orange btn-third" onclick="sendClosedStatusMessageWithPassword()">⚠️ 재고소진</button>
       <button class="btn-green btn-third" onclick="sendDefaultStatusMessage()">🔄 기본상태</button>
     </div>
 
-    <button class="btn-dark-red" onclick="sendClosedMessage()">🚫 재고 소진 마감</button>
+    <button class="btn-dark-red" onclick="sendClosedMessageWithPassword()">🚫 재고 소진 마감</button>
     <button class="btn-green" onclick="sendWelcomeMessage()">🔄 기본 메시지로 복구</button>
   </div>
 
@@ -279,6 +279,17 @@
   <script>
     // 1루점 매장 코드
     const STORE_CODE = '1ru';
+
+    // 비밀번호 확인 함수
+    function checkPassword() {
+      const password = prompt("재고소진 마감을 위해 비밀번호를 입력하세요:");
+      if (password === "1234") {
+        return true;
+      } else if (password !== null) { // 취소를 누르지 않았을 때만 오류 메시지
+        alert("비밀번호가 틀렸습니다.");
+      }
+      return false;
+    }
 
     // WebSocket 관리 클래스 (1루점용)
     class WebSocketManager {
@@ -665,22 +676,33 @@
       }
     }
 
-    // 하단 상태 표시기 메시지 변경 함수들
-    function sendClosedStatusMessage() {
+    // 하단 상태 표시기 메시지 변경 함수들 (비밀번호 보안 추가)
+    function sendClosedStatusMessageWithPassword() {
+      if (!checkPassword()) {
+        setStatus(`❌ ${STORE_CODE} 재고소진 상태 변경 취소됨`);
+        return;
+      }
+      
       if (wsManager.send(`STATUS:재고소진 마감입니다. 죄송합니다`)) {
         setStatus(`⚠️ ${STORE_CODE} 재고소진 마감 상태로 변경됨`);
       }
     }
 
-    function sendDefaultStatusMessage() {
-      if (wsManager.send(`STATUS:김치말이국수 판매 중입니다`)) {
-        setStatus(`🔄 ${STORE_CODE} 기본 상태로 복구됨`);
+    function sendClosedMessageWithPassword() {
+      if (!checkPassword()) {
+        setStatus(`❌ ${STORE_CODE} 재고 소진 마감 취소됨`);
+        return;
+      }
+      
+      if (wsManager.send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`)) {
+        setStatus(`🚫 ${STORE_CODE} 재고 소진 마감 메시지 전송됨`);
       }
     }
 
-    function sendClosedMessage() {
-      if (wsManager.send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`)) {
-        setStatus(`🚫 ${STORE_CODE} 재고 소진 마감 메시지 전송됨`);
+    // 기존 함수들 (비밀번호 없음)
+    function sendDefaultStatusMessage() {
+      if (wsManager.send(`STATUS:김치말이국수 판매 중입니다`)) {
+        setStatus(`🔄 ${STORE_CODE} 기본 상태로 복구됨`);
       }
     }
 
@@ -690,11 +712,22 @@
       }
     }
 
-    function setWaitingMode() {
-      if (wsManager.send('MODE:WAITING')) {
-        setStatus(`📺 ${STORE_CODE} 대기화면 모드로 전환됨`);
-      }
-    }
+    function setWaitingModeWithPassword() {
+	  if (!checkPassword()) {
+		setStatus(`❌ ${STORE_CODE} 대기화면 전환 취소됨`);
+		return;
+	  }
+	  
+	  if (wsManager.send('MODE:WAITING')) {
+		setStatus(`📺 ${STORE_CODE} 대기화면 모드로 전환됨`);
+	  }
+	}
+
+	function setWaitingMode() {
+	  if (wsManager.send('MODE:WAITING')) {
+		setStatus(`📺 ${STORE_CODE} 대기화면 모드로 전환됨`);
+	  }
+	}
 
     function setCallMode() {
       if (wsManager.send('MODE:CALL')) {
