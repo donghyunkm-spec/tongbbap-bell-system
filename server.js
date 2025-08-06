@@ -561,6 +561,16 @@ function processMessage(storeKey, message, clientIP) {
     };
     
     console.log(`📊 ${store.name} 상태 메시지: "${statusText}" (${clientIP})`);
+  } else if (message.startsWith('AUDIO:')) {
+	  const audioType = message.substring(6);
+	  responseData = {
+		type: 'AUDIO',
+		audioType: audioType,
+		timestamp: new Date().toISOString(),
+		triggeredBy: clientIP
+	  };
+	  
+	  console.log(`🔊 ${store.name} 오디오 재생 요청: ${audioType} (${clientIP})`);
   } else if (message.startsWith('MSG:')) {
     const text = message.substring(4);
     

@@ -326,37 +326,28 @@
 
     // 음성 재생 기능
     function playAudio(type) {
-      let fileName = '';
-      let statusMessage = '';
+	  let statusMessage = '';
+	  
+	  switch(type) {
+		case 'monitor':
+		  statusMessage = '🖥️ 모니터 음성 전송';
+		  break;
+		case 'noodle':
+		  statusMessage = '🍜 국수 음성 전송';
+		  break;
+		case 'pork':
+		  statusMessage = '🥩 삼겹살 음성 전송';
+		  break;
+	  }
+	  
+	  // WebSocket으로 서버에 전송
+	  if (wsManager.send(`AUDIO:${type}`)) {
+		setStatus(statusMessage);
+		console.log(`📡 ${STORE_CODE} ${statusMessage}`);
+	  }
+	}
       
-      switch(type) {
-        case 'monitor':
-          fileName = 'monitor.mp3';
-          statusMessage = '🖥️ 모니터 음성 재생';
-          break;
-        case 'noodle':
-          fileName = 'noodle.mp3';
-          statusMessage = '🍜 국수 음성 재생';
-          break;
-        case 'pork':
-          fileName = 'pork.mp3';
-          statusMessage = '🥩 삼겹살 음성 재생';
-          break;
-      }
-      
-      if (fileName) {
-        const audio = new Audio(`voice/${fileName}`);
-        audio.volume = 1.0;
-        
-        audio.play().then(() => {
-          setStatus(statusMessage);
-          console.log(`🔊 ${STORE_CODE} ${statusMessage}`);
-        }).catch((error) => {
-          setStatus(`❌ ${statusMessage} 실패`);
-          console.error(`❌ ${STORE_CODE} 음성 재생 실패:`, error);
-        });
-      }
-    }
+    
 
     // 비밀번호 확인 함수
     function checkPassword() {

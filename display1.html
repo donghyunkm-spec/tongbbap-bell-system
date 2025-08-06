@@ -811,6 +811,8 @@
             showServeUntilMessage(data.text, data.number);
           } else if (data.type === "MSG") {
             showMessage(data.text);
+		  } else if (data.type === "AUDIO") {
+			playDisplayAudio(data.audioType);
           } else if (data.type === "STATUS") {
             // STATUS 타입 처리 추가
             updateStatusIndicator(data.text);
@@ -818,6 +820,38 @@
         }
       };
     }
+	// display.html에 새로운 함수 추가
+	async function playDisplayAudio(type) {
+	  if (!audioManager.hasUserInteraction) {
+		console.warn(`🔇 ${STORE_CODE} 사용자 상호작용 없음 - 음성 재생 불가`);
+		return false;
+	  }
+	  
+	  const audioFiles = {
+		'monitor': 'voice/monitor.mp3',
+		'noodle': 'voice/noodle.mp3', 
+		'pork': 'voice/pork.mp3'
+	  };
+	  
+	  if (audioFiles[type]) {
+		try {
+		  const audio = new Audio();
+		  audio.src = audioFiles[type];
+		  audio.volume = 1.0;
+		  
+		  console.log(`🎤 ${STORE_CODE} ${type} 음성 재생 시도: ${audioFiles[type]}`);
+		  
+		  await audio.play();
+		  console.log(`🔊 ${STORE_CODE} ${type} 음성 재생 성공`);
+		  return true;
+		} catch (error) {
+		  console.error(`🎤 ${STORE_CODE} ${type} 음성 재생 실패:`, error.message);
+		  return false;
+		}
+	  }
+	  
+	  return false;
+	}
 
     // "X번 손님까지 드립니다" 메시지 표시
     function showServeUntilMessage(message, number) {
