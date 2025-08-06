@@ -75,6 +75,21 @@
       padding: 1.5vh 0;
     }
 
+    .btn-purple {
+      background-color: #6f42c1;
+      color: white;
+    }
+
+    .btn-teal {
+      background-color: #20c997;
+      color: white;
+    }
+
+    .btn-indigo {
+      background-color: #6610f2;
+      color: white;
+    }
+
     /* 호출 버튼 크기 키우기 */
     .btn-call {
       font-size: 6vw !important;
@@ -200,13 +215,6 @@
       overflow-y: auto;
     }
 
-    #connectionInfo {
-      font-size: 3vw;
-      text-align: center;
-      color: #666;
-      margin-bottom: 0.5vh;
-    }
-
     .pulse {
       animation: pulse 1.5s infinite;
     }
@@ -236,6 +244,20 @@
     .offline-indicator.show {
       transform: translateY(0);
     }
+
+    /* 음성 재생 버튼 스타일 */
+    .audio-buttons {
+      display: flex;
+      gap: 1vw;
+      margin-bottom: 1vh;
+    }
+
+    .btn-audio {
+      flex: 1;
+      font-size: 4vw !important;
+      padding: 1.2vh 0.5vw !important;
+      margin: 0 !important;
+    }
   </style>
 </head>
 <body>
@@ -245,8 +267,9 @@
 
   <div class="header">🍖 통빱 3루점 호출벨 🍜</div>
   
-  <div id="connectionInfo">연결 상태 확인 중...</div>
   <div id="displayStatus" class="status-disconnected">디스플레이 상태 확인 중...</div>
+
+
 
   <div id="currentNumbers">현재 호출된 번호: 없음</div>
   
@@ -265,6 +288,13 @@
       <input type="number" id="sequenceNumber" class="input-short" placeholder="끝번호" min="5" max="700" />
       <button class="btn-orange btn-flex" onclick="sendSequenceCall()">📢 최근 5개 호출</button>
     </div>
+	
+	  <!-- 음성 재생 버튼들 -->
+  <div class="audio-buttons">
+    <button class="btn-purple btn-audio" onclick="playAudio('monitor')">🖥️ 모니터</button>
+    <button class="btn-teal btn-audio" onclick="playAudio('noodle')">🍜 국수</button>
+    <button class="btn-indigo btn-audio" onclick="playAudio('pork')">🥩 삼겹살</button>
+  </div>
 
     <button class="btn-red" onclick="clearAllNumbers()">🗑️ 모든 호출번호 지우기</button>
 
@@ -293,6 +323,40 @@
 
     // 재고소진 상태 추적
     let isClosedStatusActive = false;
+
+    // 음성 재생 기능
+    function playAudio(type) {
+      let fileName = '';
+      let statusMessage = '';
+      
+      switch(type) {
+        case 'monitor':
+          fileName = 'monitor.mp3';
+          statusMessage = '🖥️ 모니터 음성 재생';
+          break;
+        case 'noodle':
+          fileName = 'noodle.mp3';
+          statusMessage = '🍜 국수 음성 재생';
+          break;
+        case 'pork':
+          fileName = 'pork.mp3';
+          statusMessage = '🥩 삼겹살 음성 재생';
+          break;
+      }
+      
+      if (fileName) {
+        const audio = new Audio(`voice/${fileName}`);
+        audio.volume = 1.0;
+        
+        audio.play().then(() => {
+          setStatus(statusMessage);
+          console.log(`🔊 ${STORE_CODE} ${statusMessage}`);
+        }).catch((error) => {
+          setStatus(`❌ ${statusMessage} 실패`);
+          console.error(`❌ ${STORE_CODE} 음성 재생 실패:`, error);
+        });
+      }
+    }
 
     // 비밀번호 확인 함수
     function checkPassword() {
@@ -403,7 +467,6 @@
         
         console.log(`🔗 ${STORE_CODE} WebSocket 연결 시도 (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts}):`, wsUrl);
         
-        this.updateConnectionInfo('연결 중...', true);
         this.isManualClose = false;
         
         try {
@@ -420,7 +483,6 @@
           console.log(`✅ ${STORE_CODE} WebSocket 연결됨`);
           this.reconnectAttempts = 0;
           this.ws.send(`INPUT:${STORE_CODE}`); // 매장 코드 포함해서 전송
-          this.updateConnectionInfo('연결됨', false);
           this.hideOfflineIndicator();
           this.startHeartbeat();
           this.lastPongTime = Date.now();
@@ -468,7 +530,6 @@
           
           if (!this.isManualClose) {
             setStatus(`⚠️ ${STORE_CODE} 서버 연결 끊김`);
-            this.updateConnectionInfo('연결 끊김', false);
             this.scheduleReconnect();
           }
         };
@@ -477,7 +538,6 @@
       scheduleReconnect() {
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
           console.error(`❌ ${STORE_CODE} 최대 재연결 시도 횟수 초과 (${this.maxReconnectAttempts})`);
-          this.updateConnectionInfo('연결 실패 - 새로고침 필요', false);
           setStatus(`❌ ${STORE_CODE} 연결 실패 - 새로고침해주세요`);
           return;
         }
@@ -485,7 +545,6 @@
         // 항상 5분 간격으로 재연결
         const delay = this.reconnectInterval; // 300000ms (5분)
         
-        this.updateConnectionInfo(`${Math.ceil(delay/1000)}초 후 재연결...`, true);
         this.showOfflineIndicator();
         
         this.reconnectTimer = setTimeout(() => {
@@ -539,16 +598,6 @@
           setStatus(`⚠️ ${STORE_CODE} 연결 끊김 - 재연결 중...`);
           this.reconnect();
           return false;
-        }
-      }
-
-      updateConnectionInfo(text, isPulse) {
-        const info = document.getElementById('connectionInfo');
-        info.textContent = `🔗 ${STORE_CODE} ${text}`;
-        if (isPulse) {
-          info.classList.add('pulse');
-        } else {
-          info.classList.remove('pulse');
         }
       }
 
