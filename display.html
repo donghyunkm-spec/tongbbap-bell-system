@@ -441,6 +441,9 @@
         this.audioInstances = new Map();
         this.hasUserInteraction = false;
         this.maxCacheSize = 10; // 최대 10개 음성 파일 캐시
+		// 🔥 추가: 큐 시스템
+		this.audioQueue = [];
+		this.isPlaying = false;
       }
 
       // 오디오 인스턴스 생성 및 캐시
@@ -479,25 +482,55 @@
         return audio;
       }
 
-      // 음성 재생
-      async playVoice(number) {
-        if (!this.hasUserInteraction) {
-          console.warn("🔇 사용자 상호작용 없음 - 음성 재생 불가");
-          return false;
-        }
+      // 🔥 기존 playVoice를 addToQueue로 변경
+	  async addToQueue(number) {
+		if (!this.hasUserInteraction) {
+		  console.warn(`🔇 사용자 상호작용 없음 - 음성 재생 불가`);
+		  return false;
+		}
+		
+		this.audioQueue.push(number);
+		console.log(`📝 ${STORE_CODE} 음성 큐에 추가: ${number}번 (대기열: ${this.audioQueue.length})`);
+		
+		if (!this.isPlaying) {
+		  this.playNext();
+		}
+		return true;
+	  }
+	  
+	  // 🔥 새로 추가: 순차 재생 메서드
+	  async playNext() {
+		if (this.audioQueue.length === 0) {
+		  this.isPlaying = false;
+		  console.log(`✅ ${STORE_CODE} 음성 재생 완료`);
+		  return;
+		}
 
-        try {
-          const audio = this.createAudioInstance(number);
-          console.log(`🎤 ${STORE_CODE} 음성 재생 시도: ${number}번`);
-          
-          await audio.play();
-          console.log(`🎤 ${STORE_CODE} 음성 재생 성공: ${number}번`);
-          return true;
-        } catch (error) {
-          console.error(`🎤 ${STORE_CODE} 음성 재생 실패: ${number}번 -`, error.message);
-          return false;
-        }
-      }
+		this.isPlaying = true;
+		const number = this.audioQueue.shift();
+		
+		try {
+		  const audio = this.createAudioInstance(number);
+		  console.log(`🎤 ${STORE_CODE} 음성 재생 시작: ${number}번`);
+		  
+		  // 🔥 핵심: 재생 완료되면 다음 음성 자동 재생
+		  audio.addEventListener('ended', () => {
+			console.log(`🎵 ${STORE_CODE} 음성 재생 완료: ${number}번`);
+			setTimeout(() => this.playNext(), 100); // 약간의 지연 후 다음 재생
+		  });
+
+		  // 에러 시에도 다음 음성 재생
+		  audio.addEventListener('error', () => {
+			console.error(`❌ ${STORE_CODE} 음성 재생 실패: ${number}번`);
+			setTimeout(() => this.playNext(), 100);
+		  });
+		  
+		  await audio.play();
+		} catch (error) {
+		  console.error(`🎤 ${STORE_CODE} 음성 재생 실패: ${number}번 -`, error.message);
+		  setTimeout(() => this.playNext(), 100);
+		}
+	  }
 
       // 모든 오디오 정리
       cleanup() {
@@ -557,7 +590,7 @@
 
     // 숫자 음성 재생 (개선된 버전)
     async function speakNumber(number) {
-      const success = await audioManager.playVoice(number);
+      const success = await audioManager.addToQueue(number);
       if (!success) {
         console.warn(`⚠️ ${STORE_CODE} 음성 재생 실패: ${number}번`);
       }
