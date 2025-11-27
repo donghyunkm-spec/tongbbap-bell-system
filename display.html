@@ -413,16 +413,17 @@
       }
 
       createAudioInstance(number) {
-        const cacheKey = `voice_${number}`;
-        if (this.audioInstances.has(cacheKey)) {
-          const cached = this.audioInstances.get(cacheKey);
-          cached.currentTime = 0;
-          return cached;
-        }
+      const cacheKey = 'dingdong';  // ← 변경
+      if (this.audioInstances.has(cacheKey)) {
+        const cached = this.audioInstances.get(cacheKey);
+        cached.currentTime = 0;
+        return cached;
+      }
 
-        const audio = new Audio();
-        audio.src = `voice/${number}번.mp3`;
-        audio.preload = 'metadata';
+      const audio = new Audio();
+      audio.src = 'dingdong.mp4';  // ← 변경
+      audio.preload = 'auto';  // ← 그대로 유지해도 됨
+
         audio.volume = 1.0;
 
         audio.addEventListener('error', (e) => {
@@ -500,6 +501,14 @@
 
     const audioManager = new SmartTVAudioManager();
 
+    // 🔥 띵동 소리 미리 로드
+    document.addEventListener('DOMContentLoaded', () => {
+      const dingdong = new Audio();
+      dingdong.src = 'dingdong.mp4';
+      dingdong.preload = 'auto';
+      dingdong.load();
+    });
+
     function initializeAudioGate() {
       const audioGate = document.getElementById('audioGate');
       const startBtn = document.getElementById('startAudioBtn');
@@ -549,7 +558,7 @@
       messageDiv.textContent = `${number}번 손님 주문 나왔습니다!`;
       fullscreenDiv.classList.add('active');
 
-      setTimeout(() => speakNumber(number), 800);
+      setTimeout(() => speakNumber(number), 100);
 
       if (fullscreenTimer) clearTimeout(fullscreenTimer);
 
@@ -577,7 +586,7 @@
         messageDiv.textContent = `${number}번 손님 주문 나왔습니다!`;
         fullscreenDiv.classList.add('active');
 
-        setTimeout(() => speakNumber(number), 500);
+        setTimeout(() => speakNumber(number), 100);
 
         currentIndex++;
 
