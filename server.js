@@ -14,14 +14,16 @@ const stores = {
     inputClients: new Map(),
     currentNumbers: [],
     currentDisplayMode: 'WAITING',
-    name: '3루점'
+    name: '3루점',
+    soldOutMenus: []
   },
   '1ru': {
     displayClients: new Map(),
     inputClients: new Map(),
     currentNumbers: [],
     currentDisplayMode: 'WAITING',
-    name: '1루점'
+    name: '1루점',
+    soldOutMenus: []
   }
 };
 
@@ -62,7 +64,7 @@ function getClientInfo(ws) {
 app.get('/health', (req, res) => {
   const now = new Date();
   const result = {};
-  
+
   for (const storeKey in stores) {
     const store = stores[storeKey];
     const displayStats = Array.from(store.displayClients.values()).map(client => ({
@@ -71,7 +73,7 @@ app.get('/health', (req, res) => {
       lastPing: Math.floor((now - client.lastPing) / 1000) + 's ago',
       alive: client.isAlive
     }));
-    
+
     const inputStats = Array.from(store.inputClients.values()).map(client => ({
       ip: client.ip,
       connected: Math.floor((now - client.connectTime) / 1000) + 's',
@@ -93,7 +95,7 @@ app.get('/health', (req, res) => {
     };
   }
 
-  res.json({ 
+  res.json({
     status: 'ok',
     timestamp: now.toISOString(),
     stores: result
@@ -126,11 +128,11 @@ const CLIENT_TIMEOUT = 300000;
 
 function heartbeat() {
   console.log(`💓 하트비트 체크 시작`);
-  
+
   for (const storeKey in stores) {
     const store = stores[storeKey];
     console.log(`   ${store.name} - Display: ${store.displayClients.size}, Input: ${store.inputClients.size}`);
-    
+
     const deadDisplays = [];
     store.displayClients.forEach((clientInfo, ws) => {
       if (ws.readyState === WebSocket.OPEN) {
@@ -189,7 +191,7 @@ const heartbeatTimer = setInterval(heartbeat, HEARTBEAT_INTERVAL);
 
 function cleanupOldConnections() {
   const now = Date.now();
-  
+
   for (const storeKey in stores) {
     const store = stores[storeKey];
     const oldDisplays = [];
@@ -277,29 +279,29 @@ wss.on('connection', (ws, req) => {
           }
           return;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // 매장 구분해서 디스플레이/입력 클라이언트 등록
     if (message === 'DISPLAY' || message === 'DISPLAY:3ru' || message === 'DISPLAY:1ru') {
       let storeKey = '3ru'; // 기본값
-      
+
       if (message === 'DISPLAY:1ru') {
         storeKey = '1ru';
       } else if (message === 'DISPLAY:3ru') {
         storeKey = '3ru';
       }
-      
+
       const store = stores[storeKey];
       const clientInfo = addClient(storeKey, store.displayClients, ws, req);
       console.log(`📺 ${store.name} 디스플레이 등록: ${clientIP} (총 ${store.displayClients.size}개)`);
-      
-      notifyInputClients(storeKey, { 
-        type: 'DISPLAY_ON', 
+
+      notifyInputClients(storeKey, {
+        type: 'DISPLAY_ON',
         count: store.displayClients.size,
         timestamp: new Date().toISOString()
       });
-      
+
       try {
         ws.send(JSON.stringify({
           type: 'MODE',
@@ -309,7 +311,7 @@ wss.on('connection', (ws, req) => {
       } catch (error) {
         console.error(`❌ ${store.name} 모드 전송 실패:`, error.message);
       }
-      
+
       if (store.currentDisplayMode === 'CALL' && store.currentNumbers.length > 0) {
         try {
           ws.send(JSON.stringify({
@@ -321,46 +323,66 @@ wss.on('connection', (ws, req) => {
           console.error(`❌ ${store.name} 번호 전송 실패:`, error.message);
         }
       }
-      
+
+      if (store.soldOutMenus && store.soldOutMenus.length > 0) {
+        try {
+          ws.send(JSON.stringify({
+            type: 'MENU_UPDATE',
+            soldOutMenus: [...store.soldOutMenus],
+            timestamp: new Date().toISOString()
+          }));
+        } catch (error) {
+          console.error(`❌ ${store.name} 메뉴 품절 상태 전송 실패:`, error.message);
+        }
+      }
+
     } else if (message === 'INPUT' || message === 'INPUT:3ru' || message === 'INPUT:1ru') {
       let storeKey = '3ru'; // 기본값
-      
+
       if (message === 'INPUT:1ru') {
         storeKey = '1ru';
       } else if (message === 'INPUT:3ru') {
         storeKey = '3ru';
       }
-      
+
       const store = stores[storeKey];
       const clientInfo = addClient(storeKey, store.inputClients, ws, req);
       console.log(`📱 ${store.name} 입력 클라이언트 등록: ${clientIP} (총 ${store.inputClients.size}개)`);
-      
+
       try {
         if (store.displayClients.size > 0) {
-          ws.send(JSON.stringify({ 
-            type: 'DISPLAY_ON', 
+          ws.send(JSON.stringify({
+            type: 'DISPLAY_ON',
             count: store.displayClients.size,
             timestamp: new Date().toISOString()
           }));
         } else {
-          ws.send(JSON.stringify({ 
-            type: 'DISPLAY_OFF', 
+          ws.send(JSON.stringify({
+            type: 'DISPLAY_OFF',
             reason: 'no_displays',
             timestamp: new Date().toISOString()
           }));
         }
-        
+
         if (store.currentNumbers.length > 0) {
-          ws.send(JSON.stringify({ 
-            type: 'CALL', 
+          ws.send(JSON.stringify({
+            type: 'CALL',
             list: [...store.currentNumbers],
+            timestamp: new Date().toISOString()
+          }));
+        }
+
+        if (store.soldOutMenus && store.soldOutMenus.length > 0) {
+          ws.send(JSON.stringify({
+            type: 'MENU_UPDATE',
+            soldOutMenus: [...store.soldOutMenus],
             timestamp: new Date().toISOString()
           }));
         }
       } catch (error) {
         console.error(`❌ ${store.name} 입력 상태 전송 실패:`, error.message);
       }
-      
+
     } else {
       // 메시지 처리 시 클라이언트가 어느 매장인지 확인
       const clientInfo = getClientInfo(ws);
@@ -376,20 +398,20 @@ wss.on('connection', (ws, req) => {
       const store = stores[clientInfo.store];
       const wasDisplay = removeClient(store.displayClients, ws);
       const wasInput = removeClient(store.inputClients, ws);
-      
+
       console.log(`❌ ${store.name} 클라이언트 해제: ${clientIP}`);
-      
+
       if (wasDisplay) {
         console.log(`📺 ${store.name} 디스플레이 해제 - 남은 개수: ${store.displayClients.size}`);
         if (store.displayClients.size === 0) {
-          notifyInputClients(clientInfo.store, { 
-            type: 'DISPLAY_OFF', 
+          notifyInputClients(clientInfo.store, {
+            type: 'DISPLAY_OFF',
             reason: 'disconnected',
             timestamp: new Date().toISOString()
           });
         }
       }
-      
+
       if (wasInput) {
         console.log(`📱 ${store.name} 입력 클라이언트 해제 - 남은 개수: ${store.inputClients.size}`);
       }
@@ -431,9 +453,9 @@ function processMessage(storeKey, message, clientIP) {
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
-      
+
       console.log(`🔄 ${store.name} 모드 변경: ${mode} (${clientIP})`);
-      
+
       if (mode === 'CALL' && store.currentNumbers.length > 0) {
         setTimeout(() => {
           const callData = {
@@ -457,13 +479,13 @@ function processMessage(storeKey, message, clientIP) {
       } else {
         // 새 번호 추가
         store.currentNumbers.push(number);
-        // 3루점은 최대 5개, 1루점은 최대 10개
-        const maxNumbers = storeKey === '3ru' ? 5 : 10;
+        // 모든 매장 최대 10개
+        const maxNumbers = 10;
         if (store.currentNumbers.length > maxNumbers) {
           store.currentNumbers.shift();
         }
       }
-      
+
       responseData = {
         type: 'CALL',
         list: [...store.currentNumbers],
@@ -471,7 +493,7 @@ function processMessage(storeKey, message, clientIP) {
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
-      
+
       console.log(`📢 ${store.name} 호출: ${number} (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
     }
   } else if (message.startsWith('CALL_PLUS_ONE:')) {
@@ -479,11 +501,11 @@ function processMessage(storeKey, message, clientIP) {
     const number = parseInt(message.split(':')[1]);
     if (!isNaN(number)) {
       store.currentNumbers.push(number);
-      const maxNumbers = storeKey === '3ru' ? 5 : 10;
+      const maxNumbers = 10;
       if (store.currentNumbers.length > maxNumbers) {
         store.currentNumbers.shift();
       }
-      
+
       responseData = {
         type: 'CALL',
         list: [...store.currentNumbers],
@@ -491,14 +513,14 @@ function processMessage(storeKey, message, clientIP) {
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
-      
+
       console.log(`📢 ${store.name} 호출+1: ${number} (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
     }
   } else if (message.startsWith('CALL_LAST')) {
     // 빈 칸으로 호출 버튼 눌렀을 때 마지막 번호 호출
     if (store.currentNumbers.length > 0) {
       const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
-      
+
       responseData = {
         type: 'CALL',
         list: [...store.currentNumbers],
@@ -506,41 +528,41 @@ function processMessage(storeKey, message, clientIP) {
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
-      
+
       console.log(`📢 ${store.name} 마지막 번호 재호출: ${lastNumber} (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
     }
   } else if (message.startsWith('SEQUENCE_NEW:')) {
     // 새로운 연속 호출 로직 (모든 매장)
-	  const numbersStr = message.substring(13);
-	  const newNumbers = numbersStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
-	  
-	  if (newNumbers.length > 0) {
-		const maxNumbers = storeKey === '3ru' ? 5 : 10;
-		store.currentNumbers = newNumbers.slice(0, maxNumbers);
-		const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
-		
-		responseData = {
-		  type: 'CALL',
-		  list: [...store.currentNumbers],
-		  calledNumber: lastNumber,
-		  calledNumbers: [...store.currentNumbers], // 🔥 이 줄 추가
-		  timestamp: new Date().toISOString(),
-		  triggeredBy: clientIP
-		};
-		
-		console.log(`📢 ${store.name} 새로운 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
-	  }
+    const numbersStr = message.substring(13);
+    const newNumbers = numbersStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+
+    if (newNumbers.length > 0) {
+      const maxNumbers = 10;
+      store.currentNumbers = newNumbers.slice(0, maxNumbers);
+      const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
+
+      responseData = {
+        type: 'CALL',
+        list: [...store.currentNumbers],
+        calledNumber: lastNumber,
+        calledNumbers: [...store.currentNumbers], // 🔥 이 줄 추가
+        timestamp: new Date().toISOString(),
+        triggeredBy: clientIP
+      };
+
+      console.log(`📢 ${store.name} 새로운 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
+    }
   } else if (message.startsWith('SEQUENCE:')) {
     // 기존 연속 호출 (호환성 유지)
     const numbersStr = message.substring(9);
     const newNumbers = numbersStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
-    
+
     if (newNumbers.length > 0) {
-      const maxNumbers = storeKey === '3ru' ? 5 : 10;
+      const maxNumbers = 10;
       store.currentNumbers = newNumbers.slice(0, maxNumbers);
-      
+
       const lastNumber = store.currentNumbers[store.currentNumbers.length - 1];
-      
+
       responseData = {
         type: 'CALL',
         list: [...store.currentNumbers],
@@ -548,7 +570,7 @@ function processMessage(storeKey, message, clientIP) {
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
-      
+
       console.log(`📢 ${store.name} 연속 호출: [${newNumbers.join(', ')}] (${clientIP})`);
     }
   } else if (message.startsWith('STATUS:')) {
@@ -559,34 +581,34 @@ function processMessage(storeKey, message, clientIP) {
       timestamp: new Date().toISOString(),
       triggeredBy: clientIP
     };
-    
+
     console.log(`📊 ${store.name} 상태 메시지: "${statusText}" (${clientIP})`);
   } else if (message.startsWith('AUDIO:')) {
-	  const audioType = message.substring(6);
-	  responseData = {
-		type: 'AUDIO',
-		audioType: audioType,
-		timestamp: new Date().toISOString(),
-		triggeredBy: clientIP
-	  };
-	  
-	  console.log(`🔊 ${store.name} 오디오 재생 요청: ${audioType} (${clientIP})`);
+    const audioType = message.substring(6);
+    responseData = {
+      type: 'AUDIO',
+      audioType: audioType,
+      timestamp: new Date().toISOString(),
+      triggeredBy: clientIP
+    };
+
+    console.log(`🔊 ${store.name} 오디오 재생 요청: ${audioType} (${clientIP})`);
   } else if (message.startsWith('MSG:')) {
     const text = message.substring(4);
-    
+
     if (storeKey === '1ru') {
       const serveUntilMatch = text.match(/(\d+)번 손님까지 드립니다/);
       if (serveUntilMatch) {
         const targetNumber = parseInt(serveUntilMatch[1]);
-        
+
         if (!store.currentNumbers.includes(targetNumber)) {
           store.currentNumbers.push(targetNumber);
-          
+
           if (store.currentNumbers.length > 10) {
             store.currentNumbers.shift();
           }
         }
-        
+
         responseData = {
           type: 'SERVE_UNTIL',
           text: text,
@@ -595,7 +617,7 @@ function processMessage(storeKey, message, clientIP) {
           timestamp: new Date().toISOString(),
           triggeredBy: clientIP
         };
-        
+
         console.log(`🍽️ ${store.name} ${targetNumber}번 손님까지 서빙: "${text}" (${clientIP}) - 목록: [${store.currentNumbers.join(', ')}]`);
       } else {
         responseData = {
@@ -604,7 +626,7 @@ function processMessage(storeKey, message, clientIP) {
           timestamp: new Date().toISOString(),
           triggeredBy: clientIP
         };
-        
+
         console.log(`💬 ${store.name} 메시지: "${text}" (${clientIP})`);
       }
     } else {
@@ -614,7 +636,7 @@ function processMessage(storeKey, message, clientIP) {
         timestamp: new Date().toISOString(),
         triggeredBy: clientIP
       };
-      
+
       console.log(`💬 ${store.name} 메시지: "${text}" (${clientIP})`);
     }
   } else if (message.startsWith('TIME:') && storeKey === '1ru') {
@@ -630,7 +652,7 @@ function processMessage(storeKey, message, clientIP) {
           timestamp: new Date().toISOString(),
           triggeredBy: clientIP
         };
-        
+
         console.log(`⏱ ${store.name} 시간 업데이트: 삼겹살 ${sam}분, 국수 ${noodle}분 (${clientIP})`);
       }
     }
@@ -642,20 +664,45 @@ function processMessage(storeKey, message, clientIP) {
       timestamp: new Date().toISOString(),
       triggeredBy: clientIP
     };
-    
-    console.log(`🗑️ ${store.name} 모든 번호 지움 (${clientIP})`);
+    console.log(`🧹 ${store.name} 호출 목록 초기화 (${clientIP})`);
+  } else if (message.startsWith('TOGGLE_MENU:')) {
+    const menuName = message.substring(12);
+    if (menuName) {
+      if (!store.soldOutMenus) store.soldOutMenus = [];
+      const index = store.soldOutMenus.indexOf(menuName);
+      if (index === -1) {
+        store.soldOutMenus.push(menuName);
+      } else {
+        store.soldOutMenus.splice(index, 1);
+      }
+      responseData = {
+        type: 'MENU_UPDATE',
+        soldOutMenus: [...store.soldOutMenus],
+        timestamp: new Date().toISOString(),
+        triggeredBy: clientIP
+      };
+      console.log(`🚫 ${store.name} 메뉴 품절 변경: ${menuName} (현재 품절: ${store.soldOutMenus.join(', ')})`);
+    }
+  } else if (message.startsWith('MSG_DISPLAY:')) {
+    const parts = message.substring(12).split('|');
+    const text = parts[0];
+    const duration = parts.length > 1 ? parseInt(parts[1]) : 10000; // Default 10 seconds
+    responseData = {
+      type: 'MSG_DISPLAY',
+      text: text,
+      duration: duration,
+      timestamp: new Date().toISOString(),
+      triggeredBy: clientIP
+    };
+    console.log(`📝 ${store.name} 텍스트 출력: "${text}" (${duration}ms)`);
   }
 
   if (responseData) {
-    const sent = broadcastToDisplays(storeKey, JSON.stringify(responseData));
-    console.log(`📡 ${store.name} ${sent}개 디스플레이에 브로드캐스트`);
-    
-    if (responseData.type === 'CALL' || responseData.type === 'SERVE_UNTIL') {
-      notifyInputClients(storeKey, {
-        type: 'CALL',
-        list: [...store.currentNumbers],
-        timestamp: responseData.timestamp
-      });
+    broadcastToDisplays(storeKey, JSON.stringify(responseData));
+
+    // 입력 클라이언트에게도 상태 업데이트 전송 (동기화)
+    if (responseData.type === 'CALL' || responseData.type === 'SERVE_UNTIL' || responseData.type === 'MENU_UPDATE') {
+      notifyInputClients(storeKey, responseData);
     }
   }
 }
@@ -664,7 +711,7 @@ function broadcastToDisplays(storeKey, message) {
   const store = stores[storeKey];
   let sentCount = 0;
   const deadClients = [];
-  
+
   store.displayClients.forEach((clientInfo, ws) => {
     if (ws.readyState === WebSocket.OPEN) {
       try {
@@ -678,7 +725,7 @@ function broadcastToDisplays(storeKey, message) {
       deadClients.push(ws);
     }
   });
-  
+
   deadClients.forEach(ws => removeClient(store.displayClients, ws));
   return sentCount;
 }
@@ -688,7 +735,7 @@ function notifyInputClients(storeKey, data) {
   const message = JSON.stringify(data);
   let sentCount = 0;
   const deadClients = [];
-  
+
   store.inputClients.forEach((clientInfo, ws) => {
     if (ws.readyState === WebSocket.OPEN) {
       try {
@@ -702,9 +749,9 @@ function notifyInputClients(storeKey, data) {
       deadClients.push(ws);
     }
   });
-  
+
   deadClients.forEach(ws => removeClient(store.inputClients, ws));
-  
+
   if (sentCount > 0) {
     console.log(`📱 ${store.name} ${sentCount}개 입력 클라이언트에 알림`);
   }
@@ -719,25 +766,25 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`💡 외부 접속: http://[서버IP]:${PORT}`);
   console.log(`📊 상태 확인: http://localhost:${PORT}/health`);
   console.log(`⏰ ${new Date().toLocaleString()}`);
-  
+
   process.on('SIGTERM', gracefulShutdown);
   process.on('SIGINT', gracefulShutdown);
-  
+
   function gracefulShutdown(signal) {
     console.log(`🛑 ${signal} 신호 받음 - 정리 시작`);
-    
+
     clearInterval(heartbeatTimer);
     clearInterval(cleanupTimer);
-    
+
     const shutdownMessage = JSON.stringify({
       type: 'SERVER_SHUTDOWN',
       message: '서버가 곧 종료됩니다',
       timestamp: new Date().toISOString()
     });
-    
+
     for (const storeKey in stores) {
       const store = stores[storeKey];
-      
+
       store.displayClients.forEach((clientInfo, ws) => {
         if (ws.readyState === WebSocket.OPEN) {
           try {
@@ -748,7 +795,7 @@ server.listen(PORT, '0.0.0.0', () => {
           }
         }
       });
-      
+
       store.inputClients.forEach((clientInfo, ws) => {
         if (ws.readyState === WebSocket.OPEN) {
           try {
@@ -760,16 +807,16 @@ server.listen(PORT, '0.0.0.0', () => {
         }
       });
     }
-    
+
     wss.close(() => {
       console.log('🔌 WebSocket 서버 종료됨');
-      
+
       server.close(() => {
         console.log('✅ HTTP 서버 정상 종료됨');
         process.exit(0);
       });
     });
-    
+
     setTimeout(() => {
       console.log('⚡ 강제 종료');
       process.exit(1);

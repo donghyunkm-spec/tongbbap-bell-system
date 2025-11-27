@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <title>통빱 1루점 디스플레이</title>
@@ -79,45 +80,57 @@
       display: none;
     }
 
+    /* 품절 메뉴 표시 영역 (상단) */
     #message {
-      font-size: 5vw;
-      font-weight: 700;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 2.5vh 3vw;
-      border-radius: 25px;
-      margin: 3vh auto 0; /* 단순화된 마진 */
-      min-height: 7vh;
-      display: inline-block; /* inline-block으로 변경 */
-      text-align: center;
-      max-width: 90%; /* 최대 너비 제한 */
+      display: none;
+      width: 100%;
+      padding: 2vh 2vw;
+      background: rgba(220, 53, 69, 0.9);
       z-index: 1000;
+      justify-content: center;
+      gap: 2vw;
+      flex-wrap: wrap;
+      font-size: 4vw;
+      font-weight: 900;
+      color: white;
+      margin-top: 2vh;
+    }
+
+    #message.show {
+      display: flex;
+    }
+
+    .sold-out-item {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 1vh 2vw;
+      border-radius: 12px;
+      border: 2px solid white;
     }
 
     #numbers {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 6vh;
+      margin-top: 4vh;
       gap: 2vh;
       min-height: 28vh;
       perspective: 1000px;
     }
-    
+
     .number-row {
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 1.5vw;
       width: 100%;
-      flex-wrap: nowrap; /* 줄바꿈 방지 */
+      flex-wrap: nowrap;
     }
 
     .numBox {
       background: #ffeb3b;
       color: #1a1a1a;
       font-family: 'Noto Sans KR', sans-serif;
-      font-size: 8vw;
+      font-size: 10vw;
       font-weight: 900;
       padding: 2vh 2vw;
       border-radius: 25px;
@@ -126,37 +139,34 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
+      flex-shrink: 1;  /* 0 → 1로 변경! */
       position: relative;
+      transition: font-size 0.3s ease;
     }
 
-    .numBox.small {
+    .numBox.shrink {
       font-size: 7vw;
-      min-width: 8vw;
-      min-height: 11vh;
-      padding: 1.5vh 1.5vw;
     }
 
-    .numBox.very-small {
-      font-size: 6vw;
-      min-width: 7vw;
-      min-height: 10vh;
-      padding: 1vh 1vw;
-    }
+    /* 🔥 줄당 숫자 개수별 크기 자동 조절 */
+    .numBox.row-count-1 { font-size: 12vw; min-width: 12vw; }
+    .numBox.row-count-2 { font-size: 11vw; min-width: 11vw; }
+    .numBox.row-count-3 { font-size: 10vw; min-width: 10vw; }
+    .numBox.row-count-4 { font-size: 9vw; min-width: 9vw; }
+    .numBox.row-count-5 { font-size: 8vw; min-width: 8vw; }
+
+    .numBox.shrink.row-count-2 { font-size: 7.5vw; }
+    .numBox.shrink.row-count-3 { font-size: 7vw; }
+    .numBox.shrink.row-count-4 { font-size: 6.5vw; }
+    .numBox.shrink.row-count-5 { font-size: 6vw; }
 
     .numBox.new-number {
       animation: newNumberEntry 0.6s ease-out;
     }
 
     @keyframes newNumberEntry {
-      0% {
-        transform: scale(0.8);
-        opacity: 0;
-      }
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     .fullscreen-call {
@@ -182,7 +192,7 @@
       font-size: 50vw;
       font-weight: 900;
       color: white;
-      text-shadow: 0 0 50px rgba(0,0,0,0.3);
+      text-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
       animation: numberBounce 0.6s ease-out;
     }
 
@@ -191,7 +201,7 @@
       font-weight: 700;
       color: white;
       margin-top: 2vh;
-      text-shadow: 0 0 30px rgba(0,0,0,0.3);
+      text-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
       animation: messageSlideUp 0.8s ease-out 0.2s both;
     }
 
@@ -218,7 +228,7 @@
       font-size: 12vw;
       font-weight: 900;
       color: white;
-      text-shadow: 0 0 30px rgba(0,0,0,0.3);
+      text-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
       animation: messageSlideUp 0.8s ease-out 0.2s both;
       margin-bottom: 4vh;
       text-align: center;
@@ -228,20 +238,21 @@
       font-size: 6vw;
       font-weight: 700;
       color: white;
-      text-shadow: 0 0 30px rgba(0,0,0,0.3);
+      text-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
       animation: messageSlideUp 0.8s ease-out 0.4s both;
       text-align: center;
       line-height: 1.3;
     }
 
+    /* 텍스트 출력 영역 (하단) */
     .status-indicator {
-      position: fixed; /* absolute 대신 fixed 사용 */
+      position: fixed;
       bottom: 5vh;
-      left: 0; /* left: 50% 대신 left: 0 */
-      right: 0; /* right: 0 추가 */
-      margin: 0 auto; /* 좌우 마진 auto */
-      transform: none; /* transform 제거 */
-      width: fit-content; /* 내용에 맞는 너비 */
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      transform: none;
+      width: fit-content;
       background-color: #4CAF50;
       color: white;
       font-size: 6vw;
@@ -249,74 +260,35 @@
       padding: 1.5vh 4vw;
       border-radius: 15px;
       animation: pulse 2s infinite;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       z-index: 100;
       text-align: center;
+      display: none;
     }
 
-    /* 재고소진 상태일 때 빨간색 배경 */
+    .status-indicator.show {
+      display: block;
+    }
+
     .status-indicator.closed {
       background-color: #dc3545;
     }
 
-    /* 재고소진 안내 문구 */
-    .status-notice {
-      position: fixed;
-      bottom: 15vh; /* 상태 표시기 위에 배치 */
-      left: 0;
-      right: 0;
-      margin: 0 auto;
-      width: fit-content;
-      background-color: rgba(220, 53, 69, 0.9);
-      color: white;
-      font-size: 4vw;
-      font-weight: 700;
-      padding: 1vh 3vw;
-      border-radius: 10px;
-      text-align: center;
-      z-index: 101;
-      display: none; /* 기본적으로 숨김 */
-    }
-
-    .status-notice.show {
-      display: block;
-    }
-
     @keyframes fullscreenPulse {
-      0% {
-        opacity: 0;
-        transform: scale(0.9);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
+      0% { opacity: 0; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
     }
 
     @keyframes numberBounce {
-      0% {
-        transform: scale(0.5);
-        opacity: 0;
-      }
-      60% {
-        transform: scale(1.1);
-      }
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
+      0% { transform: scale(0.5); opacity: 0; }
+      60% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     @keyframes messageSlideUp {
-      0% {
-        transform: translateY(50px);
-        opacity: 0;
-      }
-      100% {
-        transform: translateY(0);
-        opacity: 1;
-      }
+      0% { transform: translateY(50px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
     }
 
     .waiting-screen {
@@ -351,12 +323,8 @@
     }
 
     @keyframes slideIn {
-      0% {
-        opacity: 0;
-      }
-      100% {
-        opacity: 1;
-      }
+      0% { opacity: 0; }
+      100% { opacity: 1; }
     }
 
     .slide-image {
@@ -379,36 +347,59 @@
       transform: translateZ(0);
       backface-visibility: hidden;
     }
+
+    .text-overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 5vh 5vw;
+      border-radius: 20px;
+      font-size: 8vw;
+      font-weight: bold;
+      z-index: 2000;
+      text-align: center;
+      width: 80%;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      border: 5px solid #ffc107;
+      display: none;
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
   </style>
 </head>
+
 <body>
-  <!-- 오디오 활성화 게이트 -->
   <div id="audioGate" class="audio-gate">
     <div>🔊 통빱 1루점 호출벨 시스템</div>
     <div style="font-size: 4vw; margin-top: 2vh;">음성 안내를 들으려면 리모컨 확인 버튼을 눌러주세요</div>
     <button id="startAudioBtn" class="start-button">🎵 음성 활성화</button>
   </div>
 
-  <!-- 호출화면 -->
+  <div id="textOverlay" class="text-overlay"></div>
+
   <div id="callScreen" class="call-screen hidden">
-    <div id="message">↓↓준비완료↓↓</div>
+    <div id="message"></div>
     <div id="numbers"></div>
-    <div id="statusIndicator" class="status-indicator">김치말이국수 판매 중입니다</div>
+    <div id="statusIndicator" class="status-indicator"></div>
   </div>
 
-  <!-- 전체화면 호출 -->
   <div id="fullscreenCall" class="fullscreen-call">
     <div id="fullscreenNumber" class="fullscreen-number"></div>
     <div id="fullscreenMessage" class="fullscreen-message">번 손님 주문 나왔습니다!</div>
   </div>
 
-  <!-- 재고소진 마감 전체화면 -->
   <div id="fullscreenClosed" class="fullscreen-closed">
     <div class="closed-title">재고 소진</div>
     <div class="closed-message">금일 재고소진으로 인해<br>마감합니다.<br><br>대단히 죄송합니다.</div>
   </div>
 
-  <!-- 대기화면 -->
   <div id="waitingScreen" class="waiting-screen active">
     <div class="slide active" id="slide1">
       <img src="slide1.jpg" alt="통빱 1루점 브랜딩" class="slide-image">
@@ -423,30 +414,27 @@
     let currentMode = 'WAITING';
     let fullscreenTimer = null;
 
-    // 1루점 매장 코드
     const STORE_CODE = '1ru';
 
-    // 안드로이드 TV용 스마트 오디오 관리 클래스
     class AndroidTVAudioManager {
       constructor() {
         this.audioInstances = new Map();
         this.hasUserInteraction = false;
         this.maxCacheSize = 10;
-		// 🔥 추가: 큐 시스템
-		this.audioQueue = [];
-		this.isPlaying = false;
+        this.audioQueue = [];
+        this.isPlaying = false;
         this.isAndroidTV = this.detectAndroidTV();
       }
 
       detectAndroidTV() {
         const userAgent = navigator.userAgent.toLowerCase();
-        return userAgent.includes('android') && 
-               (userAgent.includes('tv') || userAgent.includes('television'));
+        return userAgent.includes('android') &&
+          (userAgent.includes('tv') || userAgent.includes('television'));
       }
 
       createAudioInstance(number) {
         const cacheKey = `voice_${number}`;
-        
+
         if (this.audioInstances.has(cacheKey)) {
           const cached = this.audioInstances.get(cacheKey);
           cached.currentTime = 0;
@@ -475,63 +463,57 @@
           oldAudio.src = '';
           oldAudio.load();
           this.audioInstances.delete(firstKey);
-          console.log(`🗑️ ${STORE_CODE} 오래된 음성 캐시 제거: ${firstKey}`);
         }
 
         this.audioInstances.set(cacheKey, audio);
         return audio;
       }
 
-      // 🔥 기존 playVoice를 addToQueue로 변경
-	  async addToQueue(number) {
-		if (!this.hasUserInteraction) {
-		  console.warn(`🔇 사용자 상호작용 없음 - 음성 재생 불가`);
-		  return false;
-		}
-		
-		this.audioQueue.push(number);
-		console.log(`📝 ${STORE_CODE} 음성 큐에 추가: ${number}번 (대기열: ${this.audioQueue.length})`);
-		
-		if (!this.isPlaying) {
-		  this.playNext();
-		}
-		return true;
-	  }
+      async addToQueue(number) {
+        if (!this.hasUserInteraction) {
+          console.warn(`🔇 사용자 상호작용 없음`);
+          return false;
+        }
 
-	  // 🔥 새로 추가: 순차 재생 메서드
-	  async playNext() {
-		if (this.audioQueue.length === 0) {
-		  this.isPlaying = false;
-		  console.log(`✅ ${STORE_CODE} 음성 재생 완료`);
-		  return;
-		}
+        this.audioQueue.push(number);
+        console.log(`📝 ${STORE_CODE} 음성 큐에 추가: ${number}번`);
 
-		this.isPlaying = true;
-		const number = this.audioQueue.shift();
-		
-		try {
-		  const audio = this.createAudioInstance(number);
-		  console.log(`🎤 ${STORE_CODE} 음성 재생 시작: ${number}번`);
-		  
-		  // 🔥 핵심: 재생 완료되면 다음 음성 자동 재생
-		  audio.addEventListener('ended', () => {
-			console.log(`🎵 ${STORE_CODE} 음성 재생 완료: ${number}번`);
-			setTimeout(() => this.playNext(), 100); // 약간의 지연 후 다음 재생
-		  });
+        if (!this.isPlaying) {
+          this.playNext();
+        }
+        return true;
+      }
 
-		  // 에러 시에도 다음 음성 재생
-		  audio.addEventListener('error', () => {
-			console.error(`❌ ${STORE_CODE} 음성 재생 실패: ${number}번`);
-			setTimeout(() => this.playNext(), 100);
-		  });
-		  
-		  await audio.play();
-		} catch (error) {
-		  console.error(`🎤 ${STORE_CODE} 음성 재생 실패: ${number}번 -`, error.message);
-		  setTimeout(() => this.playNext(), 100);
-		}
-	  }
+      async playNext() {
+        if (this.audioQueue.length === 0) {
+          this.isPlaying = false;
+          console.log(`✅ ${STORE_CODE} 음성 재생 완료`);
+          return;
+        }
 
+        this.isPlaying = true;
+        const number = this.audioQueue.shift();
+
+        try {
+          const audio = this.createAudioInstance(number);
+          console.log(`🎤 ${STORE_CODE} 음성 재생: ${number}번`);
+
+          audio.addEventListener('ended', () => {
+            console.log(`🎵 완료: ${number}번`);
+            setTimeout(() => this.playNext(), 100);
+          });
+
+          audio.addEventListener('error', () => {
+            console.error(`❌ 실패: ${number}번`);
+            setTimeout(() => this.playNext(), 100);
+          });
+
+          await audio.play();
+        } catch (error) {
+          console.error(`🎤 재생 실패: ${number}번`, error.message);
+          setTimeout(() => this.playNext(), 100);
+        }
+      }
 
       cleanup() {
         this.audioInstances.forEach((audio, key) => {
@@ -540,7 +522,6 @@
           audio.load();
         });
         this.audioInstances.clear();
-        console.log(`🗑️ ${STORE_CODE} 모든 오디오 캐시 정리 완료`);
       }
     }
 
@@ -553,14 +534,14 @@
       startBtn.focus();
       startBtn.addEventListener('click', activateAudio);
 
-      startBtn.addEventListener('keydown', function(e) {
+      startBtn.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.keyCode === 13 || e.keyCode === 23) {
           e.preventDefault();
           activateAudio();
         }
       });
 
-      document.addEventListener('keydown', function(e) {
+      document.addEventListener('keydown', function (e) {
         if (!audioEnabled && (e.key === 'Enter' || e.keyCode === 13 || e.keyCode === 23)) {
           e.preventDefault();
           activateAudio();
@@ -568,8 +549,8 @@
       });
 
       async function activateAudio() {
-        console.log(`🎵 ${STORE_CODE} 사용자가 음성 활성화`);
-        
+        console.log(`🎵 ${STORE_CODE} 음성 활성화`);
+
         audioManager.hasUserInteraction = true;
         audioEnabled = true;
 
@@ -583,7 +564,7 @@
         }
 
         audioGate.classList.add('hidden');
-        
+
         if (currentMode === 'WAITING') {
           switchToWaitingMode();
         } else {
@@ -593,115 +574,81 @@
     }
 
     async function speakNumber(number) {
-      const success = await audioManager.addToQueue(number);
-      if (!success) {
-        console.warn(`⚠️ ${STORE_CODE} 음성 재생 실패: ${number}번`);
-      }
+      await audioManager.addToQueue(number);
     }
 
     function showFullscreenCall(number) {
       if (isClosedForDay) return;
-      
+
       const fullscreenDiv = document.getElementById('fullscreenCall');
       const numberDiv = document.getElementById('fullscreenNumber');
       const messageDiv = document.getElementById('fullscreenMessage');
 
       numberDiv.textContent = number;
       messageDiv.textContent = `${number}번 손님 주문 나왔습니다!`;
-      
+
       fullscreenDiv.classList.add('active');
-      
-      // 음성 재생 - 호출된 번호의 음성 재생
-      setTimeout(() => {
-        speakNumber(number);
-      }, 500);
+
+      setTimeout(() => speakNumber(number), 500);
+
+      if (fullscreenTimer) clearTimeout(fullscreenTimer);
+
+      fullscreenTimer = setTimeout(() => {
+        fullscreenDiv.classList.remove('active');
+      }, 5000);
+    }
+
+    function showFullscreenCallSequence(numbers) {
+      if (isClosedForDay || !Array.isArray(numbers) || numbers.length === 0) return;
+
+      let currentIndex = 0;
+
+      function playNextNumber() {
+        if (currentIndex >= numbers.length) {
+          return;
+        }
+
+        const number = numbers[currentIndex];
+        const fullscreenDiv = document.getElementById('fullscreenCall');
+        const numberDiv = document.getElementById('fullscreenNumber');
+        const messageDiv = document.getElementById('fullscreenMessage');
+
+        numberDiv.textContent = number;
+        messageDiv.textContent = `${number}번 손님 주문 나왔습니다!`;
+        fullscreenDiv.classList.add('active');
+
+        setTimeout(() => speakNumber(number), 500);
+
+        currentIndex++;
+
+        setTimeout(() => {
+          if (currentIndex < numbers.length) {
+            playNextNumber();
+          } else {
+            setTimeout(() => fullscreenDiv.classList.remove('active'), 3000);
+          }
+        }, 3000);
+      }
 
       if (fullscreenTimer) {
         clearTimeout(fullscreenTimer);
+        fullscreenTimer = null;
       }
-      
-      fullscreenTimer = setTimeout(() => {
-        fullscreenDiv.classList.remove('active');
-        console.log(`📺 ${STORE_CODE} 전체화면 호출 종료: ${number}번`);
-      }, 5000);
 
-      console.log(`📺 ${STORE_CODE} 전체화면 호출 표시: ${number}번`);
+      playNextNumber();
     }
-	
-	// 연속 번호 음성 재생 함수 (display1.html에 추가)
-	function showFullscreenCallSequence(numbers) {
-	  if (isClosedForDay || !Array.isArray(numbers) || numbers.length === 0) return;
-	  
-	  console.log(`📢 ${STORE_CODE} 연속 호출 음성 재생:`, numbers);
-	  
-	  let currentIndex = 0;
-	  
-	  function playNextNumber() {
-		if (currentIndex >= numbers.length) {
-		  console.log(`🎤 ${STORE_CODE} 연속 음성 재생 완료`);
-		  return;
-		}
-		
-		const number = numbers[currentIndex];
-		
-		// 전체화면 표시
-		const fullscreenDiv = document.getElementById('fullscreenCall');
-		const numberDiv = document.getElementById('fullscreenNumber');
-		const messageDiv = document.getElementById('fullscreenMessage');
-
-		numberDiv.textContent = number;
-		messageDiv.textContent = `${number}번 손님 주문 나왔습니다!`;
-		fullscreenDiv.classList.add('active');
-		
-		// 음성 재생
-		setTimeout(() => {
-		  speakNumber(number);
-		}, 500);
-		
-		currentIndex++;
-		
-		// 다음 번호 재생 (3초 간격)
-		setTimeout(() => {
-		  if (currentIndex < numbers.length) {
-			playNextNumber();
-		  } else {
-			// 모든 음성 재생 완료 후 전체화면 닫기
-			setTimeout(() => {
-			  fullscreenDiv.classList.remove('active');
-			  console.log(`📺 ${STORE_CODE} 연속 호출 전체화면 종료`);
-			}, 3000);
-		  }
-		}, 3000);
-	  }
-	  
-	  // 기존 타이머가 있으면 클리어
-	  if (fullscreenTimer) {
-		clearTimeout(fullscreenTimer);
-		fullscreenTimer = null;
-	  }
-	  
-	  // 연속 재생 시작
-	  playNextNumber();
-	}
 
     function showClosedScreen() {
-      const closedDiv = document.getElementById('fullscreenClosed');
-      closedDiv.classList.add('active');
-      
+      document.getElementById('fullscreenClosed').classList.add('active');
       document.getElementById('callScreen').classList.add('hidden');
       document.getElementById('waitingScreen').classList.remove('active');
-      
-      console.log(`🚫 ${STORE_CODE} 재고소진 마감 전체화면 표시`);
       isClosedForDay = true;
     }
 
     function hideClosedScreen() {
-      const closedDiv = document.getElementById('fullscreenClosed');
-      closedDiv.classList.remove('active');
-      
-      console.log(`🔄 ${STORE_CODE} 마감 화면 제거`);
+      document.getElementById('fullscreenClosed').classList.remove('active');
       isClosedForDay = false;
-      
+
       if (currentMode === 'WAITING') {
         switchToWaitingMode();
       } else {
@@ -709,57 +656,79 @@
       }
     }
 
-    // 하단 상태 표시기 업데이트
     function updateStatusIndicator(text) {
       if (currentMode === 'CALL' && !isClosedForDay) {
         const statusIndicator = document.getElementById('statusIndicator');
-        const statusNotice = document.getElementById('statusNotice');
-        
         statusIndicator.innerText = text;
-        
-        // 재고소진 관련 메시지면 빨간색 배경과 안내 문구 표시
+
+        if (text && text.trim() !== '') {
+          statusIndicator.classList.add('show');
+          adjustNumberSize(true);
+        } else {
+          statusIndicator.classList.remove('show');
+          adjustNumberSize(false);
+        }
+
         if (text.includes('재고소진') || text.includes('마감')) {
           statusIndicator.classList.add('closed');
-          statusNotice.classList.add('show');
-          console.log(`📍 ${STORE_CODE} 재고소진 상태 표시기 업데이트: ${text}`);
         } else {
           statusIndicator.classList.remove('closed');
-          statusNotice.classList.remove('show');
-          console.log(`📍 ${STORE_CODE} 일반 상태 표시기 업데이트: ${text}`);
         }
       }
     }
 
+    function updateSoldOutMenus(soldOutMenus) {
+      const messageBox = document.getElementById('message');
+
+      if (soldOutMenus && soldOutMenus.length > 0) {
+        messageBox.innerHTML = '';
+        soldOutMenus.forEach(menu => {
+          const item = document.createElement('div');
+          item.className = 'sold-out-item';
+          item.innerText = `🚫 ${menu} 품절`;
+          messageBox.appendChild(item);
+        });
+        messageBox.classList.add('show');
+        adjustNumberSize(true);
+      } else {
+        messageBox.classList.remove('show');
+        adjustNumberSize(false);
+      }
+    }
+
+    function adjustNumberSize(shrink) {
+      const numBoxes = document.querySelectorAll('.numBox');
+      numBoxes.forEach(box => {
+        if (shrink) {
+          box.classList.add('shrink');
+        } else {
+          box.classList.remove('shrink');
+        }
+      });
+    }
+
     function switchToWaitingMode() {
       if (isClosedForDay) return;
-      
+
       currentMode = 'WAITING';
       document.getElementById('callScreen').classList.add('hidden');
       document.getElementById('waitingScreen').classList.add('active');
       document.getElementById('fullscreenCall').classList.remove('active');
-      
-      if (fullscreenTimer) {
-        clearTimeout(fullscreenTimer);
-      }
-      
-      console.log(`📺 ${STORE_CODE} 대기화면 모드로 전환`);
+
+      if (fullscreenTimer) clearTimeout(fullscreenTimer);
     }
 
     function switchToCallMode() {
       if (isClosedForDay) return;
-      
+
       currentMode = 'CALL';
       document.getElementById('waitingScreen').classList.remove('active');
       document.getElementById('callScreen').classList.remove('hidden');
-      
-      // 기본 상태로 초기화
+
       const statusIndicator = document.getElementById('statusIndicator');
-      const statusNotice = document.getElementById('statusNotice');
-      statusIndicator.innerText = '김치말이국수 판매 중입니다';
-      statusIndicator.classList.remove('closed');
-      statusNotice.classList.remove('show');
-      
-      console.log(`📢 ${STORE_CODE} 호출화면 모드로 전환`);
+      statusIndicator.innerText = '';
+      statusIndicator.classList.remove('show', 'closed');
+      adjustNumberSize(false);
     }
 
     function connectWebSocket() {
@@ -770,36 +739,28 @@
 
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${location.host}`;
-      
-      console.log(`${STORE_CODE} WebSocket 연결 시도:`, wsUrl);
+
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log(`✅ ${STORE_CODE} WebSocket 연결됨`);
+        console.log(`✅ ${STORE_CODE} 연결됨`);
         ws.send('DISPLAY:1ru');
       };
 
       ws.onclose = (event) => {
-        console.warn(`❌ ${STORE_CODE} 연결 끊김. 코드:`, event.code, "이유:", event.reason);
-        
-        reconnectTimer = setTimeout(() => {
-          console.log(`🔄 ${STORE_CODE} 재연결 시도...`);
-          connectWebSocket();
-        }, 3000);
+        console.warn(`❌ ${STORE_CODE} 연결 끊김`);
+        reconnectTimer = setTimeout(() => connectWebSocket(), 3000);
       };
 
       ws.onerror = (err) => {
-        console.error(`⚠️ ${STORE_CODE} WebSocket 에러:`, err);
+        console.error(`⚠️ ${STORE_CODE} 에러`, err);
       };
 
       ws.onmessage = (event) => {
-        console.log(`📩 ${STORE_CODE} 받은 메시지:`, event.data);
-        
         let data;
         try {
           data = JSON.parse(event.data);
         } catch (e) {
-          console.warn(`❗ ${STORE_CODE} JSON 파싱 실패:`, event.data, e);
           return;
         }
 
@@ -824,82 +785,63 @@
         if (currentMode === 'CALL') {
           if (data.type === "CALL" && Array.isArray(data.list)) {
             updateNumbers(data.list);
-            
-            // 호출된 번호 정보가 있으면 그 번호로 전체화면 표시
-			// 수정 후 코드  
-			if (data.calledNumbers && Array.isArray(data.calledNumbers)) {
-			  // 연속 번호 음성 재생
-			  showFullscreenCallSequence(data.calledNumbers);
-			} else if (data.calledNumber) {
-			  // 단일 번호 호출
-			  showFullscreenCall(data.calledNumber);
-			} else if (data.list.length > 0) {
-			  const latestNumber = data.list[data.list.length - 1];
-			  showFullscreenCall(latestNumber);
-			}
+
+            if (data.calledNumbers && Array.isArray(data.calledNumbers)) {
+              showFullscreenCallSequence(data.calledNumbers);
+            } else if (data.calledNumber) {
+              showFullscreenCall(data.calledNumber);
+            } else if (data.list.length > 0) {
+              showFullscreenCall(data.list[data.list.length - 1]);
+            }
           } else if (data.type === "SERVE_UNTIL") {
             showServeUntilMessage(data.text, data.number);
           } else if (data.type === "MSG") {
             showMessage(data.text);
-		  } else if (data.type === "AUDIO") {
-			playDisplayAudio(data.audioType);
+          } else if (data.type === "AUDIO") {
+            playDisplayAudio(data.audioType);
           } else if (data.type === "STATUS") {
-            // STATUS 타입 처리 추가
             updateStatusIndicator(data.text);
+          } else if (data.type === 'MENU_UPDATE') {
+            updateSoldOutMenus(data.soldOutMenus);
+          } else if (data.type === 'MSG_DISPLAY') {
+            showTextOverlay(data.text, data.duration);
           }
         }
       };
     }
-	// display.html에 새로운 함수 추가
-	async function playDisplayAudio(type) {
-	  if (!audioManager.hasUserInteraction) {
-		console.warn(`🔇 ${STORE_CODE} 사용자 상호작용 없음 - 음성 재생 불가`);
-		return false;
-	  }
-	  
-	  const audioFiles = {
-		'monitor': 'voice/monitor.mp3',
-		'noodle': 'voice/noodle.mp3', 
-		'pork': 'voice/pork.mp3'
-	  };
-	  
-	  if (audioFiles[type]) {
-		try {
-		  const audio = new Audio();
-		  audio.src = audioFiles[type];
-		  audio.volume = 1.0;
-		  
-		  console.log(`🎤 ${STORE_CODE} ${type} 음성 재생 시도: ${audioFiles[type]}`);
-		  
-		  await audio.play();
-		  console.log(`🔊 ${STORE_CODE} ${type} 음성 재생 성공`);
-		  return true;
-		} catch (error) {
-		  console.error(`🎤 ${STORE_CODE} ${type} 음성 재생 실패:`, error.message);
-		  return false;
-		}
-	  }
-	  
-	  return false;
-	}
 
-    // "X번 손님까지 드립니다" 메시지 표시
+    async function playDisplayAudio(type) {
+      if (!audioManager.hasUserInteraction) return false;
+
+      const audioFiles = {
+        'monitor': 'voice/monitor.mp3',
+        'noodle': 'voice/noodle.mp3',
+        'pork': 'voice/pork.mp3'
+      };
+
+      if (audioFiles[type]) {
+        try {
+          const audio = new Audio();
+          audio.src = audioFiles[type];
+          audio.volume = 1.0;
+          await audio.play();
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+      return false;
+    }
+
     function showServeUntilMessage(message, number) {
       if (isClosedForDay) return;
-      
-      console.log(`🍽️ ${STORE_CODE} 서빙 메시지 표시: ${message}`);
-      
-      // 호출 번호 컨테이너 숨기기
+
       const numbersContainer = document.getElementById("numbers");
       numbersContainer.style.display = 'none';
-      
-      // 기존 서빙 메시지가 있으면 제거
+
       const existingServeMessage = document.getElementById('serveUntilMessage');
-      if (existingServeMessage) {
-        existingServeMessage.remove();
-      }
-      
-      // 서빙 메시지 박스 생성
+      if (existingServeMessage) existingServeMessage.remove();
+
       const messageBox = document.createElement("div");
       messageBox.id = 'serveUntilMessage';
       messageBox.style.cssText = `
@@ -922,145 +864,128 @@
         margin-top: 4vh;
       `;
       messageBox.innerText = message;
-      
-      // 메시지를 호출 번호 자리에 추가
+
       numbersContainer.parentNode.insertBefore(messageBox, numbersContainer);
-      
-      // 음성 재생
-      setTimeout(() => {
-        speakNumber(number);
-      }, 800);
-      
-      console.log(`🔊 ${STORE_CODE} ${number}번 음성 재생`);
+
+      setTimeout(() => speakNumber(number), 800);
     }
 
+    // 🔥 수정: 줄당 숫자 개수에 따라 크기 조절
     function updateNumbers(numbers) {
       if (currentMode !== 'CALL') return;
-      
-      console.log(`📊 ${STORE_CODE} 번호 업데이트:`, numbers);
-      
-      // 서빙 메시지가 있으면 제거하고 번호 컨테이너 다시 표시
+
       const existingServeMessage = document.getElementById('serveUntilMessage');
-      if (existingServeMessage) {
-        existingServeMessage.remove();
-      }
-      
+      if (existingServeMessage) existingServeMessage.remove();
+
       const container = document.getElementById("numbers");
-      container.style.display = 'flex'; // 번호 컨테이너 다시 표시
-      
+      container.style.display = 'flex';
+
       const currentNumbers = Array.from(container.querySelectorAll('.numBox')).map(child => child.innerText);
-      
+
       container.innerHTML = '';
-      
-      // 확실히 2줄로 나누기: 첫 번째 줄 5개, 두 번째 줄 5개
+
       const firstRowNumbers = numbers.slice(0, 5);
       const secondRowNumbers = numbers.slice(5, 10);
-      
-      // 첫 번째 줄 생성
+
       if (firstRowNumbers.length > 0) {
         const row1 = document.createElement("div");
         row1.className = "number-row";
-        
+        const firstRowCountClass = `row-count-${firstRowNumbers.length}`;  // 추가!
+
         firstRowNumbers.forEach((num) => {
-          const box = createNumberBox(num, currentNumbers, numbers.length);
+          const box = createNumberBox(num, currentNumbers, firstRowCountClass);  // 변경!
           row1.appendChild(box);
         });
-        
+
         container.appendChild(row1);
       }
-      
-      // 두 번째 줄 생성 (6개 이상일 때만)
+
       if (secondRowNumbers.length > 0) {
         const row2 = document.createElement("div");
         row2.className = "number-row";
-        
+        const secondRowCountClass = `row-count-${secondRowNumbers.length}`;  // 추가!
+
         secondRowNumbers.forEach((num) => {
-          const box = createNumberBox(num, currentNumbers, numbers.length);
+          const box = createNumberBox(num, currentNumbers, secondRowCountClass);  // 변경!
           row2.appendChild(box);
         });
-        
+
         container.appendChild(row2);
       }
+
+      const hasMenu = document.getElementById('message').classList.contains('show');
+      const hasStatus = document.getElementById('statusIndicator').classList.contains('show');
+      adjustNumberSize(hasMenu || hasStatus);
     }
-    
-    // 번호 박스 생성 헬퍼 함수
+
+    function createNumberBox(num, currentNumbers, rowCountClass) {  // 파라미터 변경!
+      const box = document.createElement("div");
+      box.className = `numBox optimized ${rowCountClass}`;  // 클래스 적용 방식 변경!
+      box.innerText = num;
+
+      if (!currentNumbers.includes(num.toString())) {
+        box.classList.add('new-number');
+      }
+
+      return box;
+    }
+
     function createNumberBox(num, currentNumbers, totalCount) {
       const box = document.createElement("div");
       box.className = "numBox optimized";
-      
+
       if (totalCount >= 8) {
         box.classList.add('very-small');
       } else if (totalCount >= 6) {
         box.classList.add('small');
       }
-      
+
       box.innerText = num;
-      
+
       if (!currentNumbers.includes(num.toString())) {
         box.classList.add('new-number');
       }
-      
+
       return box;
     }
 
     function showMessage(msg) {
-      console.log(`💬 ${STORE_CODE} 메시지 표시:`, msg);
-      
       if (msg.includes('재고소진') && msg.includes('마감')) {
-        console.log(`🚫 ${STORE_CODE} 재고소진 마감 메시지 - 전체화면 표시`);
         showClosedScreen();
         return;
       }
-      
+
       if (msg === '안녕하세요! 통빱 입니다' && isClosedForDay) {
-        console.log(`🔄 ${STORE_CODE} 기본 메시지 복구 - 마감 화면 제거`);
         hideClosedScreen();
         return;
       }
-      
-      if (!isClosedForDay && currentMode === 'CALL') {
-        const msgBox = document.getElementById("message");
-        msgBox.innerText = msg;
+    }
 
-        if (msg.includes('삼겹살만') || msg.includes('국수만')) {
-          setTimeout(() => {
-            if (!isClosedForDay) {
-              msgBox.innerText = '안녕하세요! 통빱 1루점입니다';
-            }
-          }, 20000);
-        } else {
-          setTimeout(() => {
-            if (!isClosedForDay) {
-              msgBox.innerText = '안녕하세요! 통빱 1루점입니다';
-            }
-          }, 10000);
-        }
-      }
+    let textOverlayTimer = null;
+    function showTextOverlay(text, duration = 10000) {
+      const overlay = document.getElementById('textOverlay');
+      overlay.innerText = text;
+      overlay.style.display = 'block';
+
+      playDisplayAudio('call');
+
+      if (textOverlayTimer) clearTimeout(textOverlayTimer);
+
+      textOverlayTimer = setTimeout(() => {
+        overlay.style.display = 'none';
+      }, duration);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      console.log(`📄 ${STORE_CODE} 페이지 로드됨 - 안드로이드 TV 최적화 모드`);
-      
-      if (audioManager.isAndroidTV) {
-        console.log(`📱 ${STORE_CODE} 안드로이드 TV 환경 감지됨`);
-      }
-      
       initializeAudioGate();
       connectWebSocket();
       switchToWaitingMode();
     });
 
     window.addEventListener('beforeunload', () => {
-      if (ws) {
-        ws.close();
-      }
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-      }
-      if (fullscreenTimer) {
-        clearTimeout(fullscreenTimer);
-      }
-      
+      if (ws) ws.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (fullscreenTimer) clearTimeout(fullscreenTimer);
       audioManager.cleanup();
     });
 
@@ -1071,4 +996,5 @@
     }, 300000);
   </script>
 </body>
+
 </html>

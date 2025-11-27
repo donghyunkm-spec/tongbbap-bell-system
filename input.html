@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -25,7 +26,8 @@
       margin-bottom: 1vh;
     }
 
-    button, input {
+    button,
+    input {
       font-size: 4.5vw;
       padding: 1.2vh 0;
       margin: 0.3vh 0;
@@ -39,58 +41,16 @@
       width: 100%;
     }
 
-    .btn-orange {
-      background-color: orange;
-      color: white;
-    }
+    .btn-orange { background-color: orange; color: white; }
+    .btn-gray { background-color: #ccc; color: #333; }
+    .btn-red { background-color: #ff4444; color: white; }
+    .btn-dark-red { background-color: #8b0000; color: white; margin-top: 2vh; padding: 2vh 0; }
+    .btn-green { background-color: #28a745; color: white; margin-top: 1vh; padding: 1.5vh 0; }
+    .btn-blue { background-color: #007bff; color: white; margin-top: 1vh; padding: 1.5vh 0; }
+    .btn-purple { background-color: #6f42c1; color: white; }
+    .btn-teal { background-color: #20c997; color: white; }
+    .btn-indigo { background-color: #6610f2; color: white; }
 
-    .btn-gray {
-      background-color: #ccc;
-      color: #333;
-    }
-
-    .btn-red {
-      background-color: #ff4444;
-      color: white;
-    }
-
-    .btn-dark-red {
-      background-color: #8b0000;
-      color: white;
-      margin-top: 2vh;
-      padding: 2vh 0;
-    }
-
-    .btn-green {
-      background-color: #28a745;
-      color: white;
-      margin-top: 1vh;
-      padding: 1.5vh 0;
-    }
-
-    .btn-blue {
-      background-color: #007bff;
-      color: white;
-      margin-top: 1vh;
-      padding: 1.5vh 0;
-    }
-
-    .btn-purple {
-      background-color: #6f42c1;
-      color: white;
-    }
-
-    .btn-teal {
-      background-color: #20c997;
-      color: white;
-    }
-
-    .btn-indigo {
-      background-color: #6610f2;
-      color: white;
-    }
-
-    /* 호출 버튼 크기 키우기 */
     .btn-call {
       font-size: 6vw !important;
       padding: 2vh 0 !important;
@@ -104,7 +64,6 @@
       width: 100%;
     }
 
-    /* 3개 버튼을 1/3씩 나누는 스타일 */
     .row-three-buttons {
       display: flex;
       gap: 1vw;
@@ -127,13 +86,8 @@
       border: 2px solid #ccc;
     }
 
-    .btn-flex {
-      flex: 1;
-    }
-
-    .btn-half {
-      flex: 1;
-    }
+    .btn-flex { flex: 1; }
+    .btn-half { flex: 1; }
 
     #status {
       text-align: center;
@@ -160,35 +114,23 @@
       margin-bottom: 0.5vh;
     }
 
-    .status-connected {
-      background-color: #d4edda;
-      color: #155724;
-    }
-
-    .status-disconnected {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-
-    .status-reconnecting {
-      background-color: #fff3cd;
-      color: #856404;
-    }
+    .status-connected { background-color: #d4edda; color: #155724; }
+    .status-disconnected { background-color: #f8d7da; color: #721c24; }
+    .status-reconnecting { background-color: #fff3cd; color: #856404; }
 
     #currentNumbers {
       background-color: #f0f0f0;
       padding: 1.5vh 2.5vw;
       border-radius: 6px;
       margin: 0.5vh 0;
-      font-size: 5.5vw; /* 더 큰 폰트 사이즈 */
+      font-size: 5.5vw;
       text-align: center;
-      min-height: 4vh; /* 더 큰 높이 */
+      min-height: 4vh;
       flex-shrink: 0;
-      font-weight: bold; /* 굵게 표시 */
-      border: 3px solid #ddd; /* 더 굵은 테두리 */
+      font-weight: bold;
+      border: 3px solid #ddd;
     }
 
-    /* 재고소진 상태 안내 추가 */
     #closedStatusNotice {
       background-color: #dc3545;
       color: white;
@@ -199,13 +141,11 @@
       text-align: center;
       font-weight: bold;
       border: 3px solid #a71e2a;
-      display: none; /* 기본적으로 숨김 */
+      display: none;
       animation: pulse 2s infinite;
     }
 
-    #closedStatusNotice.show {
-      display: block;
-    }
+    #closedStatusNotice.show { display: block; }
 
     .content-wrapper {
       flex: 1;
@@ -215,9 +155,7 @@
       overflow-y: auto;
     }
 
-    .pulse {
-      animation: pulse 1.5s infinite;
-    }
+    .pulse { animation: pulse 1.5s infinite; }
 
     @keyframes pulse {
       0% { opacity: 1; }
@@ -225,7 +163,6 @@
       100% { opacity: 1; }
     }
 
-    /* PWA 느낌을 위한 추가 스타일 */
     .offline-indicator {
       position: fixed;
       top: 0;
@@ -241,11 +178,8 @@
       transition: transform 0.3s ease;
     }
 
-    .offline-indicator.show {
-      transform: translateY(0);
-    }
+    .offline-indicator.show { transform: translateY(0); }
 
-    /* 음성 재생 버튼 스타일 */
     .audio-buttons {
       display: flex;
       gap: 1vw;
@@ -258,26 +192,52 @@
       padding: 1.2vh 0.5vw !important;
       margin: 0 !important;
     }
+
+    .btn-menu-toggle {
+      background-color: #28a745;
+      color: white;
+      transition: all 0.3s ease;
+      font-size: 3.5vw;
+      padding: 1.5vh 0.5vw;
+    }
+
+    .btn-menu-toggle.sold-out {
+      background-color: #dc3545;
+      text-decoration: line-through;
+      opacity: 0.8;
+    }
+
+    .section-title {
+      font-size: 4.5vw;
+      font-weight: bold;
+      margin: 1.5vh 0 0.5vh 0;
+      color: #555;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 0.5vh;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1vw;
+    }
   </style>
 </head>
+
 <body>
   <div id="offlineIndicator" class="offline-indicator">
     🔄 서버 재연결 중... 잠시만 기다려 주세요
   </div>
 
-  <div class="header">🍖 통빱 3루점 호출벨 🍜</div>
-  
+  <div class="header">🖖 통빱 3루점 호출벨 🜠</div>
+
   <div id="displayStatus" class="status-disconnected">디스플레이 상태 확인 중...</div>
 
-
-
   <div id="currentNumbers">현재 호출된 번호: 없음</div>
-  
-  <!-- 재고소진 상태 안내 추가 -->
+
   <div id="closedStatusNotice">⚠️ 재고소진마감 문구 표시중 ⚠️</div>
 
   <div class="content-wrapper">
-    <!-- 호출 버튼을 두 개로 나누기 -->
     <div class="row">
       <input type="number" id="callNumber" class="input-short" placeholder="번호" min="1" max="700" />
       <button class="btn-orange btn-half btn-call" onclick="sendCall()">📢 호출</button>
@@ -285,16 +245,32 @@
     </div>
 
     <div class="row">
-      <input type="number" id="sequenceNumber" class="input-short" placeholder="끝번호" min="5" max="700" />
-      <button class="btn-orange btn-flex" onclick="sendSequenceCall()">📢 최근 5개 호출</button>
+      <input type="number" id="sequenceNumber" class="input-short" placeholder="끝번호" min="10" max="700" />
+      <button class="btn-orange btn-flex" onclick="sendSequenceCall()">📢 최근 10개 호출</button>
     </div>
-	
-	  <!-- 음성 재생 버튼들 -->
-  <div class="audio-buttons">
-    <button class="btn-purple btn-audio" onclick="playAudio('monitor')">🖥️ 모니터</button>
-    <button class="btn-teal btn-audio" onclick="playAudio('noodle')">🍜 국수</button>
-    <button class="btn-indigo btn-audio" onclick="playAudio('pork')">🥩 삼겹살</button>
-  </div>
+
+    <div class="audio-buttons">
+      <button class="btn-purple btn-audio" onclick="playAudio('monitor')">🖥️ 모니터</button>
+      <button class="btn-teal btn-audio" onclick="playAudio('noodle')">🜠국수</button>
+      <button class="btn-indigo btn-audio" onclick="playAudio('pork')">🥩 삼겹살</button>
+    </div>
+
+    <div class="section-title">🚫 메뉴 품절 관리</div>
+    <div class="menu-grid">
+      <button id="btn-menu-sausage" class="btn-menu-toggle" onclick="toggleMenu('소시지나초')">소시지나초</button>
+      <button id="btn-menu-bibim" class="btn-menu-toggle" onclick="toggleMenu('비빔면')">비빔면</button>
+      <button id="btn-menu-noodle" class="btn-menu-toggle" onclick="toggleMenu('김치말이국수')">김치말이국수</button>
+      <button id="btn-menu-pork" class="btn-menu-toggle" onclick="toggleMenu('삼겹살')">삼겹살</button>
+      <button id="btn-menu-udon" class="btn-menu-toggle" onclick="toggleMenu('우동')">우동</button>
+      <button id="btn-menu-banquet" class="btn-menu-toggle" onclick="toggleMenu('잔치국수')">잔치국수</button>
+    </div>
+
+    <div class="section-title">📝 텍스트 출력</div>
+    <div class="row">
+      <input type="text" id="textMessage" class="input-short" style="flex: 2; text-align: left; padding-left: 2vw;"
+        placeholder="출력할 텍스트 입력" />
+      <button class="btn-blue btn-flex" style="flex: 1;" onclick="sendTextMessage()">전송</button>
+    </div>
 
     <button class="btn-red" onclick="clearAllNumbers()">🗑️ 모든 호출번호 지우기</button>
 
@@ -305,7 +281,6 @@
       <button class="btn-orange btn-flex" onclick="setCallMode()">📢 호출화면 시작</button>
     </div>
 
-    <!-- 재고소진 관련 버튼들을 맨 밑으로 이동 -->
     <div class="row-three-buttons">
       <button class="btn-orange btn-third" onclick="sendClosedStatusMessageWithPassword()">⚠️ 재고소진(작은메시지)</button>
       <button class="btn-green btn-third" onclick="sendDefaultStatusMessage()">🔄 기본상태</button>
@@ -315,84 +290,66 @@
     <button class="btn-green" onclick="sendWelcomeMessage()">🔄 기본 메시지로 복구 (전체화면 마감 해제)</button>
   </div>
 
-  <audio id="alert" src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSqW3/LNeCQEJoO+8+KVQQAJT6/h3rNSEwc7iNb94HQ7BQFM1O+9czCZvpyMnf3mgJFyRBFh3+/8JQEBS9XvuiEEAQECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/" preload="auto"></audio>
+  <audio id="alert"
+    src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSqW3/LNeCQEJoO+8+KVQQAJT6/h3rNSEwc7iNb94HQ7BQFM1O+9czCZvpyMnf3mgJFyRBFh3+/8JQEBS9XvuiEEAQECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJykqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/"
+    preload="auto"></audio>
 
   <script>
-    // 3루점 매장 코드
     const STORE_CODE = '3ru';
-
-    // 재고소진 상태 추적
     let isClosedStatusActive = false;
 
-    // 음성 재생 기능
     function playAudio(type) {
-	  let statusMessage = '';
-	  
-	  switch(type) {
-		case 'monitor':
-		  statusMessage = '🖥️ 모니터 음성 전송';
-		  break;
-		case 'noodle':
-		  statusMessage = '🍜 국수 음성 전송';
-		  break;
-		case 'pork':
-		  statusMessage = '🥩 삼겹살 음성 전송';
-		  break;
-	  }
-	  
-	  // WebSocket으로 서버에 전송
-	  if (wsManager.send(`AUDIO:${type}`)) {
-		setStatus(statusMessage);
-		console.log(`📡 ${STORE_CODE} ${statusMessage}`);
-	  }
-	}
-      
-    
+      let statusMessage = '';
 
-    // 비밀번호 확인 함수
+      switch (type) {
+        case 'monitor': statusMessage = '🖥️ 모니터 음성 전송'; break;
+        case 'noodle': statusMessage = '🜠국수 음성 전송'; break;
+        case 'pork': statusMessage = '🥩 삼겹살 음성 전송'; break;
+      }
+
+      if (wsManager.send(`AUDIO:${type}`)) {
+        setStatus(statusMessage);
+        console.log(`📡 ${STORE_CODE} ${statusMessage}`);
+      }
+    }
+
     function checkPassword() {
       const password = prompt("화면 전환을 위해 비밀번호를 입력하세요:");
       if (password === "1234") {
         return true;
-      } else if (password !== null) { // 취소를 누르지 않았을 때만 오류 메시지
+      } else if (password !== null) {
         alert("비밀번호가 틀렸습니다.");
       }
       return false;
     }
 
-    // WebSocket 관리 클래스
     class WebSocketManager {
       constructor() {
         this.ws = null;
         this.reconnectTimer = null;
         this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 50; // 최대 재연결 시도 횟수
-        this.reconnectInterval = 300000; // 재연결 간격 (5분)
+        this.maxReconnectAttempts = 50;
+        this.reconnectInterval = 300000;
         this.heartbeatTimer = null;
-        this.heartbeatInterval = 300000; // 2분마다 ping
+        this.heartbeatInterval = 300000;
         this.lastPongTime = Date.now();
         this.isManualClose = false;
-        
+
         this.initVisibilityHandling();
         this.connect();
       }
 
-      // 페이지 가시성 변화 처리
       initVisibilityHandling() {
-        // Page Visibility API로 백그라운드/포그라운드 감지
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') {
-            // 포그라운드로 돌아왔을 때
             console.log(`📱 ${STORE_CODE} 앱이 포그라운드로 돌아옴`);
             this.handleForeground();
           } else {
-            // 백그라운드로 갔을 때
             console.log(`📱 ${STORE_CODE} 앱이 백그라운드로 이동`);
             this.handleBackground();
           }
         });
 
-        // 페이지 포커스/블러 이벤트
         window.addEventListener('focus', () => {
           console.log(`🎯 ${STORE_CODE} 페이지 포커스 됨`);
           this.handleForeground();
@@ -402,33 +359,27 @@
           console.log(`😴 ${STORE_CODE} 페이지 블러 됨`);
         });
 
-        // 온라인/오프라인 감지
         window.addEventListener('online', () => {
           console.log(`🌐 ${STORE_CODE} 인터넷 연결됨`);
           this.handleOnline();
         });
 
         window.addEventListener('offline', () => {
-          console.log(`📵 ${STORE_CODE} 인터넷 연결 끊김`);
+          console.log(`🔵 ${STORE_CODE} 인터넷 연결 끊김`);
           this.handleOffline();
         });
       }
 
       handleForeground() {
-        // 연결 상태 확인 및 재연결
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
           console.log(`🔄 ${STORE_CODE} 포그라운드 복귀 - 재연결 시도`);
           this.reconnect();
         } else {
-          // 연결이 살아있는지 확인
           this.sendHeartbeat();
         }
       }
 
-      handleBackground() {
-        // 백그라운드로 갈 때는 특별한 처리 없음
-        // 모바일 브라우저가 알아서 연결을 관리함
-      }
+      handleBackground() {}
 
       handleOnline() {
         this.hideOfflineIndicator();
@@ -455,11 +406,11 @@
 
         const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${location.host}`;
-        
+
         console.log(`🔗 ${STORE_CODE} WebSocket 연결 시도 (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts}):`, wsUrl);
-        
+
         this.isManualClose = false;
-        
+
         try {
           this.ws = new WebSocket(wsUrl);
           this.setupWebSocketEvents();
@@ -473,7 +424,7 @@
         this.ws.onopen = () => {
           console.log(`✅ ${STORE_CODE} WebSocket 연결됨`);
           this.reconnectAttempts = 0;
-          this.ws.send(`INPUT:${STORE_CODE}`); // 매장 코드 포함해서 전송
+          this.ws.send(`INPUT:${STORE_CODE}`);
           this.hideOfflineIndicator();
           this.startHeartbeat();
           this.lastPongTime = Date.now();
@@ -481,17 +432,16 @@
         };
 
         this.ws.onmessage = (event) => {
-          this.lastPongTime = Date.now(); // 메시지 받으면 연결 상태 업데이트
-          
+          this.lastPongTime = Date.now();
+
           try {
             const data = JSON.parse(event.data);
-            
-            // Pong 응답 처리
+
             if (data.type === 'PONG') {
               console.log(`🏓 ${STORE_CODE} Pong 받음`);
               return;
             }
-            
+
             if (data.type === 'DISPLAY_ON') {
               isDisplayConnected = true;
               displayStatusBox.innerText = `✅ ${STORE_CODE} 디스플레이 연결됨`;
@@ -504,6 +454,8 @@
             } else if (data.type === 'CALL' && Array.isArray(data.list)) {
               currentNumbers = data.list;
               updateCurrentNumbersDisplay();
+            } else if (data.type === 'MENU_UPDATE') {
+              updateMenuButtons(data.soldOutMenus);
             }
           } catch (e) {
             console.log(`${STORE_CODE} 비JSON 메시지:`, event.data);
@@ -518,7 +470,7 @@
         this.ws.onclose = (event) => {
           console.log(`❌ ${STORE_CODE} WebSocket 연결 끊김:`, event.code, event.reason);
           this.stopHeartbeat();
-          
+
           if (!this.isManualClose) {
             setStatus(`⚠️ ${STORE_CODE} 서버 연결 끊김`);
             this.scheduleReconnect();
@@ -533,11 +485,10 @@
           return;
         }
 
-        // 항상 5분 간격으로 재연결
-        const delay = this.reconnectInterval; // 300000ms (5분)
-        
+        const delay = this.reconnectInterval;
+
         this.showOfflineIndicator();
-        
+
         this.reconnectTimer = setTimeout(() => {
           this.reconnectAttempts++;
           this.reconnect();
@@ -549,19 +500,16 @@
         this.connect();
       }
 
-      // 하트비트로 연결 상태 확인
       startHeartbeat() {
         this.stopHeartbeat();
         this.heartbeatTimer = setInterval(() => {
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            // 마지막 pong으로부터 너무 오랜 시간이 지났으면 재연결
-            if (Date.now() - this.lastPongTime > 240000) { // 4분 (2분 하트비트 × 2)
+            if (Date.now() - this.lastPongTime > 240000) {
               console.warn(`🚨 ${STORE_CODE} 하트비트 타임아웃 - 재연결`);
               this.reconnect();
               return;
             }
-            
-            // Ping 전송
+
             try {
               this.ws.send(JSON.stringify({ type: 'PING' }));
               console.log(`🏓 ${STORE_CODE} Ping 전송`);
@@ -593,29 +541,21 @@
       }
 
       showOfflineIndicator() {
-        const indicator = document.getElementById('offlineIndicator');
-        indicator.classList.add('show');
+        document.getElementById('offlineIndicator').classList.add('show');
       }
 
       hideOfflineIndicator() {
-        const indicator = document.getElementById('offlineIndicator');
-        indicator.classList.remove('show');
+        document.getElementById('offlineIndicator').classList.remove('show');
       }
 
-      // 정리
       destroy() {
         this.isManualClose = true;
         this.stopHeartbeat();
-        if (this.reconnectTimer) {
-          clearTimeout(this.reconnectTimer);
-        }
-        if (this.ws) {
-          this.ws.close();
-        }
+        if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+        if (this.ws) this.ws.close();
       }
     }
 
-    // 전역 변수들
     let wsManager;
     const statusBox = document.getElementById("status");
     const displayStatusBox = document.getElementById("displayStatus");
@@ -624,7 +564,6 @@
     let currentNumbers = [];
     let isDisplayConnected = false;
 
-    // WebSocket 매니저 초기화
     wsManager = new WebSocketManager();
 
     function updateCurrentNumbersDisplay() {
@@ -635,7 +574,6 @@
       }
     }
 
-    // 재고소진 상태 표시 업데이트
     function updateClosedStatusDisplay() {
       if (isClosedStatusActive) {
         closedStatusNotice.classList.add('show');
@@ -652,7 +590,7 @@
       const alert = document.getElementById("alert");
       if (alert) {
         alert.currentTime = 0;
-        alert.play().catch(() => {});
+        alert.play().catch(() => { });
       }
     }
 
@@ -667,11 +605,10 @@
 
     function sendCall() {
       if (!checkDisplayAndNotify()) return;
-      
+
       const callNumberInput = document.getElementById("callNumber");
       const num = parseInt(callNumberInput.value);
-      
-      // 번호가 입력되지 않았을 때 마지막 번호 호출
+
       if (isNaN(num) || callNumberInput.value.trim() === '') {
         if (currentNumbers.length > 0) {
           if (wsManager.send('CALL_LAST')) {
@@ -684,8 +621,7 @@
         }
         return;
       }
-      
-      // 정상적인 번호 호출
+
       if (num >= 1 && num <= 700) {
         if (wsManager.send(`CALL:${num}`)) {
           setStatus(`📢 ${STORE_CODE} ${num}번 호출됨`);
@@ -696,18 +632,17 @@
       }
     }
 
-    // 새로운 호출+1 기능
     function sendCallPlusOne() {
       if (!checkDisplayAndNotify()) return;
-      
+
       if (currentNumbers.length === 0) {
         setStatus(`⚠️ 현재 호출된 번호가 없어서 +1 호출이 불가능합니다`);
         return;
       }
-      
-      const lastNumber = currentNumbers[currentNumbers.length - 1]; 
+
+      const lastNumber = currentNumbers[currentNumbers.length - 1];
       const nextNumber = lastNumber + 1;
-      
+
       if (nextNumber <= 700) {
         if (wsManager.send(`CALL_PLUS_ONE:${nextNumber}`)) {
           setStatus(`📢 ${STORE_CODE} 호출+1: ${nextNumber}번 호출됨`);
@@ -719,24 +654,23 @@
 
     function sendSequenceCall() {
       if (!checkDisplayAndNotify()) return;
-      
+
       const targetNum = parseInt(document.getElementById("sequenceNumber").value);
-      if (!isNaN(targetNum) && targetNum >= 5 && targetNum <= 700) {
-        // 새로운 로직: 입력한 번호 기준으로 최근 5개 번호 생성
+      if (!isNaN(targetNum) && targetNum >= 10 && targetNum <= 700) {
         const endNumber = targetNum;
-        const startNumber = Math.max(1, endNumber - 4); // 최소 1번부터
+        const startNumber = Math.max(1, endNumber - 9);  // -4 → -9로 변경!
         const sequenceNumbers = [];
-        
+
         for (let i = startNumber; i <= endNumber; i++) {
           sequenceNumbers.push(i);
         }
-        
+
         if (wsManager.send(`SEQUENCE_NEW:${sequenceNumbers.join(',')}`)) {
-          setStatus(`📢 ${STORE_CODE} ${sequenceNumbers.join(', ')}번 최근 5개 호출됨`);
+          setStatus(`📢 ${STORE_CODE} ${sequenceNumbers.join(', ')}번 최근 10개 호출됨`);  // 5개 → 10개
           document.getElementById("sequenceNumber").value = '';
         }
       } else {
-        setStatus(`❌ 5~700 사이의 번호를 입력해주세요`);
+        setStatus(`❌ 10~700 사이의 번호를 입력해주세요`);  // 5 → 10
       }
     }
 
@@ -748,19 +682,63 @@
 
     function sendMessage(text) {
       if (!checkDisplayAndNotify()) return;
-      
+
       if (wsManager.send(`MSG:${text}`)) {
         setStatus(`💬 ${STORE_CODE} 메시지 전송: ${text}`);
       }
     }
 
-    // 하단 상태 표시기 메시지 변경 함수들 (비밀번호 보안 추가)
+    function toggleMenu(menuName) {
+      if (wsManager.send(`TOGGLE_MENU:${menuName}`)) {
+        // 서버에서 응답이 오면 버튼 상태가 업데이트됨
+      }
+    }
+
+    function updateMenuButtons(soldOutMenus) {
+      const menus = ['소시지나초', '비빔면', '김치말이국수', '삼겹살', '우동', '잔치국수'];
+      const menuIds = {
+        '소시지나초': 'btn-menu-sausage',
+        '비빔면': 'btn-menu-bibim',
+        '김치말이국수': 'btn-menu-noodle',
+        '삼겹살': 'btn-menu-pork',
+        '우동': 'btn-menu-udon',
+        '잔치국수': 'btn-menu-banquet'
+      };
+
+      menus.forEach(menu => {
+        const btn = document.getElementById(menuIds[menu]);
+        if (soldOutMenus.includes(menu)) {
+          btn.classList.add('sold-out');
+          btn.innerText = `🚫 ${menu} (품절)`;
+        } else {
+          btn.classList.remove('sold-out');
+          btn.innerText = menu;
+        }
+      });
+    }
+
+    function sendTextMessage() {
+      if (!checkDisplayAndNotify()) return;
+
+      const input = document.getElementById('textMessage');
+      const text = input.value.trim();
+
+      if (text) {
+        if (wsManager.send(`MSG_DISPLAY:${text}|10000`)) {
+          setStatus(`📝 텍스트 전송: "${text}"`);
+          input.value = '';
+        }
+      } else {
+        setStatus('⚠️ 텍스트를 입력해주세요');
+      }
+    }
+
     function sendClosedStatusMessageWithPassword() {
       if (!checkPassword()) {
         setStatus(`❌ ${STORE_CODE} 재고소진 상태 변경 취소됨`);
         return;
       }
-      
+
       if (wsManager.send(`STATUS:재고소진 마감입니다. 죄송합니다`)) {
         setStatus(`⚠️ ${STORE_CODE} 재고소진 마감 상태로 변경됨`);
         isClosedStatusActive = true;
@@ -773,7 +751,7 @@
         setStatus(`❌ ${STORE_CODE} 전체화면 마감 취소됨`);
         return;
       }
-      
+
       if (wsManager.send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`)) {
         setStatus(`🚫 ${STORE_CODE} 전체화면 재고소진 마감 메시지 전송됨`);
         isClosedStatusActive = true;
@@ -781,7 +759,6 @@
       }
     }
 
-    // 기존 함수들 (비밀번호 없음)
     function sendDefaultStatusMessage() {
       if (wsManager.send(`STATUS:김치말이국수 판매 중입니다`)) {
         setStatus(`🔄 ${STORE_CODE} 기본 상태로 복구됨`);
@@ -799,21 +776,21 @@
     }
 
     function setWaitingModeWithPassword() {
-	  if (!checkPassword()) {
-		setStatus(`❌ ${STORE_CODE} 대기화면 전환 취소됨`);
-		return;
-	  }
-	  
-	  if (wsManager.send('MODE:WAITING')) {
-		setStatus(`📺 ${STORE_CODE} 대기화면 모드로 전환됨`);
-	  }
-	}
+      if (!checkPassword()) {
+        setStatus(`❌ ${STORE_CODE} 대기화면 전환 취소됨`);
+        return;
+      }
 
-	function setWaitingMode() {
-	  if (wsManager.send('MODE:WAITING')) {
-		setStatus(`📺 ${STORE_CODE} 대기화면 모드로 전환됨`);
-	  }
-	}
+      if (wsManager.send('MODE:WAITING')) {
+        setStatus(`📺 ${STORE_CODE} 대기화면 모드로 전환됨`);
+      }
+    }
+
+    function setWaitingMode() {
+      if (wsManager.send('MODE:WAITING')) {
+        setStatus(`📺 ${STORE_CODE} 대기화면 모드로 전환됨`);
+      }
+    }
 
     function setCallMode() {
       if (wsManager.send('MODE:CALL')) {
@@ -821,25 +798,18 @@
       }
     }
 
-    // 페이지 언로드 시 정리
     window.addEventListener('beforeunload', () => {
-      if (wsManager) {
-        wsManager.destroy();
-      }
+      if (wsManager) wsManager.destroy();
     });
 
-    // 엔터키로 호출 기능
-    document.getElementById('callNumber').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        sendCall();
-      }
+    document.getElementById('callNumber').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') sendCall();
     });
 
-    document.getElementById('sequenceNumber').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        sendSequenceCall();
-      }
+    document.getElementById('sequenceNumber').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') sendSequenceCall();
     });
   </script>
 </body>
+
 </html>
