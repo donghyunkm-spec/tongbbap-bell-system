@@ -1,738 +1,327 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>통빱 1루점 호출 시스템</title>
+  <title>통빱 1루점 관리자</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      padding: 1vh 2vw;
-      margin: 0;
-      background-color: #fff;
-      color: #333;
-      height: 100vh;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header {
-      text-align: center;
-      font-size: 6vw;
-      font-weight: bold;
-      color: #e91e63;
-      margin-bottom: 1vh;
-    }
-
-    button, input {
-      font-size: 4.5vw;
-      padding: 1.2vh 0;
-      margin: 0.3vh 0;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      box-sizing: border-box;
-    }
-
-    button { width: 100%; cursor: pointer; }
-
-    .btn-orange { background-color: orange; color: white; }
-    .btn-gray { background-color: #ccc; color: #333; }
-    .btn-red { background-color: #ff4444; color: white; }
-    .btn-dark-red { background-color: #8b0000; color: white; margin-top: 2vh; padding: 2vh 0; }
-    .btn-green { background-color: #28a745; color: white; margin-top: 1vh; padding: 1.5vh 0; }
-    .btn-blue { background-color: #007bff; color: white; margin-top: 1vh; padding: 1.5vh 0; }
-    .btn-purple { background-color: #6f42c1; color: white; }
-    .btn-teal { background-color: #20c997; color: white; }
-    .btn-indigo { background-color: #6610f2; color: white; }
-
-    .btn-call {
-      font-size: 6vw !important;
-      padding: 2vh 0 !important;
-      margin: 1vh 0 !important;
-    }
-
-    .row {
-      display: flex;
-      gap: 1.5vw;
-      align-items: center;
-      width: 100%;
-    }
-
-    .row-three-buttons {
-      display: flex;
-      gap: 1vw;
-      align-items: center;
-      width: 100%;
-      margin-top: 1vh;
-    }
-
-    .btn-third {
-      flex: 1;
-      font-size: 3.5vw !important;
-      padding: 1.5vh 0.5vw !important;
-      margin: 0 !important;
-    }
-
-    .input-short {
-      width: 22%;
-      font-size: 4.5vw;
-      text-align: center;
-      border: 2px solid #ccc;
-    }
-
-    .btn-flex { flex: 1; }
-    .btn-half { flex: 1; }
-
-    #status {
-      text-align: center;
-      font-size: 5.5vw;
-      color: #ff0000;
-      font-weight: bold;
-      margin: 1vh 0;
-      padding: 1vh 2vw;
-      min-height: 4vh;
-      flex-shrink: 0;
-      background-color: #ffe6e6;
-      border-radius: 8px;
-      border: 2px solid #ff6666;
-    }
-
-    #displayStatus {
-      text-align: center;
-      font-size: 4vw;
-      font-weight: bold;
-      min-height: 3vh;
-      flex-shrink: 0;
-      border-radius: 8px;
-      padding: 0.5vh 1vw;
-      margin-bottom: 0.5vh;
-    }
-
-    .status-connected { background-color: #d4edda; color: #155724; }
-    .status-disconnected { background-color: #f8d7da; color: #721c24; }
-    .status-reconnecting { background-color: #fff3cd; color: #856404; }
-
-    #currentNumbers {
-      background-color: #f0f0f0;
-      padding: 1.5vh 2.5vw;
-      border-radius: 6px;
-      margin: 0.5vh 0;
-      font-size: 5.5vw;
-      text-align: center;
-      min-height: 4vh;
-      flex-shrink: 0;
-      font-weight: bold;
-      border: 3px solid #ddd;
-    }
-
-    #closedStatusNotice {
-      background-color: #dc3545;
-      color: white;
-      padding: 1vh 2vw;
-      border-radius: 6px;
-      margin: 0.5vh 0;
-      font-size: 4.5vw;
-      text-align: center;
-      font-weight: bold;
-      border: 3px solid #a71e2a;
-      display: none;
-      animation: pulse 2s infinite;
-    }
-
-    #closedStatusNotice.show { display: block; }
-
-    .content-wrapper {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5vh;
-      overflow-y: auto;
-    }
-
-    .pulse { animation: pulse 1.5s infinite; }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-
-    .offline-indicator {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background-color: #dc3545;
-      color: white;
-      text-align: center;
-      padding: 0.5vh;
-      font-size: 3.5vw;
-      z-index: 1000;
-      transform: translateY(-100%);
-      transition: transform 0.3s ease;
-    }
-
-    .offline-indicator.show { transform: translateY(0); }
-
-    .audio-buttons {
-      display: flex;
-      gap: 1vw;
-      margin-bottom: 1vh;
-    }
-
-    .btn-audio {
-      flex: 1;
-      font-size: 4vw !important;
-      padding: 1.2vh 0.5vw !important;
-      margin: 0 !important;
-    }
-
-    .btn-menu-toggle {
-      background-color: #28a745;
-      color: white;
-      transition: all 0.3s ease;
-      font-size: 3.5vw;
-      padding: 1.5vh 0.5vw;
-    }
-
-    .btn-menu-toggle.sold-out {
-      background-color: #dc3545;
-      text-decoration: line-through;
-      opacity: 0.8;
-    }
-
-    .section-title {
-      font-size: 4.5vw;
-      font-weight: bold;
-      margin: 1.5vh 0 0.5vh 0;
-      color: #555;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 0.5vh;
-    }
-
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1vw;
-    }
+    :root { --bg: #f0f2f5; --tv: #1a1a2e; --pri: #e91e63; --sec: #007bff; --suc: #28a745; --err: #dc3545; }
+    body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+    
+    .dashboard { background: var(--tv); border-radius: 15px; padding: 12px; color: white; margin-bottom: 10px; border: 2px solid #444; }
+    .v-screen { background: #000; border-radius: 8px; padding: 10px; min-height: 80px; border: 1px solid #333; display: flex; flex-direction: column; justify-content: center; }
+    .v-text { font-size: 18px; font-weight: 800; color: #0f0; margin-top: 5px; line-height: 1.4; }
+    
+    .content { flex: 1; overflow-y: auto; }
+    .row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .section-title { font-size: 13px; font-weight: bold; color: #555; margin: 12px 0 6px 5px; }
+    
+    button { border: none; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.1s; }
+    button:active { transform: scale(0.97); }
+    button:disabled { background: #ccc !important; color: #888 !important; cursor: not-allowed; }
+    
+    .input-num { width: 65px; border: 2px solid #ddd; border-radius: 10px; font-size: 20px; text-align: center; }
+    .btn-call { flex: 1.2; height: 60px; font-size: 22px; background: linear-gradient(#ff9800, #f44336); color: white; }
+    .btn-n { flex: 1; height: 60px; background: var(--sec); color: white; }
+    
+    .input-text { flex: 1; border: 2px solid #ddd; border-radius: 10px; padding: 10px; font-size: 15px; }
+    .btn-action { width: 85px; background: var(--sec); color: white; }
+    
+    .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .btn-menu { height: 45px; background: white; border: 1px solid #ddd; font-size: 12px; }
+    .sold-out { background: #ffebee; border-color: var(--err); color: var(--err); text-decoration: line-through; }
+    
+    .btn-ctrl { height: 45px; flex: 1; background: #eee; font-size: 13px; }
+    .btn-blue { background: var(--sec); color: white; }
+    .btn-green { background: var(--suc); color: white; }
+    .btn-red { background: var(--err); color: white; }
   </style>
 </head>
-
 <body>
-  <div id="offlineIndicator" class="offline-indicator">
-    🔄 서버 재연결 중... 잠시만 기다려 주세요
+  <div class="dashboard">
+    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+      <span>📺 실시간 TV 모니터링 (1루점)</span>
+      <span id="conn"><span style="color:#e74c3c">●</span> TV 연결끊김</span>
+    </div>
+    <div class="v-screen">
+      <div id="v-mode" style="font-size:12px; color:#ffc107; font-weight: bold;">모드: 서버 연결 중...</div>
+      <div id="v-msg" class="v-text">연결을 기다리는 중입니다.</div>
+      <div id="v-list" style="font-size:12px; color:#fff; opacity:0.7; margin-top:5px;">호출 목록: ---</div>
+    </div>
   </div>
 
-  <div class="header">🖖 통빱 1루점 호출벨 🜠</div>
-
-  <div id="displayStatus" class="status-disconnected">디스플레이 상태 확인 중...</div>
-
-  <div id="currentNumbers">현재 호출된 번호: 없음</div>
-
-  <div id="closedStatusNotice">⚠️ 재고소진마감 문구 표시중 ⚠️</div>
-
-  <div class="content-wrapper">
+  <div class="content">
+    <div class="section-title">📢 번호 호출 제어</div>
     <div class="row">
-      <input type="number" id="callNumber" class="input-short" placeholder="번호" min="1" max="700" />
-      <button class="btn-orange btn-half btn-call" onclick="sendCall()">📢 호출</button>
-      <button class="btn-blue btn-half btn-call" onclick="sendCallPlusOne()">📢 호출+1</button>
+      <input type="number" id="cNum" class="input-num" placeholder="번호" />
+      <button class="btn-call" id="callB" onclick="hCall()">📢 호출</button>
+      <button class="btn-n" onclick="hPlus(1)">+1</button>
+      <button class="btn-n" onclick="hPlus(3)">+3</button>
+      <button class="btn-n" onclick="hPlus(5)">+5</button>
     </div>
 
+    <div class="section-title">🍽️ 서빙 알림 (10초간 상단 메시지 노출)</div>
     <div class="row">
-      <input type="number" id="sequenceNumber" class="input-short" placeholder="끝번호" min="5" max="700" />
-      <button class="btn-orange btn-flex" onclick="sendSequenceCall()">📢 최근 5개 호출</button>
+      <input type="number" id="sNum" class="input-text" style="flex:0.3" placeholder="번호" />
+      <button class="btn-green btn-action" style="flex:1" onclick="hServe()">번까지 드립니다</button>
     </div>
 
-    <div class="audio-buttons">
-      <button class="btn-purple btn-audio" onclick="playAudio('monitor')">🖥️ 모니터</button>
-      <button class="btn-teal btn-audio" onclick="playAudio('noodle')">🜠국수</button>
-      <button class="btn-indigo btn-audio" onclick="playAudio('pork')">🥩 삼겹살</button>
-    </div>
-
-    <div class="section-title">🚫 메뉴 품절 관리</div>
-    <div class="menu-grid">
-      <button id="btn-menu-sausage" class="btn-menu-toggle" onclick="toggleMenu('소시지나초')">소시지나초</button>
-      <button id="btn-menu-bibim" class="btn-menu-toggle" onclick="toggleMenu('비빔면')">비빔면</button>
-      <button id="btn-menu-noodle" class="btn-menu-toggle" onclick="toggleMenu('김치말이국수')">김치말이국수</button>
-      <button id="btn-menu-pork" class="btn-menu-toggle" onclick="toggleMenu('삼겹살')">삼겹살</button>
-      <button id="btn-menu-udon" class="btn-menu-toggle" onclick="toggleMenu('우동')">우동</button>
-      <button id="btn-menu-banquet" class="btn-menu-toggle" onclick="toggleMenu('잔치국수')">잔치국수</button>
-    </div>
-
-    <div class="section-title">📝 텍스트 출력</div>
+    <div class="section-title">📝 하단 전광판 텍스트 고정</div>
     <div class="row">
-      <input type="text" id="textMessage" class="input-short" style="flex: 2; text-align: left; padding-left: 2vw;"
-        placeholder="출력할 텍스트 입력" />
-      <button class="btn-blue btn-flex" style="flex: 1;" onclick="sendTextMessage()">전송</button>
+      <input type="text" id="mIn" class="input-text" placeholder="고정할 문구를 입력하세요" />
+      <button class="btn-blue btn-action" id="sB" onclick="hSendM()">고정 전송</button>
+      <button class="btn-ctrl" style="flex:0.3" onclick="hClearM()">지우기</button>
     </div>
 
-    <button class="btn-red" onclick="clearAllNumbers()">🗑️ 모든 호출번호 지우기</button>
+    <div class="section-title">🚫 실시간 메뉴 품절 관리</div>
+    <div class="menu-grid" id="mG">
+      <button class="btn-menu" onclick="tMenu('소세지나쵸')">소세지나쵸</button>
+      <button class="btn-menu" onclick="tMenu('비빔면')">비빔면</button>
+      <button class="btn-menu" onclick="tMenu('김치말이국수')">김치말이국수</button>
+      <button class="btn-menu" onclick="tMenu('삼겹살')">삼겹살</button>
+      <button class="btn-menu" onclick="tMenu('우동')">우동</button>
+      <button class="btn-menu" onclick="tMenu('잔치국수')">잔치국수</button>
+    </div>
 
-    <div id="status">1루점 호출벨 시스템 준비됨</div>
-
+    <div class="section-title">⚙️ 시스템 및 화면 제어</div>
     <div class="row">
-      <button class="btn-orange btn-flex" onclick="setWaitingModeWithPassword()">📺 대기화면(홍보화면)</button>
-      <button class="btn-orange btn-flex" onclick="setCallMode()">📢 호출화면 시작</button>
+      <button class="btn-ctrl" onclick="sMode('WAITING')">📺 홍보화면 전환</button>
+      <button class="btn-ctrl btn-blue" onclick="sMode('CALL')">📢 호출화면 전환</button>
+      <button class="btn-ctrl btn-green" onclick="sDef()">🍜 판매중 기본설정</button>
     </div>
-
-    <div class="row-three-buttons">
-      <button class="btn-orange btn-third" onclick="sendClosedStatusMessageWithPassword()">⚠️ 재고소진(작은메시지)</button>
-      <button class="btn-green btn-third" onclick="sendDefaultStatusMessage()">🔄 기본상태</button>
+    <div class="row">
+      <button class="btn-ctrl btn-red" onclick="hReset()">🧹 번호 전체 초기화</button>
+      <button class="btn-ctrl btn-red" onclick="hFullC()">🚫 재고마감 전송</button>
+      <button class="btn-ctrl btn-green" onclick="hRelease()">🔄 마감 해제</button>
     </div>
-
-    <button class="btn-dark-red" onclick="sendFullClosedMessageWithPassword()">🚫 재고소진 마감 (전체화면)</button>
-    <button class="btn-green" onclick="sendWelcomeMessage()">🔄 기본 메시지로 복구 (전체화면 마감 해제)</button>
   </div>
 
   <script>
-    const STORE_CODE = '1ru';
-    let isClosedStatusActive = false;
-    let isDisplayConnected = false;
-    let currentNumbers = [];
-    let wsManager;
+    const STORE = '1ru'; 
+    let ws; 
+    let last = 0; 
+    let currentMode = 'WAITING'; 
+    let isBusy = false;
+    let msgDisplayFixed = false;
+    let currentStatusText = "";
+    let monitorTimer = null; // 모니터용 타이머 추가
+    let currentFixedMsg = ""; // 전광판/임시 메시지 저장용 변수 추가
 
-    function playAudio(type) {
-      let statusMessage = '';
+    function connect() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${location.host}`);
 
-      switch (type) {
-        case 'monitor': statusMessage = '🖥️ 모니터 음성 전송'; break;
-        case 'noodle': statusMessage = '🜠국수 음성 전송'; break;
-        case 'pork': statusMessage = '🥩 삼겹살 음성 전송'; break;
-      }
+      ws.onopen = () => { 
+        ws.send(`INPUT:${STORE}`);
+      };
 
-      if (wsManager.send(`AUDIO:${type}`)) {
-        setStatus(statusMessage);
-        console.log(`📡 ${STORE_CODE} ${statusMessage}`);
-      }
-    }
+      ws.onclose = () => {
+        document.getElementById('v-msg').innerText = "서버와 연결이 끊겼습니다. 재연결 중...";
+        document.getElementById('v-mode').innerText = "모드: 연결 끊김";
+        document.getElementById('v-mode').style.color = "#ff4757";
+        setTimeout(connect, 3000);
+      };
 
-    function checkPassword() {
-      const password = prompt("화면 전환을 위해 비밀번호를 입력하세요:");
-      if (password === "1234") {
-        return true;
-      } else if (password !== null) {
-        alert("비밀번호가 틀렸습니다.");
-      }
-      return false;
-    }
+      ws.onmessage = (e) => {
+        let d;
+        try { d = JSON.parse(e.data); } catch { return; }
+        
+        if (d.type === 'PING') {
+          try { ws.send(JSON.stringify({ type: 'PONG' })); } catch(e) {}
+          return;
+        }
+        
+        if (d.type === 'DISPLAY_ON') {
+          document.getElementById('conn').innerHTML = '<span style="color:#2ecc71">●</span> TV 연결됨';
+        }
+        if (d.type === 'DISPLAY_OFF') {
+          document.getElementById('conn').innerHTML = '<span style="color:#e74c3c">●</span> TV 연결끊김';
+        }
+        
+        if (d.type === 'MODE') { 
+          currentMode = d.mode;
+          updateModeUI();
+        }
+        
+        if (d.type === 'CALL') { 
+          const list = d.list || []; 
+          if (list.length > 0) last = Number(list[list.length - 1]);
+          else last = 0;
+          document.getElementById('v-list').innerText = `호출 목록: ${list.join(', ') || '없음'}`;
+          if (list.length > 0 && !msgDisplayFixed) {
+            updateModeUI();
+          }
+        }
 
-    class WebSocketManager {
-      constructor() {
-        this.ws = null;
-        this.reconnectTimer = null;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 50;
-        this.reconnectInterval = 300000;
-        this.heartbeatTimer = null;
-        this.heartbeatInterval = 300000;
-        this.lastPongTime = Date.now();
-        this.isManualClose = false;
+        if (d.type === 'MSG_DISPLAY') {
+          if (monitorTimer) clearTimeout(monitorTimer);
 
-        this.initVisibilityHandling();
-        this.connect();
-      }
-
-      initVisibilityHandling() {
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') {
-            console.log(`📱 ${STORE_CODE} 앱이 포그라운드로 돌아옴`);
-            this.handleForeground();
+          if (d.text && d.text.trim()) {
+            msgDisplayFixed = true;
+            if (d.duration < 90000) {
+              currentFixedMsg = `<span style="color:#ff9800">[임시] ${d.text}</span>`;
+              monitorTimer = setTimeout(() => {
+                msgDisplayFixed = false;
+                currentFixedMsg = "";
+                updateModeUI();
+              }, d.duration);
+            } else {
+              currentFixedMsg = `<span style="color:#00c6ff">[고정] ${d.text}</span>`;
+            }
           } else {
-            console.log(`📱 ${STORE_CODE} 앱이 백그라운드로 이동`);
-            this.handleBackground();
+            msgDisplayFixed = false;
+            currentFixedMsg = "";
           }
-        });
-
-        window.addEventListener('focus', () => {
-          console.log(`🎯 ${STORE_CODE} 페이지 포커스 됨`);
-          this.handleForeground();
-        });
-
-        window.addEventListener('blur', () => {
-          console.log(`😴 ${STORE_CODE} 페이지 블러 됨`);
-        });
-
-        window.addEventListener('online', () => {
-          console.log(`🌐 ${STORE_CODE} 인터넷 연결됨`);
-          this.handleOnline();
-        });
-
-        window.addEventListener('offline', () => {
-          console.log(`🔵 ${STORE_CODE} 인터넷 연결 끊김`);
-          this.handleOffline();
-        });
-      }
-
-      handleForeground() {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-          console.log(`🔄 ${STORE_CODE} 포그라운드 복귀 - 재연결 시도`);
-          this.reconnect();
-        } else {
-          this.sendHeartbeat();
-        }
-      }
-
-      handleBackground() {}
-
-      handleOnline() {
-        this.hideOfflineIndicator();
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-          this.reconnect();
-        }
-      }
-
-      handleOffline() {
-        this.showOfflineIndicator();
-        this.stopHeartbeat();
-      }
-
-      connect() {
-        if (this.reconnectTimer) {
-          clearTimeout(this.reconnectTimer);
-          this.reconnectTimer = null;
+          updateModeUI();
         }
 
-        if (this.ws) {
-          this.isManualClose = true;
-          this.ws.close();
+        // STATUS 처리 부분 수정
+        if (d.type === 'STATUS') {
+          currentStatusText = d.text || "";
+          updateModeUI(); // 무조건 업데이트하여 실시간 반영
         }
-
-        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${location.host}`;
-
-        console.log(`🔗 ${STORE_CODE} WebSocket 연결 시도 (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts}):`, wsUrl);
-
-        this.isManualClose = false;
-
-        try {
-          this.ws = new WebSocket(wsUrl);
-          this.setupWebSocketEvents();
-        } catch (error) {
-          console.error(`❌ ${STORE_CODE} WebSocket 생성 실패:`, error);
-          this.scheduleReconnect();
-        }
-      }
-
-      setupWebSocketEvents() {
-        this.ws.onopen = () => {
-          console.log(`✅ ${STORE_CODE} WebSocket 연결됨`);
-          this.reconnectAttempts = 0;
-          this.ws.send(`INPUT:${STORE_CODE}`);
-          this.hideOfflineIndicator();
-          this.startHeartbeat();
-          this.lastPongTime = Date.now();
-          setStatus(`✅ ${STORE_CODE} 서버 연결됨`);
-        };
-
-        this.ws.onmessage = (event) => {
-          this.lastPongTime = Date.now();
-
-          try {
-            const data = JSON.parse(event.data);
-
-            if (data.type === 'PONG') {
-              console.log(`🏓 ${STORE_CODE} Pong 받음`);
-              return;
-            }
-
-            if (data.type === 'DISPLAY_ON') {
-              isDisplayConnected = true;
-              document.getElementById('displayStatus').innerText = `✅ ${STORE_CODE} 디스플레이 연결됨`;
-              document.getElementById('displayStatus').className = "status-connected";
-            } else if (data.type === 'DISPLAY_OFF') {
-              isDisplayConnected = false;
-              document.getElementById('displayStatus').innerText = `❌ ${STORE_CODE} 디스플레이 연결 끊김`;
-              document.getElementById('displayStatus').className = "status-disconnected";
-            } else if (data.type === 'CALL' && Array.isArray(data.list)) {
-              currentNumbers = data.list;
-              updateCurrentNumbersDisplay();
-            } else if (data.type === 'MENU_UPDATE') {
-              updateMenuButtons(data.soldOutMenus);
-            }
-          } catch (e) {
-            console.log(`${STORE_CODE} 비JSON 메시지:`, event.data);
+        
+        if (d.type === 'MSG') {
+          const text = d.text || "";
+          if (text.includes('재고소진') || text.includes('마감')) {
+            document.getElementById('v-mode').innerText = "모드: 🚫 재고 마감 화면";
+            document.getElementById('v-mode').style.color = "#ff4757";
+            document.getElementById('v-msg').innerHTML = `<span style="color:#ff4757">${text}</span>`;
+          } else if (!msgDisplayFixed) {
+            document.getElementById('v-msg').innerText = text;
+            updateModeUI();
           }
-        };
-
-        this.ws.onerror = (error) => {
-          console.error(`❌ ${STORE_CODE} WebSocket 에러:`, error);
-          setStatus(`❌ ${STORE_CODE} 서버 연결 실패`);
-        };
-
-        this.ws.onclose = (event) => {
-          console.log(`❌ ${STORE_CODE} WebSocket 연결 끊김:`, event.code, event.reason);
-          this.stopHeartbeat();
-
-          if (!this.isManualClose) {
-            setStatus(`⚠️ ${STORE_CODE} 서버 연결 끊김`);
-            this.scheduleReconnect();
-          }
-        };
-      }
-
-      scheduleReconnect() {
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-          console.error(`❌ ${STORE_CODE} 최대 재연결 시도 횟수 초과`);
-          setStatus(`❌ ${STORE_CODE} 연결 실패 - 새로고침해주세요`);
-          return;
         }
 
-        const delay = this.reconnectInterval;
-        this.showOfflineIndicator();
-
-        this.reconnectTimer = setTimeout(() => {
-          this.reconnectAttempts++;
-          this.reconnect();
-        }, delay);
-      }
-
-      reconnect() {
-        console.log(`🔄 ${STORE_CODE} 재연결 시도`);
-        this.connect();
-      }
-
-      startHeartbeat() {
-        this.stopHeartbeat();
-        this.heartbeatTimer = setInterval(() => {
-          this.sendHeartbeat();
-        }, this.heartbeatInterval);
-      }
-
-      stopHeartbeat() {
-        if (this.heartbeatTimer) {
-          clearInterval(this.heartbeatTimer);
-          this.heartbeatTimer = null;
-        }
-      }
-
-      sendHeartbeat() {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-          console.log(`💓 ${STORE_CODE} Ping 전송`);
-          this.ws.send(JSON.stringify({ type: 'PING' }));
-        }
-      }
-
-      send(message) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-          this.ws.send(message);
-          return true;
-        } else {
-          console.warn(`⚠️ ${STORE_CODE} 전송 실패: 연결 안됨`);
-          setStatus(`❌ 서버 연결 안됨`);
-          this.reconnect();
-          return false;
-        }
-      }
-
-      showOfflineIndicator() {
-        document.getElementById('offlineIndicator').classList.add('show');
-        document.getElementById('displayStatus').innerText = '◯ 연결 끊김';
-        document.getElementById('displayStatus').className = 'status-disconnected';
-      }
-
-      hideOfflineIndicator() {
-        document.getElementById('offlineIndicator').classList.remove('show');
-      }
-
-      destroy() {
-        this.stopHeartbeat();
-        if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
-        if (this.ws) {
-          this.isManualClose = true;
-          this.ws.close();
-        }
-      }
+        if (d.type === 'MENU_UPDATE') updateMenuUI(d.soldOutMenus);
+      };
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      wsManager = new WebSocketManager();
-    });
+    function updateModeUI() {
+      const modeEl = document.getElementById('v-mode');
+      const msgEl = document.getElementById('v-msg');
+      modeEl.style.color = "#ffc107";
 
-    function setStatus(msg) {
-      const statusBox = document.getElementById('status');
-      statusBox.innerText = msg;
-      statusBox.style.animation = 'none';
-      statusBox.offsetHeight;
-      statusBox.style.animation = 'pulse 0.5s';
-    }
-
-    function updateCurrentNumbersDisplay() {
-      const display = document.getElementById('currentNumbers');
-      if (currentNumbers.length === 0) {
-        display.innerText = "현재 호출된 번호: 없음";
+      // 1. 상단 모드 텍스트 설정
+      if (currentMode === 'WAITING') {
+        modeEl.innerText = "모드: 📺 홍보 화면 노출 중";
       } else {
-        const recent = currentNumbers.slice(-5);
-        display.innerText = `현재 호출된 번호: ${recent.join(', ')}`;
+        modeEl.innerText = "모드: 📢 호출 화면 노출 중";
+      }
+
+      // 2. 메시지 영역 병합 생성
+      let combinedHtml = "";
+
+      // [상태] 판매중 기본 설정 메시지 (초록색)
+      if (currentStatusText) {
+        combinedHtml += `<div style="color: #4CAF50; font-size: 14px; margin-bottom: 4px;">● 판매상태: ${currentStatusText}</div>`;
+      }
+
+      // [전광판] 고정 또는 임시 메시지 (하늘색/주황색)
+      if (msgDisplayFixed && currentFixedMsg) {
+        combinedHtml += `<div style="line-height: 1.2;">${currentFixedMsg}</div>`;
+      }
+
+      // 만약 아무 메시지도 없다면 기본 안내 문구 표시
+      if (!combinedHtml) {
+        combinedHtml = currentMode === 'WAITING' ? "홍보 영상 노출 중" : "대기 중...";
+      }
+
+      msgEl.innerHTML = combinedHtml;
+    }
+
+    function checkPW() { return prompt("보안 비밀번호를 입력하세요 (4자리)") === "1234"; }
+    
+    function ensureCallMode() { if (currentMode !== 'CALL') ws.send('MODE:CALL'); }
+    
+    function hCall() { 
+      const e = document.getElementById('cNum'); 
+      if (e.value) { 
+        ensureCallMode(); 
+        ws.send(`CALL:${e.value}`); 
+        e.value = ''; 
+      } else if (last > 0) { 
+        ensureCallMode(); 
+        ws.send('CALL_LAST'); 
       }
     }
 
-    function sendCall() {
-      const numberInput = document.getElementById('callNumber');
-      const number = numberInput.value;
-
-      if (!number) {
-        alert("호출할 번호를 입력하세요.");
-        return;
+    async function hPlus(n) {
+      if (isBusy) return; 
+      isBusy = true; 
+      ensureCallMode();
+      const startNum = Number(last);
+      for (let i = 1; i <= n; i++) { 
+        ws.send(`CALL:${startNum + i}`); 
+        await new Promise(r => setTimeout(r, 1500)); 
       }
+      isBusy = false;
+    }
 
-      if (wsManager.send(`CALL:${number}`)) {
-        setStatus(`📢 ${number}번 호출 전송됨`);
-        numberInput.value = '';
-        numberInput.focus();
+    function hServe() {
+      const e = document.getElementById('sNum'); 
+      if (!e.value) return; 
+      ensureCallMode();
+      ws.send(`MSG_DISPLAY:${e.value}번 손님까지 드립니다|10000`); 
+      e.value = '';
+    }
+
+    function hSendM() { 
+      const inputEl = document.getElementById('mIn');
+      const val = inputEl.value; 
+      if (val) {
+        ws.send(`MSG_DISPLAY:${val}|999999`);
+        inputEl.disabled = true; // 입력창 비활성화
       }
     }
 
-    function sendCallPlusOne() {
-      const numberInput = document.getElementById('callNumber');
-      let number = parseInt(numberInput.value);
+    function hClearM() { 
+      const inputEl = document.getElementById('mIn');
+      ws.send(`MSG_DISPLAY: |1`);
+      inputEl.value = '';      // 내용 초기화
+      inputEl.disabled = false; // 입력창 활성화
+    }
+    
+    function sMode(m) { 
+      if (m === 'WAITING' && currentMode === 'CALL') { if (!checkPW()) return; }
+      ws.send(`MODE:${m}`); 
+    }
 
-      if (!number) {
-        if (currentNumbers.length > 0) {
-          number = parseInt(currentNumbers[currentNumbers.length - 1]) + 1;
-        } else {
-          alert("호출할 번호를 입력하세요.");
-          return;
-        }
+    function sDef() { 
+      const defaultMsg = "김치말이국수 판매 중입니다";
+      // 현재 문구와 같으면 빈 값을 보내서 해제, 다르면 문구 전송
+      if (currentStatusText === defaultMsg) {
+        ws.send(`STATUS: `); 
       } else {
-        number = number + 1;
-      }
-
-      if (wsManager.send(`CALL:${number}`)) {
-        setStatus(`📢 ${number}번 호출 전송됨`);
-        numberInput.value = number;
-        numberInput.focus();
+        ws.send(`STATUS:${defaultMsg}`); 
       }
     }
+    
+    function tMenu(m) { ws.send(`TOGGLE_MENU:${m}`); }
 
-    function sendSequenceCall() {
-      const sequenceInput = document.getElementById('sequenceNumber');
-      const endNumber = parseInt(sequenceInput.value);
-
-      if (!endNumber) {
-        alert("끝번호를 입력하세요.");
-        return;
-      }
-
-      const startNumber = Math.max(1, endNumber - 4);
-      const confirmMsg = `${startNumber}번부터 ${endNumber}번까지 5개를 연속 호출하시겠습니까?`;
-      
-      if (!confirm(confirmMsg)) return;
-
-      let current = startNumber;
-      let count = 0;
-
-      const interval = setInterval(() => {
-        if (current > endNumber) {
-          clearInterval(interval);
-          setStatus(`✅ ${startNumber}~${endNumber}번 연속 호출 완료`);
-          sequenceInput.value = '';
-          return;
-        }
-
-        if (wsManager.send(`CALL:${current}`)) {
-          setStatus(`📢 ${current}번 호출 전송됨 (${++count}/5)`);
-        }
-        current++;
-      }, 500);
-    }
-
-    function clearAllNumbers() {
-      if (confirm("모든 호출 번호를 지우시겠습니까?")) {
-        if (wsManager.send('CLEAR')) {
-          setStatus("🗑️ 모든 호출 번호 삭제됨");
-          currentNumbers = [];
-          updateCurrentNumbersDisplay();
-        }
-      }
-    }
-
-    function setWaitingModeWithPassword() {
-      if (!checkPassword()) return;
-
-      if (wsManager.send('MODE:WAITING')) {
-        setStatus("📺 대기화면 모드로 전환됨");
-      }
-    }
-
-    function setCallMode() {
-      if (wsManager.send('MODE:CALL')) {
-        setStatus("📢 호출화면 모드로 전환됨");
-      }
-    }
-
-    function sendTextMessage() {
-      const input = document.getElementById('textMessage');
-      const text = input.value;
-
-      if (!text) {
-        alert("전송할 텍스트를 입력하세요.");
-        return;
-      }
-
-      if (wsManager.send(`MSG_DISPLAY:${text}|10000`)) {
-        setStatus(`📝 텍스트 전송: ${text}`);
-        input.value = '';
-      }
-    }
-
-    function toggleMenu(menuName) {
-      if (wsManager.send(`TOGGLE_MENU:${menuName}`)) {
-        // UI 업데이트는 서버 응답(MENU_UPDATE)으로 처리
-      }
-    }
-
-    function updateMenuButtons(soldOutList) {
-      const buttons = document.querySelectorAll('.btn-menu-toggle');
-      buttons.forEach(btn => {
+    function updateMenuUI(list) {
+      if (!list) return;
+      document.querySelectorAll('.btn-menu').forEach(btn => {
         const menuName = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
-
-        if (soldOutList.includes(menuName)) {
+        if (list.includes(menuName)) {
           btn.classList.add('sold-out');
-          if (!btn.innerText.includes('(품절)')) {
-            btn.innerText = btn.innerText + ' (품절)';
-          }
         } else {
           btn.classList.remove('sold-out');
-          btn.innerText = btn.innerText.replace(' (품절)', '');
         }
       });
     }
 
-    function sendClosedStatusMessageWithPassword() {
-      if (!checkPassword()) return;
+    function hReset() { if (confirm("호출 목록을 모두 지우시겠습니까?")) ws.send('CLEAR'); }
 
-      if (wsManager.send(`STATUS:재고소진 마감입니다. 죄송합니다`)) {
-        setStatus("⚠️ 재고소진 상태 메시지 전송됨");
-        document.getElementById('closedStatusNotice').classList.add('show');
-        isClosedStatusActive = true;
-      }
+    function hFullC() { 
+      if (checkPW()) ws.send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`); 
     }
 
-    function sendDefaultStatusMessage() {
-      if (wsManager.send(`STATUS:김치말이국수 판매 중입니다`)) {
-        setStatus("🔄 기본 상태 메시지로 복구됨");
-        document.getElementById('closedStatusNotice').classList.remove('show');
-        isClosedStatusActive = false;
-      }
+    function hRelease() {
+      ws.send('MSG:안녕하세요! 통빱 입니다');
     }
 
-    function sendFullClosedMessageWithPassword() {
-      if (!checkPassword()) return;
-
-      if (wsManager.send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`)) {
-        setStatus("🚫 전체화면 마감 메시지 전송됨");
-      }
-    }
-
-    function sendWelcomeMessage() {
-      if (wsManager.send(`MSG:안녕하세요! 통빱 입니다`)) {
-        setStatus("🔄 전체화면 마감 해제됨");
-      }
-    }
+    connect();
   </script>
 </body>
-
 </html>

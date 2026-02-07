@@ -1,384 +1,102 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
   <meta charset="UTF-8">
   <title>통빱 1루점 디스플레이</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
+    body { background-color: #1a1a2e; color: white; font-family: 'Noto Sans KR', sans-serif; text-align: center; margin: 0; padding: 0; overflow: hidden; min-height: 100vh; position: relative; -webkit-user-select: none; user-select: none; }
 
-    body {
-      background-color: #1a1a2e;
-      color: white;
-      font-family: 'Noto Sans KR', sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      min-height: 100vh;
-      position: relative;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
+    .audio-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20000; font-size: 6vw; color: white; }
+    .audio-gate.hidden { display: none; }
+    .start-button { font-size: 8vw; font-weight: 900; background: #ff6b6b; color: white; border: none; padding: 3vh 6vw; border-radius: 25px; margin-top: 4vh; cursor: pointer; animation: pulse 2s infinite; outline: 3px solid transparent; transition: all 0.3s ease; }
+    .start-button:focus { outline: 3px solid #ffd700; background: #ff5252; transform: scale(1.05); }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
 
-    .audio-gate {
+    .call-screen { display: block; }
+    .call-screen.hidden { display: none; }
+
+    #message { display: none; width: 100%; padding: 2vh 2vw; background: rgba(220,53,69,0.9); z-index: 1000; justify-content: center; gap: 2vw; flex-wrap: wrap; font-size: 4vw; font-weight: 900; color: white; margin-top: 2vh; }
+    #message.show { display: flex; }
+    .sold-out-item { background: rgba(255,255,255,0.2); padding: 1vh 2vw; border-radius: 12px; border: 2px solid white; }
+
+    #numbers { display: flex; flex-direction: column; align-items: center; margin-top: 4vh; gap: 2vh; min-height: 28vh; perspective: 1000px; }
+    .number-row { display: flex; justify-content: center; align-items: center; gap: 1.5vw; width: 100%; flex-wrap: nowrap; }
+    .numBox { background: #ffeb3b; color: #1a1a1a; font-family: 'Noto Sans KR', sans-serif; font-size: 10vw; font-weight: 900; padding: 2vh 2vw; border-radius: 25px; min-width: 9vw; min-height: 12vh; display: flex; align-items: center; justify-content: center; flex-shrink: 1; position: relative; transition: font-size 0.3s ease; }
+    .numBox.shrink { font-size: 7vw; }
+    .numBox.row-count-1{font-size:12vw;min-width:12vw}.numBox.row-count-2{font-size:11vw;min-width:11vw}.numBox.row-count-3{font-size:10vw;min-width:10vw}.numBox.row-count-4{font-size:9vw;min-width:9vw}.numBox.row-count-5{font-size:8vw;min-width:8vw}
+    .numBox.shrink.row-count-2{font-size:7.5vw}.numBox.shrink.row-count-3{font-size:7vw}.numBox.shrink.row-count-4{font-size:6.5vw}.numBox.shrink.row-count-5{font-size:6vw}
+    .numBox.new-number { animation: newNumberEntry 0.6s ease-out; }
+    @keyframes newNumberEntry { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
+
+    .fullscreen-call { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg,#ff6b6b,#ff8e53); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; animation: fullscreenPulse 0.5s ease-in-out; }
+    .fullscreen-call.active { display: flex; }
+    .fullscreen-number { font-size: 50vw; font-weight: 900; color: white; text-shadow: 0 0 50px rgba(0,0,0,0.3); animation: numberBounce 0.6s ease-out; }
+    .fullscreen-message { font-size: 8vw; font-weight: 700; color: white; margin-top: 2vh; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.2s both; }
+
+    .fullscreen-closed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg,#8b0000,#dc143c); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; animation: fullscreenPulse 0.5s ease-in-out; }
+    .fullscreen-closed.active { display: flex; }
+    .closed-title { font-size: 12vw; font-weight: 900; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.2s both; margin-bottom: 4vh; text-align: center; }
+    .closed-message { font-size: 6vw; font-weight: 700; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.4s both; text-align: center; line-height: 1.3; }
+
+    .status-indicator { 
+      display: none; 
+      position: fixed; 
+      bottom: 60px; /* 공지사항 바 높이(약 50~60px)만큼 띄움 */
+      left: 0; 
+      right: 0; 
+      width: 100%; 
+      padding: 2.5vh 2vw; 
+      background-color: #4CAF50; 
+      color: white; 
+      font-size: 5vw; 
+      font-weight: 900; 
+      text-align: center; 
+      z-index: 100; 
+      box-shadow: 0 -4px 10px rgba(0,0,0,0.3); 
+    }
+    .status-indicator.show { display: block; }
+    .status-indicator.closed { background-color: #dc3545; }
+
+    /* 하단 공지사항 바 높이 고정 */
+    #noticeBar {
       position: fixed;
-      top: 0;
-      left: 0;
+      bottom: 0;
       width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 20000;
-      font-size: 6vw;
-      color: white;
-    }
-
-    .audio-gate.hidden {
-      display: none;
-    }
-
-    .start-button {
-      font-size: 8vw;
-      font-weight: 900;
-      background: #ff6b6b;
-      color: white;
-      border: none;
-      padding: 3vh 6vw;
-      border-radius: 25px;
-      margin-top: 4vh;
-      cursor: pointer;
-      animation: pulse 2s infinite;
-      outline: 3px solid transparent;
-      transition: all 0.3s ease;
-    }
-
-    .start-button:focus {
-      outline: 3px solid #ffd700;
-      background: #ff5252;
-      transform: scale(1.05);
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    .call-screen {
-      display: block;
-    }
-
-    .call-screen.hidden {
-      display: none;
-    }
-
-    /* 품절 메뉴 표시 영역 (상단) */
-    #message {
-      display: none;
-      width: 100%;
-      padding: 2vh 2vw;
-      background: rgba(220, 53, 69, 0.9);
-      z-index: 1000;
-      justify-content: center;
-      gap: 2vw;
-      flex-wrap: wrap;
-      font-size: 4vw;
-      font-weight: 900;
-      color: white;
-      margin-top: 2vh;
-    }
-
-    #message.show {
-      display: flex;
-    }
-
-    .sold-out-item {
-      background: rgba(255, 255, 255, 0.2);
-      padding: 1vh 2vw;
-      border-radius: 12px;
-      border: 2px solid white;
-    }
-
-    #numbers {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 4vh;
-      gap: 2vh;
-      min-height: 28vh;
-      perspective: 1000px;
-    }
-
-    .number-row {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 1.5vw;
-      width: 100%;
-      flex-wrap: nowrap;
-    }
-
-    .numBox {
-      background: #ffeb3b;
-      color: #1a1a1a;
-      font-family: 'Noto Sans KR', sans-serif;
-      font-size: 10vw;
-      font-weight: 900;
-      padding: 2vh 2vw;
-      border-radius: 25px;
-      min-width: 9vw;
-      min-height: 12vh;
+      height: 60px; /* 높이를 명시적으로 지정 */
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 1;  /* 0 → 1로 변경! */
-      position: relative;
-      transition: font-size 0.3s ease;
-    }
-
-    .numBox.shrink {
-      font-size: 7vw;
-    }
-
-    /* 🔥 줄당 숫자 개수별 크기 자동 조절 */
-    .numBox.row-count-1 { font-size: 12vw; min-width: 12vw; }
-    .numBox.row-count-2 { font-size: 11vw; min-width: 11vw; }
-    .numBox.row-count-3 { font-size: 10vw; min-width: 10vw; }
-    .numBox.row-count-4 { font-size: 9vw; min-width: 9vw; }
-    .numBox.row-count-5 { font-size: 8vw; min-width: 8vw; }
-
-    .numBox.shrink.row-count-2 { font-size: 7.5vw; }
-    .numBox.shrink.row-count-3 { font-size: 7vw; }
-    .numBox.shrink.row-count-4 { font-size: 6.5vw; }
-    .numBox.shrink.row-count-5 { font-size: 6vw; }
-
-    .numBox.new-number {
-      animation: newNumberEntry 0.6s ease-out;
-    }
-
-    @keyframes newNumberEntry {
-      0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    .fullscreen-call {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #ff6b6b, #ff8e53);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      animation: fullscreenPulse 0.5s ease-in-out;
-    }
-
-    .fullscreen-call.active {
-      display: flex;
-    }
-
-    .fullscreen-number {
-      font-size: 50vw;
-      font-weight: 900;
-      color: white;
-      text-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
-      animation: numberBounce 0.6s ease-out;
-    }
-
-    .fullscreen-message {
-      font-size: 8vw;
-      font-weight: 700;
-      color: white;
-      margin-top: 2vh;
-      text-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-      animation: messageSlideUp 0.8s ease-out 0.2s both;
-    }
-
-    .fullscreen-closed {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #8b0000, #dc143c);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-      animation: fullscreenPulse 0.5s ease-in-out;
-    }
-
-    .fullscreen-closed.active {
-      display: flex;
-    }
-
-    .closed-title {
-      font-size: 12vw;
-      font-weight: 900;
-      color: white;
-      text-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-      animation: messageSlideUp 0.8s ease-out 0.2s both;
-      margin-bottom: 4vh;
-      text-align: center;
-    }
-
-    .closed-message {
-      font-size: 6vw;
-      font-weight: 700;
-      color: white;
-      text-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-      animation: messageSlideUp 0.8s ease-out 0.4s both;
-      text-align: center;
-      line-height: 1.3;
-    }
-
-    /* 텍스트 출력 영역 (하단) */
-    .status-indicator {
-      position: fixed;
-      bottom: 5vh;
-      left: 0;
-      right: 0;
-      margin: 0 auto;
-      transform: none;
-      width: fit-content;
-      background-color: #4CAF50;
-      color: white;
-      font-size: 6vw;
-      font-weight: 900;
-      padding: 1.5vh 4vw;
-      border-radius: 15px;
-      animation: pulse 2s infinite;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      z-index: 100;
-      text-align: center;
-      display: none;
-    }
-
-    .status-indicator.show {
-      display: block;
-    }
-
-    .status-indicator.closed {
-      background-color: #dc3545;
-    }
-
-    @keyframes fullscreenPulse {
-      0% { opacity: 0; transform: scale(0.9); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-
-    @keyframes numberBounce {
-      0% { transform: scale(0.5); opacity: 0; }
-      60% { transform: scale(1.1); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    @keyframes messageSlideUp {
-      0% { transform: translateY(50px); opacity: 0; }
-      100% { transform: translateY(0); opacity: 1; }
-    }
-
-    .waiting-screen {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #1a1a2e;
-      z-index: 2000;
-      overflow: hidden;
-    }
-
-    .waiting-screen.active {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .slide {
-      display: none;
-      width: 100%;
-      height: 100%;
-      position: relative;
-      animation: slideIn 1s ease-in-out;
-    }
-
-    .slide.active {
-      display: block;
-    }
-
-    @keyframes slideIn {
-      0% { opacity: 0; }
-      100% { opacity: 1; }
-    }
-
-    .slide-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    .optimized {
-      will-change: auto;
-      transform: translateZ(0);
-      backface-visibility: hidden;
-    }
-
-    .text-overlay {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: rgba(0, 0, 0, 0.85);
-      color: white;
-      padding: 5vh 5vw;
-      border-radius: 20px;
-      font-size: 8vw;
+      padding: 0 15px;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      font-size: 2.2vw;
       font-weight: bold;
-      z-index: 2000;
-      text-align: center;
-      width: 80%;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-      border: 5px solid #ffc107;
-      display: none;
-      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-top: 3px solid #ffeb3b;
+      z-index: 150;
     }
 
-    @keyframes popIn {
-      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    }
+    @keyframes fullscreenPulse{0%{opacity:0;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
+    @keyframes numberBounce{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+    @keyframes messageSlideUp{0%{transform:translateY(50px);opacity:0}100%{transform:translateY(0);opacity:1}}
+
+    .waiting-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a2e; z-index: 2000; overflow: hidden; }
+    .waiting-screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .slide { display: none; width: 100%; height: 100%; position: relative; animation: slideIn 1s ease-in-out; }
+    .slide.active { display: block; }
+    @keyframes slideIn{0%{opacity:0}100%{opacity:1}}
+    .slide-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .text-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background-color: rgba(0,0,0,0.85); color: white; padding: 5vh 5vw; border-radius: 20px; font-size: 8vw; font-weight: bold; z-index: 15000; text-align: center; width: 80%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 5px solid #ffc107; display: none; animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .text-overlay.active { display: block; }
+    @keyframes popIn{0%{transform:translate(-50%,-50%) scale(0.5);opacity:0}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
   </style>
 </head>
-
 <body>
   <div id="audioGate" class="audio-gate">
     <div>🔊 통빱 1루점 호출벨 시스템</div>
-    <div style="font-size: 4vw; margin-top: 2vh;">음성 안내를 들으려면 리모컨 확인 버튼을 눌러주세요</div>
+    <div style="font-size:4vw;margin-top:2vh;">음성 안내를 들으려면 리모컨 확인 버튼을 눌러주세요</div>
     <button id="startAudioBtn" class="start-button">🎵 음성 활성화</button>
   </div>
 
@@ -388,11 +106,14 @@
     <div id="message"></div>
     <div id="numbers"></div>
     <div id="statusIndicator" class="status-indicator"></div>
+    <div id="noticeBar" style="position:fixed;bottom:0;width:100%;padding:15px;background:rgba(0,0,0,0.7);color:#fff;font-size:2.5vw;font-weight:bold;text-align:center;border-top:3px solid #ffeb3b;z-index:150;">
+      음식준비 순서에 따라 뒷 번호가 먼저 받으실 수도 있습니다. 양해 부탁드립니다.
+    </div>
   </div>
 
   <div id="fullscreenCall" class="fullscreen-call">
     <div id="fullscreenNumber" class="fullscreen-number"></div>
-    <div id="fullscreenMessage" class="fullscreen-message">번 손님 주문 나왔습니다!</div>
+    <div id="fullscreenMessage" class="fullscreen-message"></div>
   </div>
 
   <div id="fullscreenClosed" class="fullscreen-closed">
@@ -407,602 +128,261 @@
   </div>
 
   <script>
-    let ws;
-    let audioEnabled = false;
-    let reconnectTimer = null;
-    let isClosedForDay = false;
-    let currentMode = 'WAITING';
-    let fullscreenTimer = null;
-
+    let ws, reconnectTimer = null, fullscreenTimer = null, textOverlayTimer = null;
+    let audioEnabled = false, isClosedForDay = false, currentMode = 'WAITING';
+    let savedStatusText = "";
     const STORE_CODE = '1ru';
 
-    class AndroidTVAudioManager {
+    // === 오디오 매니저 (AndroidTV 호환, 이벤트 리스너 누적 수정) ===
+    class AudioManager {
       constructor() {
-        this.audioInstances = new Map();
-        this.hasUserInteraction = false;
-        this.maxCacheSize = 10;
-        this.audioQueue = [];
-        this.isPlaying = false;
-        this.isAndroidTV = this.detectAndroidTV();
+        this.cachedAudio = null; this.hasUserInteraction = false; this.queue = []; this.playing = false;
+        const ua = navigator.userAgent.toLowerCase();
+        this.isAndroidTV = ua.includes('android') && (ua.includes('tv') || ua.includes('television'));
       }
-
-      detectAndroidTV() {
-        const userAgent = navigator.userAgent.toLowerCase();
-        return userAgent.includes('android') &&
-          (userAgent.includes('tv') || userAgent.includes('television'));
-      }
-
-      createAudioInstance(number) {
-      const cacheKey = 'dingdong';  // ← 변경
-      if (this.audioInstances.has(cacheKey)) {
-        const cached = this.audioInstances.get(cacheKey);
-        cached.currentTime = 0;
-        return cached;
-      }
-
-      const audio = new Audio();
-      audio.src = 'dingdong.mp4';  // ← 변경
-      audio.preload = 'auto';  // ← 변경 (미리 로드)
-
-        audio.volume = 1.0;
-
-        if (this.isAndroidTV) {
-          audio.loop = false;
-          audio.autoplay = false;
+      getAudio() {
+        if (!this.cachedAudio) {
+          this.cachedAudio = new Audio(); this.cachedAudio.src = 'dingdong.mp4';
+          this.cachedAudio.preload = 'auto'; this.cachedAudio.volume = 1.0;
+          if (this.isAndroidTV) { this.cachedAudio.loop = false; this.cachedAudio.autoplay = false; }
         }
-
-        audio.addEventListener('error', (e) => {
-          console.error(`🎤 ${STORE_CODE} 음성 파일 로드 실패: voice/${number}번.mp3`, e);
-          this.audioInstances.delete(cacheKey);
-        });
-
-        if (this.audioInstances.size >= this.maxCacheSize) {
-          const firstKey = this.audioInstances.keys().next().value;
-          const oldAudio = this.audioInstances.get(firstKey);
-          oldAudio.pause();
-          oldAudio.src = '';
-          oldAudio.load();
-          this.audioInstances.delete(firstKey);
-        }
-
-        this.audioInstances.set(cacheKey, audio);
-        return audio;
+        return this.cachedAudio;
       }
-
-      async addToQueue(number) {
-        if (!this.hasUserInteraction) {
-          console.warn(`🔇 사용자 상호작용 없음`);
-          return false;
-        }
-
-        this.audioQueue.push(number);
-        console.log(`📝 ${STORE_CODE} 음성 큐에 추가: ${number}번`);
-
-        if (!this.isPlaying) {
-          this.playNext();
-        }
-        return true;
-      }
-
+      async addToQueue(n) { if (!this.hasUserInteraction) return; this.queue.push(n); if (!this.playing) this.playNext(); }
       async playNext() {
-        if (this.audioQueue.length === 0) {
-          this.isPlaying = false;
-          console.log(`✅ ${STORE_CODE} 음성 재생 완료`);
-          return;
-        }
-
-        this.isPlaying = true;
-        const number = this.audioQueue.shift();
-
+        if (this.queue.length === 0) { this.playing = false; return; }
+        this.playing = true; this.queue.shift();
         try {
-          const audio = this.createAudioInstance(number);
-          console.log(`🎤 ${STORE_CODE} 음성 재생: ${number}번`);
-
-          audio.addEventListener('ended', () => {
-            console.log(`🎵 완료: ${number}번`);
-            setTimeout(() => this.playNext(), 100);
+          const a = this.getAudio(); a.currentTime = 0;
+          await new Promise((res, rej) => {
+            a.addEventListener('ended', res, { once: true });
+            a.addEventListener('error', rej, { once: true });
+            a.play().catch(rej);
           });
-
-          audio.addEventListener('error', () => {
-            console.error(`❌ 실패: ${number}번`);
-            setTimeout(() => this.playNext(), 100);
-          });
-
-          await audio.play();
-        } catch (error) {
-          console.error(`🎤 재생 실패: ${number}번`, error.message);
-          setTimeout(() => this.playNext(), 100);
-        }
+        } catch (e) {}
+        setTimeout(() => this.playNext(), 100);
       }
-
-      cleanup() {
-        this.audioInstances.forEach((audio, key) => {
-          audio.pause();
-          audio.src = '';
-          audio.load();
-        });
-        this.audioInstances.clear();
-      }
+      cleanup() { if (this.cachedAudio) { this.cachedAudio.pause(); this.cachedAudio.src = ''; this.cachedAudio = null; } }
     }
-
-    const audioManager = new AndroidTVAudioManager();
-
-    // 🔥 띵동 소리 미리 로드
-    document.addEventListener('DOMContentLoaded', () => {
-      const dingdong = new Audio();
-      dingdong.src = 'dingdong.mp4';
-      dingdong.preload = 'auto';
-      dingdong.load();
-    });
+    const audioManager = new AudioManager();
 
     function initializeAudioGate() {
-      const audioGate = document.getElementById('audioGate');
-      const startBtn = document.getElementById('startAudioBtn');
+      const gate = document.getElementById('audioGate');
+      const btn = document.getElementById('startAudioBtn');
+      btn.focus();
 
-      startBtn.focus();
-      startBtn.addEventListener('click', activateAudio);
-
-      startBtn.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.keyCode === 13 || e.keyCode === 23) {
-          e.preventDefault();
-          activateAudio();
-        }
-      });
-
-      document.addEventListener('keydown', function (e) {
-        if (!audioEnabled && (e.key === 'Enter' || e.keyCode === 13 || e.keyCode === 23)) {
-          e.preventDefault();
-          activateAudio();
-        }
-      });
-
-      async function activateAudio() {
-        console.log(`🎵 ${STORE_CODE} 음성 활성화`);
-
-        audioManager.hasUserInteraction = true;
-        audioEnabled = true;
-
-        try {
-          const testAudio = new Audio();
-          testAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAAAQElGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
-          await testAudio.play();
-          console.log(`🔊 ${STORE_CODE} 오디오 테스트 성공`);
-        } catch (e) {
-          console.log(`⚠️ ${STORE_CODE} 오디오 테스트 실패:`, e.message);
-        }
-
-        audioGate.classList.add('hidden');
-
-        if (currentMode === 'WAITING') {
-          switchToWaitingMode();
-        } else {
-          switchToCallMode();
-        }
+      async function activate() {
+        audioManager.hasUserInteraction = true; audioEnabled = true;
+        try { const t = new Audio(); t.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAAAQElGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=='; await t.play(); } catch(e){}
+        gate.classList.add('hidden');
+        if (currentMode === 'WAITING') switchToWaitingMode(); else switchToCallMode();
       }
+
+      btn.addEventListener('click', activate, { once: true });
+      btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.keyCode === 23) { e.preventDefault(); activate(); } });
+      document.addEventListener('keydown', function handler(e) {
+        if (!audioEnabled && (e.key === 'Enter' || e.keyCode === 23)) { e.preventDefault(); activate(); document.removeEventListener('keydown', handler); }
+      });
     }
 
-    async function speakNumber(number) {
-      await audioManager.addToQueue(number);
-    }
-
-    function showFullscreenCall(number) {
+    // === 화면 전환 ===
+    function switchToWaitingMode() {
       if (isClosedForDay) return;
-
-      const fullscreenDiv = document.getElementById('fullscreenCall');
-      const numberDiv = document.getElementById('fullscreenNumber');
-      const messageDiv = document.getElementById('fullscreenMessage');
-
-      numberDiv.textContent = number;
-      messageDiv.textContent = `${number}번 손님 주문 나왔습니다!`;
-
-      fullscreenDiv.classList.add('active');
-
-      setTimeout(() => speakNumber(number), 100);
-
+      currentMode = 'WAITING';
+      document.getElementById('callScreen').classList.add('hidden');
+      document.getElementById('waitingScreen').classList.add('active');
+      document.getElementById('fullscreenCall').classList.remove('active');
       if (fullscreenTimer) clearTimeout(fullscreenTimer);
-
-      fullscreenTimer = setTimeout(() => {
-        fullscreenDiv.classList.remove('active');
-      }, 5000);
     }
-
-    function showFullscreenCallSequence(numbers) {
-      if (isClosedForDay || !Array.isArray(numbers) || numbers.length === 0) return;
-
-      let currentIndex = 0;
-
-      function playNextNumber() {
-        if (currentIndex >= numbers.length) {
-          return;
-        }
-
-        const number = numbers[currentIndex];
-        const fullscreenDiv = document.getElementById('fullscreenCall');
-        const numberDiv = document.getElementById('fullscreenNumber');
-        const messageDiv = document.getElementById('fullscreenMessage');
-
-        numberDiv.textContent = number;
-        messageDiv.textContent = `${number}번 손님 주문 나왔습니다!`;
-        fullscreenDiv.classList.add('active');
-
-        setTimeout(() => speakNumber(number), 100);
-
-        currentIndex++;
-
-        setTimeout(() => {
-          if (currentIndex < numbers.length) {
-            playNextNumber();
-          } else {
-            setTimeout(() => fullscreenDiv.classList.remove('active'), 3000);
-          }
-        }, 3000);
-      }
-
-      if (fullscreenTimer) {
-        clearTimeout(fullscreenTimer);
-        fullscreenTimer = null;
-      }
-
-      playNextNumber();
+    function switchToCallMode() {
+      if (isClosedForDay) return;
+      currentMode = 'CALL';
+      document.getElementById('waitingScreen').classList.remove('active');
+      document.getElementById('callScreen').classList.remove('hidden');
+      
+      // 기존의 비우는 코드(si.innerText = '')를 삭제하고 저장된 상태를 적용합니다.
+      updateStatusIndicator(savedStatusText); 
     }
-
     function showClosedScreen() {
       document.getElementById('fullscreenClosed').classList.add('active');
       document.getElementById('callScreen').classList.add('hidden');
       document.getElementById('waitingScreen').classList.remove('active');
       isClosedForDay = true;
     }
-
     function hideClosedScreen() {
       document.getElementById('fullscreenClosed').classList.remove('active');
       isClosedForDay = false;
-
-      if (currentMode === 'WAITING') {
-        switchToWaitingMode();
-      } else {
-        switchToCallMode();
-      }
+      if (currentMode === 'WAITING') switchToWaitingMode(); else switchToCallMode();
     }
 
-    function updateStatusIndicator(text) {
-      if (currentMode === 'CALL' && !isClosedForDay) {
-        const statusIndicator = document.getElementById('statusIndicator');
-        statusIndicator.innerText = text;
-
-        if (text && text.trim() !== '') {
-          statusIndicator.classList.add('show');
-          adjustNumberSize(true);
-        } else {
-          statusIndicator.classList.remove('show');
-          adjustNumberSize(false);
-        }
-
-        if (text.includes('재고소진') || text.includes('마감')) {
-          statusIndicator.classList.add('closed');
-        } else {
-          statusIndicator.classList.remove('closed');
-        }
-      }
-    }
-
-    function updateSoldOutMenus(soldOutMenus) {
-      const messageBox = document.getElementById('message');
-
-      if (soldOutMenus && soldOutMenus.length > 0) {
-        messageBox.innerHTML = '';
-        soldOutMenus.forEach(menu => {
-          const item = document.createElement('div');
-          item.className = 'sold-out-item';
-          item.innerText = `🚫 ${menu} 품절`;
-          messageBox.appendChild(item);
-        });
-        messageBox.classList.add('show');
-        adjustNumberSize(true);
-      } else {
-        messageBox.classList.remove('show');
-        adjustNumberSize(false);
-      }
-    }
-
-    function adjustNumberSize(shrink) {
-      const numBoxes = document.querySelectorAll('.numBox');
-      numBoxes.forEach(box => {
-        if (shrink) {
-          box.classList.add('shrink');
-        } else {
-          box.classList.remove('shrink');
-        }
-      });
-    }
-
-    function switchToWaitingMode() {
-      if (isClosedForDay) return;
-
-      currentMode = 'WAITING';
-      document.getElementById('callScreen').classList.add('hidden');
-      document.getElementById('waitingScreen').classList.add('active');
-      document.getElementById('fullscreenCall').classList.remove('active');
-
-      if (fullscreenTimer) clearTimeout(fullscreenTimer);
-    }
-
-    function switchToCallMode() {
-      if (isClosedForDay) return;
-
-      currentMode = 'CALL';
-      document.getElementById('waitingScreen').classList.remove('active');
-      document.getElementById('callScreen').classList.remove('hidden');
-
-      const statusIndicator = document.getElementById('statusIndicator');
-      statusIndicator.innerText = '';
-      statusIndicator.classList.remove('show', 'closed');
-      adjustNumberSize(false);
-    }
-
-    function connectWebSocket() {
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-        reconnectTimer = null;
-      }
-
-      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${location.host}`;
-
-      ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        console.log(`✅ ${STORE_CODE} 연결됨`);
-        ws.send('DISPLAY:1ru');
-      };
-
-      ws.onclose = (event) => {
-        console.warn(`❌ ${STORE_CODE} 연결 끊김`);
-        reconnectTimer = setTimeout(() => connectWebSocket(), 3000);
-      };
-
-      ws.onerror = (err) => {
-        console.error(`⚠️ ${STORE_CODE} 에러`, err);
-      };
-
-      ws.onmessage = (event) => {
-        let data;
-        try {
-          data = JSON.parse(event.data);
-        } catch (e) {
-          return;
-        }
-
-        if (data.type === "PING") {
-          try {
-            ws.send(JSON.stringify({ type: 'PONG' }));
-          } catch (error) {
-            console.error(`❌ ${STORE_CODE} PONG 전송 실패:`, error);
-          }
-          return;
-        }
-
-        if (data.type === "MODE") {
-          if (data.mode === "WAITING") {
-            switchToWaitingMode();
-          } else if (data.mode === "CALL") {
-            switchToCallMode();
-          }
-          return;
-        }
-
-        if (currentMode === 'CALL') {
-          if (data.type === "CALL" && Array.isArray(data.list)) {
-            updateNumbers(data.list);
-
-            if (data.calledNumbers && Array.isArray(data.calledNumbers)) {
-              showFullscreenCallSequence(data.calledNumbers);
-            } else if (data.calledNumber) {
-              showFullscreenCall(data.calledNumber);
-            } else if (data.list.length > 0) {
-              showFullscreenCall(data.list[data.list.length - 1]);
-            }
-          } else if (data.type === "SERVE_UNTIL") {
-            showServeUntilMessage(data.text, data.number);
-          } else if (data.type === "MSG") {
-            showMessage(data.text);
-          } else if (data.type === "AUDIO") {
-            playDisplayAudio(data.audioType);
-          } else if (data.type === "STATUS") {
-            updateStatusIndicator(data.text);
-          } else if (data.type === 'MENU_UPDATE') {
-            updateSoldOutMenus(data.soldOutMenus);
-          } else if (data.type === 'MSG_DISPLAY') {
-            showTextOverlay(data.text, data.duration);
-          }
-        }
-      };
-    }
-
-    async function playDisplayAudio(type) {
-      if (!audioManager.hasUserInteraction) return false;
-
-      const audioFiles = {
-        'monitor': 'voice/monitor.mp3',
-        'noodle': 'voice/noodle.mp3',
-        'pork': 'voice/pork.mp3'
-      };
-
-      if (audioFiles[type]) {
-        try {
-          const audio = new Audio();
-          audio.src = audioFiles[type];
-          audio.volume = 1.0;
-          await audio.play();
-          return true;
-        } catch (error) {
-          return false;
-        }
-      }
-      return false;
-    }
-
-    function showServeUntilMessage(message, number) {
-      if (isClosedForDay) return;
-
-      const numbersContainer = document.getElementById("numbers");
-      numbersContainer.style.display = 'none';
-
-      const existingServeMessage = document.getElementById('serveUntilMessage');
-      if (existingServeMessage) existingServeMessage.remove();
-
-      const messageBox = document.createElement("div");
-      messageBox.id = 'serveUntilMessage';
-      messageBox.style.cssText = `
-        background: #4CAF50;
-        color: white;
-        font-family: 'Noto Sans KR', sans-serif;
-        font-size: 8vw;
-        font-weight: 900;
-        padding: 4vh 5vw;
-        border-radius: 25px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        animation: newNumberEntry 0.6s ease-out;
-        text-align: center;
-        line-height: 1.2;
-        min-height: 20vh;
-        margin: 0 auto;
-        max-width: 80vw;
-        margin-top: 4vh;
-      `;
-      messageBox.innerText = message;
-
-      numbersContainer.parentNode.insertBefore(messageBox, numbersContainer);
-
-      setTimeout(() => speakNumber(number), 100);
-    }
-
-    // 🔥 수정: 줄당 숫자 개수에 따라 크기 조절
+    // === 번호 표시 (createNumberBox 중복 제거) ===
     function updateNumbers(numbers) {
       if (currentMode !== 'CALL') return;
-
-      const existingServeMessage = document.getElementById('serveUntilMessage');
-      if (existingServeMessage) existingServeMessage.remove();
-
+      // 서빙 메시지 제거
+      const existingServe = document.getElementById('serveUntilMessage');
+      if (existingServe) existingServe.remove();
       const container = document.getElementById("numbers");
       container.style.display = 'flex';
-
-      const currentNumbers = Array.from(container.querySelectorAll('.numBox')).map(child => child.innerText);
-
+      const cur = Array.from(container.querySelectorAll('.numBox')).map(c => c.innerText);
       container.innerHTML = '';
 
-      const firstRowNumbers = numbers.slice(0, 5);
-      const secondRowNumbers = numbers.slice(5, 10);
-
-      if (firstRowNumbers.length > 0) {
-        const row1 = document.createElement("div");
-        row1.className = "number-row";
-        const firstRowCountClass = `row-count-${firstRowNumbers.length}`;  // 추가!
-
-        firstRowNumbers.forEach((num) => {
-          const box = createNumberBox(num, currentNumbers, firstRowCountClass);  // 변경!
-          row1.appendChild(box);
-        });
-
-        container.appendChild(row1);
-      }
-
-      if (secondRowNumbers.length > 0) {
-        const row2 = document.createElement("div");
-        row2.className = "number-row";
-        const secondRowCountClass = `row-count-${secondRowNumbers.length}`;  // 추가!
-
-        secondRowNumbers.forEach((num) => {
-          const box = createNumberBox(num, currentNumbers, secondRowCountClass);  // 변경!
-          row2.appendChild(box);
-        });
-
-        container.appendChild(row2);
-      }
-
+      [numbers.slice(0,5), numbers.slice(5,10)].forEach(rowNums => {
+        if (rowNums.length > 0) {
+          const row = document.createElement("div"); row.className = "number-row";
+          const cls = `row-count-${rowNums.length}`;
+          rowNums.forEach(num => {
+            const box = document.createElement("div"); box.className = `numBox ${cls}`; box.innerText = num;
+            if (!cur.includes(num.toString())) box.classList.add('new-number');
+            row.appendChild(box);
+          });
+          container.appendChild(row);
+        }
+      });
       const hasMenu = document.getElementById('message').classList.contains('show');
       const hasStatus = document.getElementById('statusIndicator').classList.contains('show');
       adjustNumberSize(hasMenu || hasStatus);
     }
-
-    function createNumberBox(num, currentNumbers, rowCountClass) {  // 파라미터 변경!
-      const box = document.createElement("div");
-      box.className = `numBox optimized ${rowCountClass}`;  // 클래스 적용 방식 변경!
-      box.innerText = num;
-
-      if (!currentNumbers.includes(num.toString())) {
-        box.classList.add('new-number');
-      }
-
-      return box;
+    function adjustNumberSize(shrink) {
+      document.querySelectorAll('.numBox').forEach(b => { if(shrink) b.classList.add('shrink'); else b.classList.remove('shrink'); });
     }
 
-    function createNumberBox(num, currentNumbers, totalCount) {
-      const box = document.createElement("div");
-      box.className = "numBox optimized";
-
-      if (totalCount >= 8) {
-        box.classList.add('very-small');
-      } else if (totalCount >= 6) {
-        box.classList.add('small');
-      }
-
-      box.innerText = num;
-
-      if (!currentNumbers.includes(num.toString())) {
-        box.classList.add('new-number');
-      }
-
-      return box;
-    }
-
-    function showMessage(msg) {
-      if (msg.includes('재고소진') && msg.includes('마감')) {
-        showClosedScreen();
-        return;
-      }
-
-      if (msg === '안녕하세요! 통빱 입니다' && isClosedForDay) {
-        hideClosedScreen();
-        return;
-      }
-    }
-
-    let textOverlayTimer = null;
-    function showTextOverlay(text, duration = 10000) {
-      const overlay = document.getElementById('textOverlay');
-      overlay.innerText = text;
-      overlay.style.display = 'block';
-
-      playDisplayAudio('call');
-
-      if (textOverlayTimer) clearTimeout(textOverlayTimer);
-
-      textOverlayTimer = setTimeout(() => {
-        overlay.style.display = 'none';
-      }, duration);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      initializeAudioGate();
-      connectWebSocket();
-      switchToWaitingMode();
-    });
-
-    window.addEventListener('beforeunload', () => {
-      if (ws) ws.close();
-      if (reconnectTimer) clearTimeout(reconnectTimer);
+    // === 풀스크린 호출 ===
+    function showFullscreenCall(number) {
+      if (isClosedForDay) return;
+      document.getElementById('fullscreenNumber').textContent = number;
+      document.getElementById('fullscreenMessage').textContent = `${number}번 손님 주문 나왔습니다!`;
+      document.getElementById('fullscreenCall').classList.add('active');
+      setTimeout(() => audioManager.addToQueue(number), 100);
       if (fullscreenTimer) clearTimeout(fullscreenTimer);
-      audioManager.cleanup();
-    });
+      fullscreenTimer = setTimeout(() => document.getElementById('fullscreenCall').classList.remove('active'), 5000);
+    }
+    function showFullscreenCallSequence(numbers) {
+      if (isClosedForDay || !Array.isArray(numbers) || !numbers.length) return;
+      let i = 0;
+      if (fullscreenTimer) { clearTimeout(fullscreenTimer); fullscreenTimer = null; }
+      (function next() {
+        if (i >= numbers.length) return;
+        const n = numbers[i];
+        document.getElementById('fullscreenNumber').textContent = n;
+        document.getElementById('fullscreenMessage').textContent = `${n}번 손님 주문 나왔습니다!`;
+        document.getElementById('fullscreenCall').classList.add('active');
+        setTimeout(() => audioManager.addToQueue(n), 100);
+        i++;
+        setTimeout(() => { if (i < numbers.length) next(); else setTimeout(() => document.getElementById('fullscreenCall').classList.remove('active'), 3000); }, 3000);
+      })();
+    }
 
-    setInterval(() => {
-      if (window.gc && typeof window.gc === 'function') {
-        window.gc();
+    // === 서빙 메시지 (1루점 전용) ===
+    function showServeUntilMessage(message, number) {
+      if (isClosedForDay) return;
+      const container = document.getElementById("numbers");
+      container.style.display = 'none';
+      const existing = document.getElementById('serveUntilMessage');
+      if (existing) existing.remove();
+
+      const msgBox = document.createElement("div");
+      msgBox.id = 'serveUntilMessage';
+      msgBox.style.cssText = 'background:#4CAF50;color:white;font-family:"Noto Sans KR",sans-serif;font-size:8vw;font-weight:900;padding:4vh 5vw;border-radius:25px;display:flex;align-items:center;justify-content:center;animation:newNumberEntry 0.6s ease-out;text-align:center;line-height:1.2;min-height:20vh;margin:0 auto;max-width:80vw;margin-top:4vh;';
+      msgBox.innerText = message;
+      container.parentNode.insertBefore(msgBox, container);
+      setTimeout(() => audioManager.addToQueue(number), 100);
+    }
+
+    // === 상태 표시 ===
+    function updateStatusIndicator(text) {
+      // 모드와 상관없이 일단 텍스트를 저장해둡니다.
+      savedStatusText = text || ""; 
+      
+      // 현재 호출 화면이 아니거나 마감 상태면 화면에 그리지는 않습니다.
+      if (currentMode !== 'CALL' || isClosedForDay) return;
+      
+      const si = document.getElementById('statusIndicator');
+      if (savedStatusText && savedStatusText.trim()) {
+        si.innerText = savedStatusText;
+        si.classList.add('show');
+        adjustNumberSize(true);
+      } else {
+        si.innerText = '';
+        si.classList.remove('show');
+        adjustNumberSize(false);
       }
-    }, 300000);
+      
+      // 마감 색상 처리
+      if (savedStatusText.includes('재고소진') || savedStatusText.includes('마감')) {
+        si.classList.add('closed');
+      } else {
+        si.classList.remove('closed');
+      }
+    }
+    function updateSoldOutMenus(menus) {
+      const mb = document.getElementById('message');
+      if (menus && menus.length > 0) {
+        mb.innerHTML = '';
+        menus.forEach(m => { const d = document.createElement('div'); d.className = 'sold-out-item'; d.innerText = `🚫 ${m} 품절`; mb.appendChild(d); });
+        mb.classList.add('show');
+        if (currentMode === 'CALL') adjustNumberSize(true);
+      } else { mb.classList.remove('show'); if (currentMode === 'CALL') adjustNumberSize(false); }
+    }
+    function showTextOverlay(text, duration) {
+      const ov = document.getElementById('textOverlay');
+      if (!text || !text.trim()) { ov.classList.remove('active'); return; }
+      ov.innerText = text; ov.classList.add('active');
+      if (textOverlayTimer) clearTimeout(textOverlayTimer);
+      if (duration < 90000) textOverlayTimer = setTimeout(() => ov.classList.remove('active'), duration);
+    }
+
+    // === WebSocket ===
+    function connectWebSocket() {
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${location.host}`);
+
+      ws.onopen = () => { ws.send(`DISPLAY:${STORE_CODE}`); };
+      ws.onclose = () => { reconnectTimer = setTimeout(connectWebSocket, 3000); };
+      ws.onerror = (err) => console.error(`⚠️ ${STORE_CODE} 에러`, err);
+
+      ws.onmessage = (event) => {
+        let data; try { data = JSON.parse(event.data); } catch(e) { return; }
+
+        if (data.type === "PING") { try { ws.send(JSON.stringify({type:'PONG'})); } catch(e){} return; }
+
+        // 모드 전환 (항상)
+        if (data.type === "MODE") {
+          if (data.mode === "WAITING") switchToWaitingMode();
+          else if (data.mode === "CALL") switchToCallMode();
+          return;
+        }
+
+        // 모든 모드에서 처리
+        if (data.type === "MENU_UPDATE") updateSoldOutMenus(data.soldOutMenus);
+        if (data.type === "MSG_DISPLAY") showTextOverlay(data.text, data.duration);
+        if (data.type === "MSG") {
+          const t = data.text || "";
+          if (t.includes('재고소진') && t.includes('마감')) showClosedScreen();
+          else if (t === '안녕하세요! 통빱 입니다' && isClosedForDay) hideClosedScreen();
+        }
+
+        // CALL 모드 전용
+        if (currentMode === 'CALL') {
+          if (data.type === "CALL" && Array.isArray(data.list)) {
+            updateNumbers(data.list);
+            if (data.calledNumbers && Array.isArray(data.calledNumbers)) showFullscreenCallSequence(data.calledNumbers);
+            else if (data.calledNumber) showFullscreenCall(data.calledNumber);
+            else if (data.list.length > 0) showFullscreenCall(data.list[data.list.length - 1]);
+          }
+          else if (data.type === "SERVE_UNTIL") showServeUntilMessage(data.text, data.number);
+          else if (data.type === "AUDIO") {
+            if (!audioManager.hasUserInteraction) return;
+            const files = {'monitor':'voice/monitor.mp3','noodle':'voice/noodle.mp3','pork':'voice/pork.mp3'};
+            if (files[data.audioType]) { const a = new Audio(files[data.audioType]); a.volume = 1.0; a.play().catch(()=>{}); }
+          }
+          else if (data.type === "STATUS") updateStatusIndicator(data.text);
+        }
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { initializeAudioGate(); connectWebSocket(); switchToWaitingMode(); });
+    window.addEventListener('beforeunload', () => { if(ws) ws.close(); if(reconnectTimer) clearTimeout(reconnectTimer); if(fullscreenTimer) clearTimeout(fullscreenTimer); audioManager.cleanup(); });
   </script>
 </body>
-
 </html>
