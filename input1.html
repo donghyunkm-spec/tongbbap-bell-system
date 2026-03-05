@@ -91,8 +91,8 @@
     </div>
     <div class="row">
       <button class="btn-ctrl btn-red" onclick="hReset()">🧹 번호 전체 초기화</button>
-      <button class="btn-ctrl btn-red" onclick="hFullC()">🚫 재고마감 전송</button>
-      <button class="btn-ctrl btn-green" onclick="hRelease()">🔄 마감 해제</button>
+      <button class="btn-ctrl btn-red" id="closedB" onclick="hFullC()">🚫 재고마감 전송</button>
+      <button class="btn-ctrl btn-green" id="releaseB" onclick="hRelease()">🔄 마감 해제</button>
     </div>
   </div>
 
@@ -106,6 +106,7 @@
     let currentStatusText = "";
     let monitorTimer = null; // 모니터용 타이머 추가
     let currentFixedMsg = ""; // 전광판/임시 메시지 저장용 변수 추가
+    let isClosed = false; // 재고마감 상태 추적
 
     function send(msg) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(msg); }
 
@@ -192,9 +193,13 @@
             document.getElementById('v-mode').innerText = "모드: 🚫 재고 마감 화면";
             document.getElementById('v-mode').style.color = "#ff4757";
             document.getElementById('v-msg').innerHTML = `<span style="color:#ff4757">${text}</span>`;
-          } else if (!msgDisplayFixed) {
-            document.getElementById('v-msg').innerText = text;
-            updateModeUI();
+            setClosedMode(true);
+          } else {
+            if (isClosed) setClosedMode(false);
+            if (!msgDisplayFixed) {
+              document.getElementById('v-msg').innerText = text;
+              updateModeUI();
+            }
           }
         }
 
@@ -233,6 +238,17 @@
       }
 
       msgEl.innerHTML = combinedHtml;
+    }
+
+    function setClosedMode(closed) {
+      isClosed = closed;
+      document.querySelectorAll('button').forEach(btn => {
+        if (btn.id === 'releaseB') return;
+        btn.disabled = closed;
+      });
+      document.querySelectorAll('input').forEach(inp => {
+        inp.disabled = closed;
+      });
     }
 
     function checkPW() { return prompt("보안 비밀번호를 입력하세요 (4자리)") === "1234"; }
@@ -319,11 +335,15 @@
     function hReset() { if (confirm("호출 목록을 모두 지우시겠습니까?")) send('CLEAR'); }
 
     function hFullC() {
-      if (checkPW()) send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`);
+      if (checkPW()) {
+        send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`);
+        setClosedMode(true);
+      }
     }
 
     function hRelease() {
       send('MSG:안녕하세요! 통빱 입니다');
+      setClosedMode(false);
     }
 
     connect();
