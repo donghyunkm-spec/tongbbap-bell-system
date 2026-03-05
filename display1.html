@@ -362,6 +362,8 @@
           else if (t === '안녕하세요! 통빱 입니다' && isClosedForDay) hideClosedScreen();
         }
 
+        if (data.type === "STATUS") updateStatusIndicator(data.text);
+
         // CALL 모드 전용
         if (currentMode === 'CALL') {
           if (data.type === "CALL" && Array.isArray(data.list)) {
@@ -376,7 +378,6 @@
             const files = {'monitor':'voice/monitor.mp3','noodle':'voice/noodle.mp3','pork':'voice/pork.mp3'};
             if (files[data.audioType]) { const a = new Audio(files[data.audioType]); a.volume = 1.0; a.play().catch(()=>{}); }
           }
-          else if (data.type === "STATUS") updateStatusIndicator(data.text);
         }
       };
     }

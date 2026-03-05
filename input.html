@@ -97,15 +97,17 @@
   </div>
 
   <script>
-    const STORE = '3ru'; 
+    const STORE = '3ru';
     let currentStatusText = "";
-    let ws; 
-    let last = 0; 
-    let currentMode = 'WAITING'; 
+    let ws;
+    let last = 0;
+    let currentMode = 'WAITING';
     let isBusy = false;
     let msgDisplayFixed = false; // 전광판 고정 상태 추적
     let monitorTimer = null; // 모니터용 타이머 추가
     let currentFixedMsg = ""; // 전광판/임시 메시지 저장용 변수 추가
+
+    function send(msg) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(msg); }
 
     function connect() {
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -161,6 +163,7 @@
         // 전광판 텍스트 고정 처리
         if (d.type === 'MSG_DISPLAY') {
           if (monitorTimer) clearTimeout(monitorTimer);
+          const inputEl = document.getElementById('mIn');
 
           if (d.text && d.text.trim()) {
             msgDisplayFixed = true;
@@ -173,10 +176,12 @@
               }, d.duration);
             } else {
               currentFixedMsg = `<span style="color:#00c6ff">[고정] ${d.text}</span>`;
+              inputEl.disabled = true; // 고정 문구 → 입력창 비활성화 (재연결 시에도 복원)
             }
           } else {
             msgDisplayFixed = false;
             currentFixedMsg = "";
+            inputEl.disabled = false; // 문구 없음 → 입력창 활성화
           }
           updateModeUI();
         }
@@ -239,72 +244,72 @@
 
     function checkPW() { return prompt("보안 비밀번호를 입력하세요 (4자리)") === "1234"; }
     
-    function ensureCallMode() { if (currentMode !== 'CALL') ws.send('MODE:CALL'); }
-    
-    function hCall() { 
-      const e = document.getElementById('cNum'); 
-      if (e.value) { 
-        ensureCallMode(); 
-        ws.send(`CALL:${e.value}`); 
-        e.value = ''; 
-      } else if (last > 0) { 
-        ensureCallMode(); 
-        ws.send('CALL_LAST'); 
+    function ensureCallMode() { if (currentMode !== 'CALL') send('MODE:CALL'); }
+
+    function hCall() {
+      const e = document.getElementById('cNum');
+      if (e.value) {
+        ensureCallMode();
+        send(`CALL:${e.value}`);
+        e.value = '';
+      } else if (last > 0) {
+        ensureCallMode();
+        send('CALL_LAST');
       }
     }
 
     async function hPlus(n) {
-      if (isBusy) return; 
-      isBusy = true; 
+      if (isBusy) return;
+      isBusy = true;
       ensureCallMode();
       const startNum = Number(last);
-      for (let i = 1; i <= n; i++) { 
-        ws.send(`CALL:${startNum + i}`); 
-        await new Promise(r => setTimeout(r, 1500)); 
+      for (let i = 1; i <= n; i++) {
+        send(`CALL:${startNum + i}`);
+        await new Promise(r => setTimeout(r, 1500));
       }
       isBusy = false;
     }
 
     function hServe() {
-      const e = document.getElementById('sNum'); 
-      if (!e.value) return; 
+      const e = document.getElementById('sNum');
+      if (!e.value) return;
       ensureCallMode();
-      ws.send(`MSG_DISPLAY:${e.value}번 손님까지 드립니다|10000`); 
+      send(`MSG_DISPLAY:${e.value}번 손님까지 드립니다|10000`);
       e.value = '';
     }
 
-    function hSendM() { 
+    function hSendM() {
       const inputEl = document.getElementById('mIn');
-      const val = inputEl.value; 
+      const val = inputEl.value;
       if (val) {
-        ws.send(`MSG_DISPLAY:${val}|999999`);
+        send(`MSG_DISPLAY:${val}|999999`);
         inputEl.disabled = true; // 입력창 비활성화
       }
     }
 
-    function hClearM() { 
+    function hClearM() {
       const inputEl = document.getElementById('mIn');
-      ws.send(`MSG_DISPLAY: |1`);
+      send(`MSG_DISPLAY: |1`);
       inputEl.value = '';      // 내용 초기화
       inputEl.disabled = false; // 입력창 활성화
     }
-    
-    function sMode(m) { 
+
+    function sMode(m) {
       if (m === 'WAITING' && currentMode === 'CALL') { if (!checkPW()) return; }
-      ws.send(`MODE:${m}`); 
+      send(`MODE:${m}`);
     }
 
-    function sDef() { 
+    function sDef() {
       const defaultMsg = "김치말이국수 판매 중입니다";
       // 현재 문구와 같으면 빈 값을 보내서 해제, 다르면 문구 전송
       if (currentStatusText === defaultMsg) {
-        ws.send(`STATUS: `); 
+        send(`STATUS: `);
       } else {
-        ws.send(`STATUS:${defaultMsg}`); 
+        send(`STATUS:${defaultMsg}`);
       }
     }
-    
-    function tMenu(m) { ws.send(`TOGGLE_MENU:${m}`); }
+
+    function tMenu(m) { send(`TOGGLE_MENU:${m}`); }
 
     function updateMenuUI(list) {
       if (!list) return;
@@ -318,14 +323,14 @@
       });
     }
 
-    function hReset() { if (confirm("호출 목록을 모두 지우시겠습니까?")) ws.send('CLEAR'); }
+    function hReset() { if (confirm("호출 목록을 모두 지우시겠습니까?")) send('CLEAR'); }
 
-    function hFullC() { 
-      if (checkPW()) ws.send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`); 
+    function hFullC() {
+      if (checkPW()) send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`);
     }
 
     function hRelease() {
-      ws.send('MSG:안녕하세요! 통빱 입니다');
+      send('MSG:안녕하세요! 통빱 입니다');
     }
 
     connect();

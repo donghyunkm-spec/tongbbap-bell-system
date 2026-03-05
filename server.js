@@ -300,6 +300,8 @@ function processMessage(storeKey, message, clientIP) {
   } else if (message.startsWith('CALL_PLUS_ONE:')) {
     const number = parseInt(message.split(':')[1]);
     if (!isNaN(number)) {
+      const idx = store.currentNumbers.indexOf(number);
+      if (idx !== -1) store.currentNumbers.splice(idx, 1);
       store.currentNumbers.push(number);
       if (store.currentNumbers.length > 10) store.currentNumbers.shift();
       responseData = { type: 'CALL', list: [...store.currentNumbers], calledNumber: number };

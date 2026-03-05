@@ -171,23 +171,20 @@
     }
 
     // === 화면 전환 ===
-    function switchToCallMode() {
+    function switchToWaitingMode() {
       if (isClosedForDay) return;
-      currentMode = 'CALL';
-      document.getElementById('waitingScreen').classList.remove('active');
-      document.getElementById('callScreen').classList.remove('hidden');
-      
-      // 기존의 비우는 코드(si.innerText = '')를 삭제하고 저장된 상태를 적용합니다.
-      updateStatusIndicator(savedStatusText); 
+      currentMode = 'WAITING';
+      document.getElementById('callScreen').classList.add('hidden');
+      document.getElementById('waitingScreen').classList.add('active');
+      document.getElementById('fullscreenCall').classList.remove('active');
+      if (fullscreenTimer) clearTimeout(fullscreenTimer);
     }
     function switchToCallMode() {
       if (isClosedForDay) return;
       currentMode = 'CALL';
       document.getElementById('waitingScreen').classList.remove('active');
       document.getElementById('callScreen').classList.remove('hidden');
-      const si = document.getElementById('statusIndicator');
-      si.innerText = ''; si.classList.remove('show', 'closed');
-      adjustNumberSize(false);
+      updateStatusIndicator(savedStatusText);
     }
     function showClosedScreen() {
       document.getElementById('fullscreenClosed').classList.add('active');
@@ -327,6 +324,8 @@
           else if (t === '안녕하세요! 통빱 입니다' && isClosedForDay) hideClosedScreen();
         }
 
+        if (data.type === "STATUS") updateStatusIndicator(data.text);
+
         // CALL 모드 전용
         if (currentMode === 'CALL') {
           if (data.type === "CALL" && Array.isArray(data.list)) {
@@ -340,7 +339,6 @@
             const files = {'monitor':'voice/monitor.mp3','noodle':'voice/noodle.mp3','pork':'voice/pork.mp3'};
             if (files[data.audioType]) { const a = new Audio(files[data.audioType]); a.volume = 1.0; a.play().catch(()=>{}); }
           }
-          else if (data.type === "STATUS") updateStatusIndicator(data.text);
         }
       };
     }
