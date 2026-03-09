@@ -22,3 +22,5 @@ Thumbs.db
 # IDE 설정 파일 (선택 사항)
 .vscode/
 .idea/
+
+backup/

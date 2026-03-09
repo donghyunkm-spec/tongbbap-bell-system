@@ -108,6 +108,7 @@
     let currentFixedMsg = ""; // 전광판/임시 메시지 저장용 변수 추가
     let isClosed = false; // 재고마감 상태 추적
 
+    function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function send(msg) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(msg); }
 
     function connect() {
@@ -169,14 +170,14 @@
           if (d.text && d.text.trim()) {
             msgDisplayFixed = true;
             if (d.duration < 90000) {
-              currentFixedMsg = `<span style="color:#ff9800">[임시] ${d.text}</span>`;
+              currentFixedMsg = `<span style="color:#ff9800">[임시] ${escHtml(d.text)}</span>`;
               monitorTimer = setTimeout(() => {
                 msgDisplayFixed = false;
                 currentFixedMsg = "";
                 updateModeUI();
               }, d.duration);
             } else {
-              currentFixedMsg = `<span style="color:#00c6ff">[고정] ${d.text}</span>`;
+              currentFixedMsg = `<span style="color:#00c6ff">[고정] ${escHtml(d.text)}</span>`;
               inputEl.disabled = true; // 고정 문구 → 입력창 비활성화 (재연결 시에도 복원)
             }
           } else {
@@ -198,7 +199,7 @@
           if (text.includes('재고소진') || text.includes('마감')) {
             document.getElementById('v-mode').innerText = "모드: 🚫 재고 마감 화면";
             document.getElementById('v-mode').style.color = "#ff4757";
-            document.getElementById('v-msg').innerHTML = `<span style="color:#ff4757">${text}</span>`;
+            document.getElementById('v-msg').innerHTML = `<span style="color:#ff4757">${escHtml(text)}</span>`;
             setClosedMode(true);
           } else {
             if (isClosed) setClosedMode(false);
@@ -231,7 +232,7 @@
 
       // [상태] 판매중 기본 설정 메시지 (초록색)
       if (currentStatusText) {
-        combinedHtml += `<div style="color: #4CAF50; font-size: 14px; margin-bottom: 4px;">● 판매상태: ${currentStatusText}</div>`;
+        combinedHtml += `<div style="color: #4CAF50; font-size: 14px; margin-bottom: 4px;">● 판매상태: ${escHtml(currentStatusText)}</div>`;
       }
 
       // [전광판] 고정 또는 임시 메시지 (하늘색/주황색)

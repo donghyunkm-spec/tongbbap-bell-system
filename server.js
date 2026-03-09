@@ -103,7 +103,7 @@ app.get('/status', (req, res) => {
 
 // ====== Heartbeat ======
 const HEARTBEAT_INTERVAL = 300000;
-const CLIENT_TIMEOUT = 300000;
+const CLIENT_TIMEOUT = 600000;
 
 function heartbeat() {
   for (const storeKey in stores) {
@@ -148,13 +148,17 @@ function cleanupOldConnections() {
 const cleanupTimer = setInterval(cleanupOldConnections, 5 * 60 * 1000);
 
 // ====== Static & Routes ======
+// 민감한 파일 접근 차단 (server.js, package.json, .git 등)
+app.use((req, res, next) => {
+  const blocked = ['/server.js', '/package.json', '/package-lock.json', '/CLAUDE.md', '/.claudeignore'];
+  if (blocked.includes(req.path) || req.path.startsWith('/.git') || req.path.startsWith('/.claude') || req.path.startsWith('/node_modules')) {
+    return res.status(404).send('Not found');
+  }
+  next();
+});
 app.use(express.static(__dirname));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'input.html')));
-app.get('/input.html', (req, res) => res.sendFile(path.join(__dirname, 'input.html')));
-app.get('/display.html', (req, res) => res.sendFile(path.join(__dirname, 'display.html')));
 app.get('/1ru', (req, res) => res.sendFile(path.join(__dirname, 'input1.html')));
-app.get('/input1.html', (req, res) => res.sendFile(path.join(__dirname, 'input1.html')));
-app.get('/display1.html', (req, res) => res.sendFile(path.join(__dirname, 'display1.html')));
 
 // ====== 초기 상태 전송 함수 ======
 function sendFullState(ws, store) {
@@ -277,7 +281,7 @@ function processMessage(storeKey, message, clientIP) {
         }, 150); // 화면이 바뀔 시간을 주기 위해 약간의 지연 후 전송
       }
     }
-  } else if (message.startsWith('CALL:')) {
+  } else if (message.startsWith('CALL:') || message.startsWith('CALL_PLUS_ONE:')) {
     const number = parseInt(message.split(':')[1]);
     if (!isNaN(number)) {
       const idx = store.currentNumbers.indexOf(number);
@@ -294,17 +298,6 @@ function processMessage(storeKey, message, clientIP) {
     if (store.currentNumbers.length > 0) {
       const last = store.currentNumbers[store.currentNumbers.length - 1];
       responseData = { type: 'CALL', list: [...store.currentNumbers], calledNumber: last };
-      broadcastTarget = 'all';
-    }
-
-  } else if (message.startsWith('CALL_PLUS_ONE:')) {
-    const number = parseInt(message.split(':')[1]);
-    if (!isNaN(number)) {
-      const idx = store.currentNumbers.indexOf(number);
-      if (idx !== -1) store.currentNumbers.splice(idx, 1);
-      store.currentNumbers.push(number);
-      if (store.currentNumbers.length > 10) store.currentNumbers.shift();
-      responseData = { type: 'CALL', list: [...store.currentNumbers], calledNumber: number };
       broadcastTarget = 'all';
     }
 
