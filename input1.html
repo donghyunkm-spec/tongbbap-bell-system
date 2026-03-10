@@ -134,7 +134,6 @@
     <div class="row">
       <button class="btn-ctrl" onclick="sMode('WAITING')">📺 홍보화면</button>
       <button class="btn-ctrl btn-blue" onclick="sMode('CALL')">📢 호출화면</button>
-      <button class="btn-ctrl btn-green" onclick="sDef()">🍜 판매중 설정</button>
     </div>
     <div class="row">
       <button class="btn-ctrl btn-red" onclick="hReset()">🧹 전체 초기화</button>
@@ -391,15 +390,6 @@
     async function sMode(m) {
       if (m === 'WAITING' && currentMode === 'CALL') { if (!(await checkPW())) return; }
       send(`MODE:${m}`);
-    }
-
-    function sDef() {
-      const defaultMsg = "김치말이국수 판매 중입니다";
-      if (currentStatusText === defaultMsg) {
-        send(`STATUS: `);
-      } else {
-        send(`STATUS:${defaultMsg}`);
-      }
     }
 
     function tMenu(m) { send(`TOGGLE_MENU:${m}`); }
