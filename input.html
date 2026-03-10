@@ -4,46 +4,88 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>통빱 3루점 관리자</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <style>
     :root { --bg: #f0f2f5; --tv: #1a1a2e; --pri: #e91e63; --sec: #007bff; --suc: #28a745; --err: #dc3545; }
-    body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
-    
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 10px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .store-header {
+      padding: 10px 0;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 800;
+      color: white;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .store-3ru { background: linear-gradient(135deg, #3F51B5, #5C6BC0); }
+
     .dashboard { background: var(--tv); border-radius: 15px; padding: 12px; color: white; margin-bottom: 10px; border: 2px solid #444; }
-    .v-screen { background: #000; border-radius: 8px; padding: 10px; min-height: 80px; border: 1px solid #333; display: flex; flex-direction: column; justify-content: center; }
+    .dashboard-header { display: flex; justify-content: space-between; align-items: center; font-size: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .dash-toggle { font-size: 16px; transition: transform 0.3s; }
+    .dash-toggle.collapsed { transform: rotate(180deg); }
+    .v-screen { background: #000; border-radius: 8px; padding: 10px; min-height: 80px; max-height: 200px; border: 1px solid #333; display: flex; flex-direction: column; justify-content: center; margin-top: 5px; transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease, margin 0.3s ease; overflow: hidden; }
+    .v-screen.collapsed { max-height: 0; opacity: 0; padding: 0 10px; margin-top: 0; border-color: transparent; }
     .v-text { font-size: 18px; font-weight: 800; color: #0f0; margin-top: 5px; line-height: 1.4; }
-    
+
     .content { flex: 1; overflow-y: auto; }
     .row { display: flex; gap: 8px; margin-bottom: 8px; }
-    .section-title { font-size: 13px; font-weight: bold; color: #555; margin: 12px 0 6px 5px; }
-    
+    .section-title { font-size: 15px; font-weight: bold; color: #555; margin: 14px 0 8px 5px; }
+
     button { border: none; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.1s; }
     button:active { transform: scale(0.97); }
     button:disabled { background: #ccc !important; color: #888 !important; cursor: not-allowed; }
-    
-    .input-num { width: 65px; border: 2px solid #ddd; border-radius: 10px; font-size: 20px; text-align: center; }
+
+    .input-num { width: 80px; height: 60px; border: 2px solid #ddd; border-radius: 10px; font-size: 20px; text-align: center; }
     .btn-call { flex: 1.2; height: 60px; font-size: 22px; background: linear-gradient(#ff9800, #f44336); color: white; }
-    .btn-n { flex: 1; height: 60px; background: var(--sec); color: white; }
-    
+    .btn-n { flex: 1; height: 60px; background: var(--sec); color: white; font-size: 16px; }
+
     .input-text { flex: 1; border: 2px solid #ddd; border-radius: 10px; padding: 10px; font-size: 15px; }
     .btn-action { width: 85px; background: var(--sec); color: white; }
-    
+
     .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-    .btn-menu { height: 45px; background: white; border: 1px solid #ddd; font-size: 12px; }
+    .btn-menu { height: 55px; background: white; border: 1px solid #ddd; font-size: 14px; }
     .sold-out { background: #ffebee; border-color: var(--err); color: var(--err); text-decoration: line-through; }
-    
-    .btn-ctrl { height: 45px; flex: 1; background: #eee; font-size: 13px; }
+
+    .btn-ctrl { height: 50px; flex: 1; background: #eee; font-size: 14px; }
     .btn-blue { background: var(--sec); color: white; }
     .btn-green { background: var(--suc); color: white; }
     .btn-red { background: var(--err); color: white; }
+
+    .pw-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; }
+    .pw-modal.active { display: flex; }
+    .pw-modal-content { background: white; border-radius: 15px; padding: 25px; width: 280px; text-align: center; }
+    .pw-title { font-size: 18px; font-weight: 800; margin-bottom: 15px; color: #333; }
+    .pw-input { width: 100%; height: 50px; border: 2px solid #ddd; border-radius: 10px; font-size: 24px; text-align: center; letter-spacing: 8px; margin-bottom: 15px; box-sizing: border-box; }
+    .pw-input:focus { border-color: var(--sec); outline: none; }
+    .pw-buttons { display: flex; gap: 10px; }
+    .pw-btn { flex: 1; height: 45px; border: none; border-radius: 10px; font-size: 16px; font-weight: 800; cursor: pointer; }
+    .pw-cancel { background: #eee; color: #333; }
+    .pw-confirm { background: var(--sec); color: white; }
   </style>
 </head>
 <body>
+  <div class="store-header store-3ru">3루점 관리자</div>
+
   <div class="dashboard">
-    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
-      <span>📺 실시간 TV 모니터링 (3루점)</span>
+    <div class="dashboard-header" onclick="toggleDashboard()">
+      <span>📺 TV 모니터링</span>
       <span id="conn"><span style="color:#e74c3c">●</span> TV 연결끊김</span>
+      <span class="dash-toggle" id="dashToggle">▲</span>
     </div>
-    <div class="v-screen">
+    <div class="v-screen" id="vScreen">
       <div id="v-mode" style="font-size:12px; color:#ffc107; font-weight: bold;">모드: 서버 연결 중...</div>
       <div id="v-msg" class="v-text">연결을 기다리는 중입니다.</div>
       <div id="v-list" style="font-size:12px; color:#fff; opacity:0.7; margin-top:5px;">호출 목록: ---</div>
@@ -55,9 +97,9 @@
     <div class="row">
       <input type="number" id="cNum" class="input-num" placeholder="번호" />
       <button class="btn-call" id="callB" onclick="hCall()">📢 호출</button>
-      <button class="btn-n" onclick="hPlus(1)">+1</button>
-      <button class="btn-n" onclick="hPlus(3)">+3</button>
-      <button class="btn-n" onclick="hPlus(5)">+5</button>
+      <button class="btn-n" onclick="hPlus(1)">+1번</button>
+      <button class="btn-n" onclick="hPlus(3)">+3번</button>
+      <button class="btn-n" onclick="hPlus(5)">+5번</button>
     </div>
 
     <div class="section-title">🍽️ 서빙 알림 (10초간 상단 메시지 노출)</div>
@@ -85,14 +127,25 @@
 
     <div class="section-title">⚙️ 시스템 및 화면 제어</div>
     <div class="row">
-      <button class="btn-ctrl" onclick="sMode('WAITING')">📺 홍보화면 전환</button>
-      <button class="btn-ctrl btn-blue" onclick="sMode('CALL')">📢 호출화면 전환</button>
-      <button class="btn-ctrl btn-green" onclick="sDef()">🍜 판매중 기본설정</button>
+      <button class="btn-ctrl" onclick="sMode('WAITING')">📺 홍보화면</button>
+      <button class="btn-ctrl btn-blue" onclick="sMode('CALL')">📢 호출화면</button>
+      <button class="btn-ctrl btn-green" onclick="sDef()">🍜 판매중 설정</button>
     </div>
     <div class="row">
-      <button class="btn-ctrl btn-red" onclick="hReset()">🧹 번호 전체 초기화</button>
-      <button class="btn-ctrl btn-red" id="closedB" onclick="hFullC()">🚫 재고마감 전송</button>
+      <button class="btn-ctrl btn-red" onclick="hReset()">🧹 전체 초기화</button>
+      <button class="btn-ctrl btn-red" id="closedB" onclick="hFullC()">🚫 재고마감</button>
       <button class="btn-ctrl btn-green" id="releaseB" onclick="hRelease()">🔄 마감 해제</button>
+    </div>
+  </div>
+
+  <div id="pwModal" class="pw-modal">
+    <div class="pw-modal-content">
+      <div class="pw-title">🔒 비밀번호 확인</div>
+      <input type="password" id="pwInput" class="pw-input" placeholder="••••" maxlength="4" inputmode="numeric" pattern="[0-9]*" />
+      <div class="pw-buttons">
+        <button class="pw-btn pw-cancel" onclick="closePwModal(false)">취소</button>
+        <button class="pw-btn pw-confirm" onclick="closePwModal(true)">확인</button>
+      </div>
     </div>
   </div>
 
@@ -103,19 +156,46 @@
     let last = 0;
     let currentMode = 'WAITING';
     let isBusy = false;
-    let msgDisplayFixed = false; // 전광판 고정 상태 추적
-    let monitorTimer = null; // 모니터용 타이머 추가
-    let currentFixedMsg = ""; // 전광판/임시 메시지 저장용 변수 추가
-    let isClosed = false; // 재고마감 상태 추적
+    let msgDisplayFixed = false;
+    let monitorTimer = null;
+    let currentFixedMsg = "";
+    let isClosed = false;
+    let pwResolve = null;
 
     function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function send(msg) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(msg); }
+
+    function toggleDashboard() {
+      document.getElementById('vScreen').classList.toggle('collapsed');
+      document.getElementById('dashToggle').classList.toggle('collapsed');
+    }
+
+    function checkPW() {
+      return new Promise(resolve => {
+        pwResolve = resolve;
+        document.getElementById('pwInput').value = '';
+        document.getElementById('pwModal').classList.add('active');
+        setTimeout(() => document.getElementById('pwInput').focus(), 100);
+      });
+    }
+    function closePwModal(confirm) {
+      document.getElementById('pwModal').classList.remove('active');
+      if (pwResolve) {
+        pwResolve(confirm && document.getElementById('pwInput').value === "1234");
+        pwResolve = null;
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pwInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') closePwModal(true);
+      });
+    });
 
     function connect() {
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
       ws = new WebSocket(`${protocol}//${location.host}`);
 
-      ws.onopen = () => { 
+      ws.onopen = () => {
         ws.send(`INPUT:${STORE}`);
       };
 
@@ -129,40 +209,34 @@
       ws.onmessage = (e) => {
         let d;
         try { d = JSON.parse(e.data); } catch { return; }
-        
-        // PING 응답
+
         if (d.type === 'PING') {
           try { ws.send(JSON.stringify({ type: 'PONG' })); } catch(e) {}
           return;
         }
-        
-        // TV 연결 상태
+
         if (d.type === 'DISPLAY_ON') {
           document.getElementById('conn').innerHTML = '<span style="color:#2ecc71">●</span> TV 연결됨';
         }
         if (d.type === 'DISPLAY_OFF') {
           document.getElementById('conn').innerHTML = '<span style="color:#e74c3c">●</span> TV 연결끊김';
         }
-        
-        // 모드 업데이트
-        if (d.type === 'MODE') { 
+
+        if (d.type === 'MODE') {
           currentMode = d.mode;
           updateModeUI();
         }
-        
-        // 호출 목록 업데이트
-        if (d.type === 'CALL') { 
-          const list = d.list || []; 
+
+        if (d.type === 'CALL') {
+          const list = d.list || [];
           if (list.length > 0) last = Number(list[list.length - 1]);
           else last = 0;
           document.getElementById('v-list').innerText = `호출 목록: ${list.join(', ') || '없음'}`;
-          // 호출 목록이 있으면 호출화면 모드 표시 갱신
           if (list.length > 0 && !msgDisplayFixed) {
             updateModeUI();
           }
         }
 
-        // 전광판 텍스트 고정 처리
         if (d.type === 'MSG_DISPLAY') {
           if (monitorTimer) clearTimeout(monitorTimer);
           const inputEl = document.getElementById('mIn');
@@ -178,22 +252,21 @@
               }, d.duration);
             } else {
               currentFixedMsg = `<span style="color:#00c6ff">[고정] ${escHtml(d.text)}</span>`;
-              inputEl.disabled = true; // 고정 문구 → 입력창 비활성화 (재연결 시에도 복원)
+              inputEl.disabled = true;
             }
           } else {
             msgDisplayFixed = false;
             currentFixedMsg = "";
-            inputEl.disabled = false; // 문구 없음 → 입력창 활성화
+            inputEl.disabled = false;
           }
           updateModeUI();
         }
 
-        // STATUS 처리 부분 수정
         if (d.type === 'STATUS') {
           currentStatusText = d.text || "";
-          updateModeUI(); // 무조건 업데이트하여 실시간 반영
+          updateModeUI();
         }
-        
+
         if (d.type === 'MSG') {
           const text = d.text || "";
           if (text.includes('재고소진') || text.includes('마감')) {
@@ -210,7 +283,6 @@
           }
         }
 
-        // 메뉴 품절 상태 동기화
         if (d.type === 'MENU_UPDATE') updateMenuUI(d.soldOutMenus);
       };
     }
@@ -220,27 +292,22 @@
       const msgEl = document.getElementById('v-msg');
       modeEl.style.color = "#ffc107";
 
-      // 1. 상단 모드 텍스트 설정
       if (currentMode === 'WAITING') {
         modeEl.innerText = "모드: 📺 홍보 화면 노출 중";
       } else {
         modeEl.innerText = "모드: 📢 호출 화면 노출 중";
       }
 
-      // 2. 메시지 영역 병합 생성
       let combinedHtml = "";
 
-      // [상태] 판매중 기본 설정 메시지 (초록색)
       if (currentStatusText) {
         combinedHtml += `<div style="color: #4CAF50; font-size: 14px; margin-bottom: 4px;">● 판매상태: ${escHtml(currentStatusText)}</div>`;
       }
 
-      // [전광판] 고정 또는 임시 메시지 (하늘색/주황색)
       if (msgDisplayFixed && currentFixedMsg) {
         combinedHtml += `<div style="line-height: 1.2;">${currentFixedMsg}</div>`;
       }
 
-      // 만약 아무 메시지도 없다면 기본 안내 문구 표시
       if (!combinedHtml) {
         combinedHtml = currentMode === 'WAITING' ? "홍보 영상 노출 중" : "대기 중...";
       }
@@ -250,18 +317,16 @@
 
     function setClosedMode(closed) {
       isClosed = closed;
-      // 마감 해제 버튼 외 모든 버튼과 입력 필드를 비활성화/활성화
       document.querySelectorAll('button').forEach(btn => {
-        if (btn.id === 'releaseB') return; // 마감 해제 버튼은 항상 활성화
+        if (btn.id === 'releaseB') return;
+        if (btn.closest('.pw-modal')) return;
         btn.disabled = closed;
       });
       document.querySelectorAll('input').forEach(inp => {
-        // 전광판 고정 입력은 별도 로직이 있으므로 마감 해제 시에만 복원
+        if (inp.closest('.pw-modal')) return;
         inp.disabled = closed;
       });
     }
-
-    function checkPW() { return prompt("보안 비밀번호를 입력하세요 (4자리)") === "1234"; }
 
     function ensureCallMode() { if (currentMode !== 'CALL') send('MODE:CALL'); }
 
@@ -302,25 +367,24 @@
       const val = inputEl.value;
       if (val) {
         send(`MSG_DISPLAY:${val}|999999`);
-        inputEl.disabled = true; // 입력창 비활성화
+        inputEl.disabled = true;
       }
     }
 
     function hClearM() {
       const inputEl = document.getElementById('mIn');
       send(`MSG_DISPLAY: |1`);
-      inputEl.value = '';      // 내용 초기화
-      inputEl.disabled = false; // 입력창 활성화
+      inputEl.value = '';
+      inputEl.disabled = false;
     }
 
-    function sMode(m) {
-      if (m === 'WAITING' && currentMode === 'CALL') { if (!checkPW()) return; }
+    async function sMode(m) {
+      if (m === 'WAITING' && currentMode === 'CALL') { if (!(await checkPW())) return; }
       send(`MODE:${m}`);
     }
 
     function sDef() {
       const defaultMsg = "김치말이국수 판매 중입니다";
-      // 현재 문구와 같으면 빈 값을 보내서 해제, 다르면 문구 전송
       if (currentStatusText === defaultMsg) {
         send(`STATUS: `);
       } else {
@@ -344,8 +408,8 @@
 
     function hReset() { if (confirm("호출 목록을 모두 지우시겠습니까?")) send('CLEAR'); }
 
-    function hFullC() {
-      if (checkPW()) {
+    async function hFullC() {
+      if (await checkPW()) {
         send(`MSG:금일 재고소진으로 인해 마감합니다. 대단히 죄송합니다.`);
         setClosedMode(true);
       }

@@ -14,14 +14,14 @@
     .start-button:focus { outline: 3px solid #ffd700; background: #ff5252; transform: scale(1.05); }
     @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
 
-    .call-screen { display: block; }
+    .call-screen { display: flex; flex-direction: column; height: 100vh; padding: 0; background-color: #1a1a2e; }
     .call-screen.hidden { display: none; }
 
     #message { display: none; width: 100%; padding: 2vh 2vw; background: rgba(220,53,69,0.9); z-index: 1000; justify-content: center; gap: 2vw; flex-wrap: wrap; font-size: 4vw; font-weight: 900; color: white; margin-top: 2vh; }
     #message.show { display: flex; }
     .sold-out-item { background: rgba(255,255,255,0.2); padding: 1vh 2vw; border-radius: 12px; border: 2px solid white; }
 
-    #numbers { display: flex; flex-direction: column; align-items: center; margin-top: 4vh; gap: 2vh; min-height: 28vh; perspective: 1000px; }
+    #numbers { flex-grow: 1; display: flex; flex-direction: column; align-items: center; margin-top: 4vh; gap: 2vh; min-height: 28vh; perspective: 1000px; width: 100%; padding: 2vh 2vw; }
     .number-row { display: flex; justify-content: center; align-items: center; gap: 1.5vw; width: 100%; flex-wrap: nowrap; }
     .numBox { background: #ffeb3b; color: #1a1a1a; font-family: 'Noto Sans KR', sans-serif; font-size: 10vw; font-weight: 900; padding: 2vh 2vw; border-radius: 25px; min-width: 9vw; min-height: 12vh; display: flex; align-items: center; justify-content: center; flex-shrink: 1; position: relative; transition: font-size 0.3s ease; }
     .numBox.shrink { font-size: 7vw; }

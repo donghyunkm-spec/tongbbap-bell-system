@@ -11,6 +11,7 @@
     .audio-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20000; font-size: 6vw; color: white; }
     .audio-gate.hidden { display: none; }
     .start-button { font-size: 8vw; font-weight: 900; background: #ff6b6b; color: white; border: none; padding: 3vh 6vw; border-radius: 25px; margin-top: 4vh; cursor: pointer; animation: pulse 2s infinite; }
+    .start-button:focus { outline: 3px solid #ffd700; background: #ff5252; transform: scale(1.05); }
     @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
 
     .call-screen { display: flex; flex-direction: column; height: 100vh; padding: 0; background-color: #1a1a2e; }
@@ -22,10 +23,10 @@
 
     #numbers { flex-grow: 1; display: flex; flex-direction: column; align-items: center; margin-top: 4vh; gap: 2vh; min-height: 28vh; perspective: 1000px; width: 100%; padding: 2vh 2vw; }
     .number-row { display: flex; justify-content: center; align-items: center; gap: 1.5vw; width: 100%; flex-wrap: nowrap; }
-    .numBox { background: #ffeb3b; color: #1a1a1a; font-family: 'Noto Sans KR', sans-serif; font-size: 10vw; font-weight: 900; padding: 2vh 2vw; border-radius: 25px; min-width: 9vw; min-height: 12vh; display: flex; align-items: center; justify-content: center; flex-shrink: 1; position: relative; transition: font-size 0.3s ease; }
-    .numBox.shrink { font-size: 7vw; }
-    .numBox.row-count-1{font-size:12vw;min-width:12vw}.numBox.row-count-2{font-size:11vw;min-width:11vw}.numBox.row-count-3{font-size:10vw;min-width:10vw}.numBox.row-count-4{font-size:9vw;min-width:9vw}.numBox.row-count-5{font-size:8vw;min-width:8vw}
-    .numBox.shrink.row-count-2{font-size:7.5vw}.numBox.shrink.row-count-3{font-size:7vw}.numBox.shrink.row-count-4{font-size:6.5vw}.numBox.shrink.row-count-5{font-size:6vw}
+    .numBox { background: #ffeb3b; color: #1a1a1a; font-family: 'Noto Sans KR', sans-serif; font-size: 11vw; font-weight: 900; padding: 2vh 2vw; border-radius: 25px; min-width: 10vw; min-height: 12vh; display: flex; align-items: center; justify-content: center; flex-shrink: 1; position: relative; transition: font-size 0.3s ease; }
+    .numBox.shrink { font-size: 8vw; }
+    .numBox.row-count-1{font-size:14vw;min-width:14vw}.numBox.row-count-2{font-size:12vw;min-width:12vw}.numBox.row-count-3{font-size:11vw;min-width:11vw}.numBox.row-count-4{font-size:10vw;min-width:10vw}.numBox.row-count-5{font-size:9vw;min-width:9vw}
+    .numBox.shrink.row-count-2{font-size:8.5vw}.numBox.shrink.row-count-3{font-size:8vw}.numBox.shrink.row-count-4{font-size:7.5vw}.numBox.shrink.row-count-5{font-size:7vw}
     .numBox.new-number { animation: newNumberEntry 0.6s ease-out; }
     @keyframes newNumberEntry { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
 
@@ -60,7 +61,7 @@
       padding: 0 15px;
       background: rgba(0,0,0,0.8);
       color: #fff;
-      font-size: 2.2vw;
+      font-size: 3vw;
       font-weight: bold;
       border-top: 3px solid #ffeb3b;
       z-index: 150;
