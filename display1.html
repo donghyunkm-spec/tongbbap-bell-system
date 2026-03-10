@@ -275,15 +275,23 @@
     class AudioManager {
       constructor() {
         this.cachedAudio = null; this.hasUserInteraction = false; this.queue = []; this.playing = false;
+        this.audioCtx = null; this.gainNode = null;
         const ua = navigator.userAgent.toLowerCase();
         this.isAndroidTV = ua.includes('android') && (ua.includes('tv') || ua.includes('television'));
       }
       getAudio() {
         if (!this.cachedAudio) {
           this.cachedAudio = new Audio(); this.cachedAudio.src = 'dingdong.mp4';
-          this.cachedAudio.preload = 'auto'; this.cachedAudio.volume = 1.0;
+          this.cachedAudio.preload = 'auto';
           if (this.isAndroidTV) { this.cachedAudio.loop = false; this.cachedAudio.autoplay = false; }
+          this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          this.gainNode = this.audioCtx.createGain();
+          this.gainNode.gain.value = 3.0; // 3배 증폭
+          const source = this.audioCtx.createMediaElementSource(this.cachedAudio);
+          source.connect(this.gainNode);
+          this.gainNode.connect(this.audioCtx.destination);
         }
+        if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
         return this.cachedAudio;
       }
       async addToQueue(n) { if (!this.hasUserInteraction) return; this.queue.push(n); if (!this.playing) this.playNext(); }
