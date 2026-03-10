@@ -141,7 +141,7 @@
       <button class="btn-ctrl btn-green" id="releaseB" onclick="hRelease()">🔄 마감 해제</button>
     </div>
     <div class="row">
-      <button class="btn-ctrl" onclick="send('RELOAD_DISPLAY')">📺 TV 새로고침</button>
+      <button class="btn-ctrl" onclick="reloadTV()">📺 TV 새로고침</button>
     </div>
   </div>
 
@@ -392,6 +392,7 @@
       send(`MODE:${m}`);
     }
 
+    async function reloadTV() { if (await checkPW()) send('RELOAD_DISPLAY'); }
     function tMenu(m) { send(`TOGGLE_MENU:${m}`); }
 
     function updateMenuUI(list) {
