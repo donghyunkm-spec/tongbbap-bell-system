@@ -6,7 +6,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
-    body { background-color: #1a1a2e; color: white; font-family: 'Noto Sans KR', sans-serif; text-align: center; margin: 0; padding: 0; overflow: hidden; min-height: 100vh; position: relative; -webkit-user-select: none; user-select: none; }
+    body { background: linear-gradient(160deg, #0f0c29 0%, #1a1a2e 50%, #16213e 100%); color: white; font-family: 'Noto Sans KR', sans-serif; text-align: center; margin: 0; padding: 0; overflow: hidden; min-height: 100vh; position: relative; -webkit-user-select: none; user-select: none; }
 
     .audio-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20000; font-size: 6vw; color: white; }
     .audio-gate.hidden { display: none; }
@@ -14,25 +14,101 @@
     .start-button:focus { outline: 3px solid #ffd700; background: #ff5252; transform: scale(1.05); }
     @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
 
-    .call-screen { display: flex; flex-direction: column; height: 100vh; padding: 0; background-color: #1a1a2e; }
+    .call-screen { display: flex; flex-direction: column; height: 100vh; padding: 0; }
     .call-screen.hidden { display: none; }
 
-    #message { display: none; width: 100%; padding: 2vh 2vw; background: rgba(220,53,69,0.9); z-index: 1000; justify-content: center; gap: 2vw; flex-wrap: wrap; font-size: 4vw; font-weight: 900; color: white; margin-top: 2vh; }
-    #message.show { display: flex; }
-    .sold-out-item { background: rgba(255,255,255,0.2); padding: 1vh 2vw; border-radius: 12px; border: 2px solid white; }
+    /* 브랜드 헤더 */
+    .screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5vh 3vw;
+      gap: 2.5vw;
+      background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 70%, transparent 100%);
+      flex-shrink: 0;
+    }
+    .header-logo-wrap {
+      background: white;
+      border-radius: 12px;
+      padding: 0.6vh 1.5vw;
+      display: flex;
+      align-items: center;
+    }
+    .header-logo { height: 4.5vh; object-fit: contain; }
+    .header-divider { width: 2px; height: 4vh; background: rgba(255,255,255,0.3); border-radius: 1px; }
+    .header-title {
+      font-size: 4.5vw;
+      font-weight: 900;
+      color: #ffeb3b;
+      letter-spacing: 0.3vw;
+      text-shadow: 0 2px 15px rgba(255,235,59,0.4);
+    }
 
-    #numbers { flex-grow: 1; display: flex; flex-direction: column; align-items: center; margin-top: 4vh; gap: 2vh; min-height: 28vh; perspective: 1000px; width: 100%; padding: 2vh 2vw; }
+    #message { display: none; width: 100%; padding: 1.5vh 2vw; background: linear-gradient(90deg, rgba(220,53,69,0.95), rgba(183,28,28,0.95)); z-index: 1000; justify-content: center; gap: 2vw; flex-wrap: wrap; font-size: 3.5vw; font-weight: 900; color: white; margin-top: 2vh; flex-shrink: 0; }
+    #message.show { display: flex; }
+    .sold-out-item { background: rgba(255,255,255,0.15); padding: 0.8vh 1.5vw; border-radius: 10px; border: 2px solid rgba(255,255,255,0.5); backdrop-filter: blur(5px); }
+
+    #numbers { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh; min-height: 28vh; perspective: 1000px; width: 100%; padding: 2vh 2vw; }
     .number-row { display: flex; justify-content: center; align-items: center; gap: 1.5vw; width: 100%; flex-wrap: nowrap; }
-    .numBox { background: #ffeb3b; color: #1a1a1a; font-family: 'Noto Sans KR', sans-serif; font-size: 10vw; font-weight: 900; padding: 2vh 2vw; border-radius: 25px; min-width: 9vw; min-height: 12vh; display: flex; align-items: center; justify-content: center; flex-shrink: 1; position: relative; transition: font-size 0.3s ease; }
+
+    .numBox {
+      background: linear-gradient(145deg, #ffe082, #ffca28);
+      color: #1a1a1a;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 10vw;
+      font-weight: 900;
+      padding: 2vh 2vw;
+      border-radius: 20px;
+      min-width: 9vw;
+      min-height: 12vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 1;
+      position: relative;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255,202,40,0.35), inset 0 2px 0 rgba(255,255,255,0.4);
+      border: 2px solid rgba(255,255,255,0.15);
+    }
     .numBox.shrink { font-size: 7vw; }
     .numBox.row-count-1{font-size:12vw;min-width:12vw}.numBox.row-count-2{font-size:11vw;min-width:11vw}.numBox.row-count-3{font-size:10vw;min-width:10vw}.numBox.row-count-4{font-size:9vw;min-width:9vw}.numBox.row-count-5{font-size:8vw;min-width:8vw}
     .numBox.shrink.row-count-2{font-size:7.5vw}.numBox.shrink.row-count-3{font-size:7vw}.numBox.shrink.row-count-4{font-size:6.5vw}.numBox.shrink.row-count-5{font-size:6vw}
     .numBox.new-number { animation: newNumberEntry 0.6s ease-out; }
     @keyframes newNumberEntry { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
 
-    .fullscreen-call { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg,#ff6b6b,#ff8e53); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; animation: fullscreenPulse 0.5s ease-in-out; }
+    .numBox.latest {
+      background: linear-gradient(145deg, #ff6b6b, #e91e63);
+      color: white;
+      box-shadow: 0 4px 20px rgba(233,30,99,0.5), 0 0 35px rgba(233,30,99,0.2);
+      border-color: rgba(255,255,255,0.3);
+      animation: latestGlow 2s ease-in-out infinite;
+    }
+    @keyframes latestGlow {
+      0%, 100% { box-shadow: 0 4px 20px rgba(233,30,99,0.5), 0 0 35px rgba(233,30,99,0.2); }
+      50% { box-shadow: 0 4px 30px rgba(233,30,99,0.7), 0 0 50px rgba(233,30,99,0.35); }
+    }
+
+    /* 빈 화면 상태 */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.35);
+      font-size: 4vw;
+      font-weight: 700;
+      gap: 1.5vh;
+    }
+    .empty-icon { font-size: 10vw; animation: emptyFloat 3s ease-in-out infinite; }
+    @keyframes emptyFloat {
+      0%, 100% { transform: translateY(0); opacity: 0.4; }
+      50% { transform: translateY(-1vh); opacity: 0.7; }
+    }
+
+    .fullscreen-call { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg,#ff6b6b,#e91e63); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; animation: fullscreenPulse 0.5s ease-in-out; }
     .fullscreen-call.active { display: flex; }
-    .fullscreen-number { font-size: 50vw; font-weight: 900; color: white; text-shadow: 0 0 50px rgba(0,0,0,0.3); animation: numberBounce 0.6s ease-out; }
+    .fullscreen-number { font-size: 50vw; font-weight: 900; color: white; text-shadow: 0 0 60px rgba(0,0,0,0.3); animation: numberBounce 0.6s ease-out; }
     .fullscreen-message { font-size: 8vw; font-weight: 700; color: white; margin-top: 2vh; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.2s both; }
 
     .fullscreen-closed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg,#8b0000,#dc143c); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; animation: fullscreenPulse 0.5s ease-in-out; }
@@ -40,41 +116,41 @@
     .closed-title { font-size: 12vw; font-weight: 900; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.2s both; margin-bottom: 4vh; text-align: center; }
     .closed-message { font-size: 6vw; font-weight: 700; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.4s both; text-align: center; line-height: 1.3; }
 
-    .status-indicator { 
-      display: none; 
-      position: fixed; 
-      bottom: 60px; /* 공지사항 바 높이(약 50~60px)만큼 띄움 */
-      left: 0; 
-      right: 0; 
-      width: 100%; 
-      padding: 2.5vh 2vw; 
-      background-color: #4CAF50; 
-      color: white; 
-      font-size: 5vw; 
-      font-weight: 900; 
-      text-align: center; 
-      z-index: 100; 
-      box-shadow: 0 -4px 10px rgba(0,0,0,0.3); 
+    .status-indicator {
+      display: none;
+      position: fixed;
+      bottom: 60px;
+      left: 0;
+      right: 0;
+      width: 100%;
+      padding: 2.5vh 2vw;
+      background: linear-gradient(90deg, #388E3C, #4CAF50);
+      color: white;
+      font-size: 5vw;
+      font-weight: 900;
+      text-align: center;
+      z-index: 100;
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.4);
     }
     .status-indicator.show { display: block; }
-    .status-indicator.closed { background-color: #dc3545; }
+    .status-indicator.closed { background: linear-gradient(90deg, #c62828, #dc3545); }
 
-    /* 하단 공지사항 바 높이 고정 */
     #noticeBar {
       position: fixed;
       bottom: 0;
       width: 100%;
-      height: 60px; /* 높이를 명시적으로 지정 */
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 15px;
-      background: rgba(0,0,0,0.8);
-      color: #fff;
+      padding: 0 3vw;
+      background: linear-gradient(90deg, #1a1a2e, #2d1b3d, #1a1a2e);
+      color: rgba(255,255,255,0.85);
       font-size: 2.2vw;
       font-weight: bold;
-      border-top: 3px solid #ffeb3b;
+      border-top: 2px solid #e91e63;
       z-index: 150;
+      letter-spacing: 0.1vw;
     }
 
     @keyframes fullscreenPulse{0%{opacity:0;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
@@ -103,8 +179,18 @@
   <div id="textOverlay" class="text-overlay"></div>
 
   <div id="callScreen" class="call-screen hidden">
+    <div class="screen-header">
+      <div class="header-logo-wrap"><img src="logo.png" alt="통빱" class="header-logo" /></div>
+      <div class="header-divider"></div>
+      <span class="header-title">호출번호</span>
+    </div>
     <div id="message"></div>
-    <div id="numbers"></div>
+    <div id="numbers">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🍽️</div>
+        <div>주문 준비중...</div>
+      </div>
+    </div>
     <div id="statusIndicator" class="status-indicator"></div>
     <div id="noticeBar">
       음식준비 순서에 따라 뒷 번호가 먼저 받으실 수도 있습니다. 양해 부탁드립니다.
@@ -133,7 +219,7 @@
     let savedStatusText = "";
     const STORE_CODE = '1ru';
 
-    // === 오디오 매니저 (AndroidTV 호환, 이벤트 리스너 누적 수정) ===
+    // === 오디오 매니저 (AndroidTV 호환) ===
     class AudioManager {
       constructor() {
         this.cachedAudio = null; this.hasUserInteraction = false; this.queue = []; this.playing = false;
@@ -199,9 +285,7 @@
       currentMode = 'CALL';
       document.getElementById('waitingScreen').classList.remove('active');
       document.getElementById('callScreen').classList.remove('hidden');
-      
-      // 기존의 비우는 코드(si.innerText = '')를 삭제하고 저장된 상태를 적용합니다.
-      updateStatusIndicator(savedStatusText); 
+      updateStatusIndicator(savedStatusText);
     }
     function showClosedScreen() {
       document.getElementById('fullscreenClosed').classList.add('active');
@@ -215,16 +299,20 @@
       if (currentMode === 'WAITING') switchToWaitingMode(); else switchToCallMode();
     }
 
-    // === 번호 표시 (createNumberBox 중복 제거) ===
+    // === 번호 표시 ===
     function updateNumbers(numbers) {
       if (currentMode !== 'CALL') return;
-      // 서빙 메시지 제거
       const existingServe = document.getElementById('serveUntilMessage');
       if (existingServe) existingServe.remove();
       const container = document.getElementById("numbers");
       container.style.display = 'flex';
       const cur = Array.from(container.querySelectorAll('.numBox')).map(c => c.innerText);
       container.innerHTML = '';
+
+      if (!numbers || numbers.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><div>주문 준비중...</div></div>';
+        return;
+      }
 
       [numbers.slice(0,5), numbers.slice(5,10)].forEach(rowNums => {
         if (rowNums.length > 0) {
@@ -238,6 +326,13 @@
           container.appendChild(row);
         }
       });
+
+      // 최신 호출 번호 강조
+      const allBoxes = container.querySelectorAll('.numBox');
+      if (allBoxes.length > 0) {
+        allBoxes[allBoxes.length - 1].classList.add('latest');
+      }
+
       const hasMenu = document.getElementById('message').classList.contains('show');
       const hasStatus = document.getElementById('statusIndicator').classList.contains('show');
       adjustNumberSize(hasMenu || hasStatus);
@@ -282,7 +377,7 @@
 
       const msgBox = document.createElement("div");
       msgBox.id = 'serveUntilMessage';
-      msgBox.style.cssText = 'background:#4CAF50;color:white;font-family:"Noto Sans KR",sans-serif;font-size:8vw;font-weight:900;padding:4vh 5vw;border-radius:25px;display:flex;align-items:center;justify-content:center;animation:newNumberEntry 0.6s ease-out;text-align:center;line-height:1.2;min-height:20vh;margin:0 auto;max-width:80vw;margin-top:4vh;';
+      msgBox.style.cssText = 'background:linear-gradient(145deg,#43A047,#66BB6A);color:white;font-family:"Noto Sans KR",sans-serif;font-size:8vw;font-weight:900;padding:4vh 5vw;border-radius:25px;display:flex;align-items:center;justify-content:center;animation:newNumberEntry 0.6s ease-out;text-align:center;line-height:1.2;min-height:20vh;margin:0 auto;max-width:80vw;margin-top:4vh;box-shadow:0 4px 20px rgba(67,160,71,0.4);';
       msgBox.innerText = message;
       container.parentNode.insertBefore(msgBox, container);
       setTimeout(() => audioManager.addToQueue(number), 100);
@@ -290,12 +385,8 @@
 
     // === 상태 표시 ===
     function updateStatusIndicator(text) {
-      // 모드와 상관없이 일단 텍스트를 저장해둡니다.
-      savedStatusText = text || ""; 
-      
-      // 현재 호출 화면이 아니거나 마감 상태면 화면에 그리지는 않습니다.
+      savedStatusText = text || "";
       if (currentMode !== 'CALL' || isClosedForDay) return;
-      
       const si = document.getElementById('statusIndicator');
       if (savedStatusText && savedStatusText.trim()) {
         si.innerText = savedStatusText;
@@ -306,8 +397,6 @@
         si.classList.remove('show');
         adjustNumberSize(false);
       }
-      
-      // 마감 색상 처리
       if (savedStatusText.includes('재고소진') || savedStatusText.includes('마감')) {
         si.classList.add('closed');
       } else {
@@ -346,14 +435,12 @@
 
         if (data.type === "PING") { try { ws.send(JSON.stringify({type:'PONG'})); } catch(e){} return; }
 
-        // 모드 전환 (항상)
         if (data.type === "MODE") {
           if (data.mode === "WAITING") switchToWaitingMode();
           else if (data.mode === "CALL") switchToCallMode();
           return;
         }
 
-        // 모든 모드에서 처리
         if (data.type === "MENU_UPDATE") updateSoldOutMenus(data.soldOutMenus);
         if (data.type === "MSG_DISPLAY") showTextOverlay(data.text, data.duration);
         if (data.type === "MSG") {
@@ -364,7 +451,6 @@
 
         if (data.type === "STATUS") updateStatusIndicator(data.text);
 
-        // CALL 모드 전용
         if (currentMode === 'CALL') {
           if (data.type === "CALL" && Array.isArray(data.list)) {
             updateNumbers(data.list);
