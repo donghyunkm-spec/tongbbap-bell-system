@@ -84,8 +84,8 @@
       font-weight: 900;
       padding: 2vh 2vw;
       border-radius: 20px;
-      min-width: 9vw;
-      min-height: 12vh;
+      min-width: 5vw;
+      min-height: 5vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -95,9 +95,7 @@
       box-shadow: 0 4px 15px rgba(255,202,40,0.35), inset 0 2px 0 rgba(255,255,255,0.4);
       border: 2px solid rgba(255,255,255,0.15);
     }
-    .numBox.shrink { font-size: 7vw; }
-    .numBox.row-count-1{font-size:12vw;min-width:12vw}.numBox.row-count-2{font-size:11vw;min-width:11vw}.numBox.row-count-3{font-size:10vw;min-width:10vw}.numBox.row-count-4{font-size:9vw;min-width:9vw}.numBox.row-count-5{font-size:8vw;min-width:8vw}
-    .numBox.shrink.row-count-2{font-size:7.5vw}.numBox.shrink.row-count-3{font-size:7vw}.numBox.shrink.row-count-4{font-size:6.5vw}.numBox.shrink.row-count-5{font-size:6vw}
+    /* numBox 크기는 autoFitNumbers()에서 동적으로 설정 */
     .numBox.new-number { animation: newNumberEntry 0.6s ease-out; }
     @keyframes newNumberEntry { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
 
@@ -204,7 +202,7 @@
       .ready-dot { width: 2vw; height: 2vw; }
       .ready-text { font-size: 3.5vw; }
       .numBox { padding: 1.5vh 1.5vw; border-radius: 15px; min-height: 8vh; }
-      .numBox.row-count-1{font-size:12vw}.numBox.row-count-2{font-size:10vw}.numBox.row-count-3{font-size:9vw}.numBox.row-count-4{font-size:8vw}.numBox.row-count-5{font-size:7vw}
+      /* numBox 크기는 autoFitNumbers()에서 동적으로 설정 */
       #noticeBar { height: 35px; font-size: 3vw; }
       .call-screen { padding-bottom: 35px; }
       .status-indicator { font-size: 3.5vw; padding: 1vh 2vw; }
@@ -384,13 +382,34 @@
         allBoxes[allBoxes.length - 1].classList.add('latest');
       }
 
-      const hasMenu = document.getElementById('message').classList.contains('show');
-      const hasStatus = document.getElementById('statusIndicator').classList.contains('show');
-      adjustNumberSize(hasMenu || hasStatus);
+      autoFitNumbers();
     }
-    function adjustNumberSize(shrink) {
-      document.querySelectorAll('.numBox').forEach(b => { if(shrink) b.classList.add('shrink'); else b.classList.remove('shrink'); });
+    function autoFitNumbers() {
+      const container = document.getElementById('numbers');
+      const rows = container.querySelectorAll('.number-row');
+      if (!rows.length) return;
+      const boxes = container.querySelectorAll('.numBox');
+      if (!boxes.length) return;
+
+      const availH = container.clientHeight;
+      const availW = container.clientWidth;
+      const numRows = rows.length;
+      const gap = parseFloat(getComputedStyle(container).gap) || 0;
+      const padding = parseFloat(getComputedStyle(container).paddingTop) + parseFloat(getComputedStyle(container).paddingBottom);
+      const rowGapTotal = gap * (numRows - 1);
+      const maxRowH = (availH - padding - rowGapTotal) / numRows;
+
+      let maxCols = 1;
+      rows.forEach(r => { const c = r.querySelectorAll('.numBox').length; if (c > maxCols) maxCols = c; });
+      const rowGap = parseFloat(getComputedStyle(rows[0]).gap) || 0;
+      const maxBoxW = (availW - rowGap * (maxCols - 1)) / maxCols;
+
+      const fontSize = Math.min(maxRowH * 0.55, maxBoxW * 0.45);
+      const fontPx = Math.max(fontSize, 20);
+
+      boxes.forEach(b => { b.style.fontSize = fontPx + 'px'; });
     }
+    window.addEventListener('resize', () => { if (currentMode === 'CALL') autoFitNumbers(); });
 
     // === 풀스크린 호출 ===
     function showFullscreenCall(number) {
@@ -450,11 +469,11 @@
       if (savedStatusText && savedStatusText.trim()) {
         si.innerText = savedStatusText;
         si.classList.add('show');
-        adjustNumberSize(true);
+        autoFitNumbers();
       } else {
         si.innerText = '';
         si.classList.remove('show');
-        adjustNumberSize(false);
+        autoFitNumbers();
       }
       if (savedStatusText.includes('재고소진') || savedStatusText.includes('마감')) {
         si.classList.add('closed');
@@ -469,8 +488,8 @@
         mb.innerHTML = '';
         menus.forEach(m => { const d = document.createElement('div'); d.className = 'sold-out-item'; d.innerText = `🚫 ${m} 품절`; mb.appendChild(d); });
         mb.classList.add('show');
-        if (currentMode === 'CALL') adjustNumberSize(true);
-      } else { mb.classList.remove('show'); if (currentMode === 'CALL') adjustNumberSize(false); }
+        if (currentMode === 'CALL') autoFitNumbers();
+      } else { mb.classList.remove('show'); if (currentMode === 'CALL') autoFitNumbers(); }
     }
     function showTextOverlay(text, duration) {
       const ov = document.getElementById('textOverlay');
