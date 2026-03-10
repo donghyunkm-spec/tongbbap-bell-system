@@ -191,6 +191,10 @@
     @keyframes slideIn{0%{opacity:0}100%{opacity:1}}
     .slide-image { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+    .conn-status { position: fixed; top: 10px; right: 10px; padding: 0.5vh 1vw; border-radius: 8px; font-size: 1.5vw; font-weight: bold; z-index: 20000; display: none; }
+    .conn-status.disconnected { display: block; background: rgba(220,53,69,0.9); color: white; animation: connBlink 1s ease-in-out infinite; }
+    @keyframes connBlink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
     .text-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background-color: rgba(0,0,0,0.85); color: white; padding: 5vh 5vw; border-radius: 20px; font-size: 8vw; font-weight: bold; z-index: 15000; text-align: center; width: 80%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 5px solid #ffc107; display: none; animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
     .text-overlay.active { display: block; }
     @keyframes popIn{0%{transform:translate(-50%,-50%) scale(0.5);opacity:0}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
@@ -214,6 +218,7 @@
   </style>
 </head>
 <body>
+  <div id="connStatus" class="conn-status"></div>
   <div id="audioGate" class="audio-gate">
     <div>🔊 통빱 1루점 호출벨 시스템</div>
     <div style="font-size:4vw;margin-top:2vh;">음성 안내를 들으려면 리모컨 확인 버튼을 눌러주세요</div>
@@ -526,14 +531,23 @@
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
       ws = new WebSocket(`${protocol}//${location.host}`);
 
-      ws.onopen = () => { ws.send(`DISPLAY:${STORE_CODE}`); };
-      ws.onclose = () => { reconnectTimer = setTimeout(connectWebSocket, 3000); };
+      ws.onopen = () => {
+        ws.send(`DISPLAY:${STORE_CODE}`);
+        document.getElementById('connStatus').className = 'conn-status';
+        document.getElementById('connStatus').textContent = '';
+      };
+      ws.onclose = () => {
+        document.getElementById('connStatus').className = 'conn-status disconnected';
+        document.getElementById('connStatus').textContent = '⚡ 연결 끊김 - 재연결 중...';
+        reconnectTimer = setTimeout(connectWebSocket, 3000);
+      };
       ws.onerror = (err) => console.error(`⚠️ ${STORE_CODE} 에러`, err);
 
       ws.onmessage = (event) => {
         let data; try { data = JSON.parse(event.data); } catch(e) { return; }
 
         if (data.type === "PING") { try { ws.send(JSON.stringify({type:'PONG'})); } catch(e){} return; }
+        if (data.type === "RELOAD") { location.reload(); return; }
 
         if (data.type === "MODE") {
           if (data.mode === "WAITING") switchToWaitingMode();

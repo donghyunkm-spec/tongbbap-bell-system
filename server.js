@@ -391,6 +391,11 @@ function processMessage(storeKey, message, clientIP) {
     responseData = { type: 'MSG_DISPLAY', text, duration };
     broadcastTarget = 'all';
     console.log(`📝 ${store.name} 전광판: "${text}" (${duration}ms)`);
+
+  } else if (message === 'RELOAD_DISPLAY') {
+    broadcastToDisplays(storeKey, JSON.stringify({ type: 'RELOAD' }));
+    console.log(`🔄 ${store.name} 디스플레이 새로고침 명령`);
+    return;
   }
 
   // 브로드캐스트
