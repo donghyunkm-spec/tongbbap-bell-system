@@ -191,12 +191,6 @@
     @keyframes slideIn{0%{opacity:0}100%{opacity:1}}
     .slide-image { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    .conn-status { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 25000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
-    .conn-status.disconnected { display: flex; }
-    .conn-icon { font-size: 15vw; animation: connBlink 1.5s ease-in-out infinite; }
-    .conn-text { font-size: 5vw; font-weight: 900; margin-top: 2vh; }
-    .conn-sub { font-size: 2.5vw; color: rgba(255,255,255,0.6); margin-top: 1vh; }
-    @keyframes connBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
     .text-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background-color: rgba(0,0,0,0.85); color: white; padding: 5vh 5vw; border-radius: 20px; font-size: 8vw; font-weight: bold; z-index: 15000; text-align: center; width: 80%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 5px solid #ffc107; display: none; animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
     .text-overlay.active { display: block; }
@@ -221,11 +215,6 @@
   </style>
 </head>
 <body>
-  <div id="connStatus" class="conn-status">
-    <div class="conn-icon">⚡</div>
-    <div class="conn-text">서버 연결 끊김</div>
-    <div class="conn-sub">자동 재연결 시도 중...</div>
-  </div>
   <div id="audioGate" class="audio-gate">
     <div>🔊 통빱 1루점 호출벨 시스템</div>
     <div style="font-size:4vw;margin-top:2vh;">음성 안내를 들으려면 리모컨 확인 버튼을 눌러주세요</div>
@@ -540,11 +529,10 @@
 
       ws.onopen = () => {
         ws.send(`DISPLAY:${STORE_CODE}`);
-        document.getElementById('connStatus').className = 'conn-status';
+        // 연결 복구
       };
       ws.onclose = () => {
-        document.getElementById('connStatus').className = 'conn-status disconnected';
-        reconnectTimer = setTimeout(connectWebSocket, 15000);
+        reconnectTimer = setTimeout(connectWebSocket, 60000);
       };
       ws.onerror = (err) => console.error(`⚠️ ${STORE_CODE} 에러`, err);
 
