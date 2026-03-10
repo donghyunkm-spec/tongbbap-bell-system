@@ -373,7 +373,9 @@ function processMessage(storeKey, message, clientIP) {
       // 품절 메뉴가 1개 이상이면 STATUS(판매중 설정) 자동 클리어
       if (store.soldOutMenus.length > 0 && store.currentStatus) {
         store.currentStatus = '';
-        broadcast(store, 'all', { type: 'STATUS', text: '' });
+        const statusMsg = JSON.stringify({ type: 'STATUS', text: '' });
+        broadcastToDisplays(storeKey, statusMsg);
+        notifyInputClients(storeKey, { type: 'STATUS', text: '' });
       }
       responseData = { type: 'MENU_UPDATE', soldOutMenus: [...store.soldOutMenus] };
       broadcastTarget = 'all';
