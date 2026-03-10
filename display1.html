@@ -14,49 +14,34 @@
     .start-button:focus { outline: 3px solid #ffd700; background: #ff5252; transform: scale(1.05); }
     @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
 
-    .call-screen { display: flex; flex-direction: column; height: 100vh; padding: 0; padding-bottom: 80px; }
+    .call-screen { display: flex; flex-direction: column; height: 100vh; padding: 0; padding-bottom: 45px; }
     .call-screen.hidden { display: none; }
 
-    /* 브랜드 헤더 */
+    /* 브랜드 헤더: 로고 + 준비완료 한 줄 */
     .screen-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1.5vh 3vw;
+      padding: 1.2vh 3vw;
       background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 70%, transparent 100%);
       flex-shrink: 0;
     }
     .header-logo-wrap {
       background: white;
       border-radius: 12px;
-      padding: 0.8vh 2vw;
+      padding: 0.6vh 1.5vw;
       display: flex;
       align-items: center;
     }
-    .header-logo { height: 5vh; object-fit: contain; }
-    .main-card {
-      flex: 1;
-      margin: 1vh 2.5vw;
-      background: rgba(255,255,255,0.03);
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 4px 30px rgba(0,0,0,0.2), inset 0 0 30px rgba(255,255,255,0.02);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .card-header {
+    .header-logo { height: 4.5vh; object-fit: contain; }
+    .header-ready {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 1.2vw;
-      padding: 1.5vh 0;
-      background: rgba(255,255,255,0.03);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap: 0.8vw;
     }
     .ready-dot {
-      width: 1.5vw;
-      height: 1.5vw;
+      width: 1.2vw;
+      height: 1.2vw;
       background: #69f0ae;
       border-radius: 50%;
       animation: dotPulse 1.5s ease-in-out infinite;
@@ -67,10 +52,21 @@
       50% { opacity: 0.6; transform: scale(0.8); }
     }
     .ready-text {
-      font-size: 4vw;
+      font-size: 3.5vw;
       font-weight: 900;
       color: #69f0ae;
-      letter-spacing: 0.5vw;
+      letter-spacing: 0.3vw;
+    }
+    .main-card {
+      flex: 1;
+      margin: 0.5vh 2.5vw;
+      background: rgba(255,255,255,0.03);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.2), inset 0 0 30px rgba(255,255,255,0.02);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     #message { display: none; width: 100%; padding: 1.5vh 2vw; background: linear-gradient(90deg, rgba(220,53,69,0.95), rgba(183,28,28,0.95)); z-index: 1000; justify-content: center; gap: 2vw; flex-wrap: wrap; font-size: 3.5vw; font-weight: 900; color: white; margin-top: 2vh; flex-shrink: 0; }
@@ -145,30 +141,33 @@
     .closed-title { font-size: 12vw; font-weight: 900; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.2s both; margin-bottom: 4vh; text-align: center; }
     .closed-message { font-size: 6vw; font-weight: 700; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.4s both; text-align: center; line-height: 1.3; }
 
-    .status-indicator {
-      display: none;
+    /* 하단 고정 영역: status + notice를 겹치지 않게 배치 */
+    .bottom-bar {
       position: fixed;
-      bottom: 60px;
+      bottom: 0;
       left: 0;
       right: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+    .status-indicator {
+      display: none;
       width: 100%;
-      padding: 2.5vh 2vw;
+      padding: 1.2vh 2vw;
       background: linear-gradient(90deg, #388E3C, #4CAF50);
       color: white;
-      font-size: 5vw;
+      font-size: 4vw;
       font-weight: 900;
       text-align: center;
-      z-index: 100;
       box-shadow: 0 -4px 15px rgba(0,0,0,0.4);
     }
     .status-indicator.show { display: block; }
     .status-indicator.closed { background: linear-gradient(90deg, #c62828, #dc3545); }
 
     #noticeBar {
-      position: fixed;
-      bottom: 0;
       width: 100%;
-      height: 60px;
+      height: 45px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -178,8 +177,8 @@
       font-size: 2.2vw;
       font-weight: bold;
       border-top: 2px solid #e91e63;
-      z-index: 150;
       letter-spacing: 0.1vw;
+      flex-shrink: 0;
     }
 
     @keyframes fullscreenPulse{0%{opacity:0;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
@@ -201,15 +200,14 @@
     @media (max-width: 768px) {
       .screen-header { padding: 0.5vh 2vw; }
       .header-logo { height: 3vh; }
-      .main-card { margin: 0.5vh 1.5vw; border-radius: 15px; }
-      .card-header { padding: 1vh 0; }
+      .main-card { margin: 0.3vh 1.5vw; border-radius: 15px; }
       .ready-dot { width: 2vw; height: 2vw; }
       .ready-text { font-size: 3.5vw; }
       .numBox { padding: 1.5vh 1.5vw; border-radius: 15px; min-height: 8vh; }
       .numBox.row-count-1{font-size:12vw}.numBox.row-count-2{font-size:10vw}.numBox.row-count-3{font-size:9vw}.numBox.row-count-4{font-size:8vw}.numBox.row-count-5{font-size:7vw}
-      #noticeBar { height: 40px; font-size: 3vw; }
-      .call-screen { padding-bottom: 50px; }
-      .status-indicator { bottom: 40px; font-size: 4vw; padding: 1.5vh 2vw; }
+      #noticeBar { height: 35px; font-size: 3vw; }
+      .call-screen { padding-bottom: 35px; }
+      .status-indicator { font-size: 3.5vw; padding: 1vh 2vw; }
       .sold-out-item { font-size: 3vw; padding: 0.5vh 1.5vw; }
       .empty-state { font-size: 5vw; }
       .empty-icon { font-size: 12vw; }
@@ -228,12 +226,12 @@
   <div id="callScreen" class="call-screen hidden">
     <div class="screen-header">
       <div class="header-logo-wrap"><img src="logo.png" alt="통빱" class="header-logo" /></div>
-    </div>
-    <div class="main-card">
-      <div class="card-header">
+      <div class="header-ready">
         <span class="ready-dot"></span>
         <span class="ready-text">준비완료</span>
       </div>
+    </div>
+    <div class="main-card">
       <div id="message"></div>
       <div id="numbers">
         <div class="empty-state" id="emptyState">
@@ -242,9 +240,11 @@
         </div>
       </div>
     </div>
-    <div id="statusIndicator" class="status-indicator"></div>
-    <div id="noticeBar">
-      음식준비 순서에 따라 뒷 번호가 먼저 받으실 수도 있습니다. 양해 부탁드립니다.
+    <div class="bottom-bar">
+      <div id="statusIndicator" class="status-indicator"></div>
+      <div id="noticeBar">
+        음식준비 순서에 따라 뒷 번호가 먼저 받으실 수도 있습니다. 양해 부탁드립니다.
+      </div>
     </div>
   </div>
 
@@ -434,6 +434,14 @@
       setTimeout(() => audioManager.addToQueue(number), 100);
     }
 
+    // === 하단 바 높이에 맞춰 padding 조정 ===
+    function adjustBottomPadding() {
+      const bar = document.querySelector('.bottom-bar');
+      if (bar) {
+        document.getElementById('callScreen').style.paddingBottom = bar.offsetHeight + 'px';
+      }
+    }
+
     // === 상태 표시 ===
     function updateStatusIndicator(text) {
       savedStatusText = text || "";
@@ -453,6 +461,7 @@
       } else {
         si.classList.remove('closed');
       }
+      adjustBottomPadding();
     }
     function updateSoldOutMenus(menus) {
       const mb = document.getElementById('message');
