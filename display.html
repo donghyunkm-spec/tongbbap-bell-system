@@ -69,9 +69,8 @@
       overflow: hidden;
     }
 
-    #message { display: none; width: 100%; padding: 1.5vh 2vw; background: linear-gradient(90deg, rgba(220,53,69,0.95), rgba(183,28,28,0.95)); z-index: 1000; justify-content: center; gap: 2vw; flex-wrap: wrap; font-size: 3.5vw; font-weight: 900; color: white; flex-shrink: 0; }
+    #message { display: none; width: 100%; padding: 0.8vh 2vw; background: linear-gradient(90deg, rgba(220,53,69,0.95), rgba(183,28,28,0.95)); justify-content: center; align-items: center; font-size: 2.8vw; font-weight: 900; color: white; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     #message.show { display: flex; }
-    .sold-out-item { background: rgba(255,255,255,0.15); padding: 0.8vh 1.5vw; border-radius: 10px; border: 2px solid rgba(255,255,255,0.5); backdrop-filter: blur(5px); }
 
     #numbers { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh; perspective: 1000px; width: 100%; padding: 2vh 2vw; }
     .number-row { display: flex; justify-content: center; align-items: center; gap: 1.5vw; width: 100%; flex-wrap: nowrap; }
@@ -453,14 +452,21 @@
       }
       adjustBottomPadding();
     }
+    const DEFAULT_NOTICE = '음식준비 순서에 따라 뒷 번호가 먼저 받으실 수도 있습니다. 양해 부탁드립니다.';
     function updateSoldOutMenus(menus) {
       const mb = document.getElementById('message');
+      const nb = document.getElementById('noticeBar');
       if (menus && menus.length > 0) {
-        mb.innerHTML = '';
-        menus.forEach(m => { const d = document.createElement('div'); d.className = 'sold-out-item'; d.innerText = `🚫 ${m} 품절`; mb.appendChild(d); });
+        mb.textContent = '🚫 품절: ' + menus.join(', ');
         mb.classList.add('show');
+        nb.textContent = '✅ 위 품절메뉴 외에는 판매중입니다';
         if (currentMode === 'CALL') autoFitNumbers();
-      } else { mb.classList.remove('show'); if (currentMode === 'CALL') autoFitNumbers(); }
+      } else {
+        mb.textContent = '';
+        mb.classList.remove('show');
+        nb.textContent = DEFAULT_NOTICE;
+        if (currentMode === 'CALL') autoFitNumbers();
+      }
     }
     function showTextOverlay(text, duration) {
       const ov = document.getElementById('textOverlay');
