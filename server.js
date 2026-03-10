@@ -3,6 +3,9 @@ const WebSocket = require('ws');
 const http = require('http');
 const path = require('path');
 
+process.on('uncaughtException', (err) => { console.error('❌ uncaughtException:', err.message); });
+process.on('unhandledRejection', (err) => { console.error('❌ unhandledRejection:', err); });
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -230,7 +233,11 @@ wss.on('connection', (ws, req) => {
     if (ci) {
       ci.client.isAlive = true;
       ci.client.lastPing = new Date();
-      processMessage(ci.store, message, clientIP);
+      try {
+        processMessage(ci.store, message, clientIP);
+      } catch (e) {
+        console.error(`❌ 메시지 처리 오류 [${ci.store}]:`, e.message);
+      }
     }
   });
 
