@@ -18,7 +18,7 @@ const stores = {
     currentDisplayMode: 'WAITING',
     name: '3루점',
     soldOutMenus: [],
-    currentStatus: '김치말이국수 판매 중입니다',
+    currentStatus: '',
     currentMsgDisplay: { text: '', duration: 0 }
   },
   '1ru': {
@@ -28,7 +28,7 @@ const stores = {
     currentDisplayMode: 'WAITING',
     name: '1루점',
     soldOutMenus: [],
-    currentStatus: '김치말이국수 판매 중입니다',
+    currentStatus: '',
     currentMsgDisplay: { text: '', duration: 0 }
   }
 };
