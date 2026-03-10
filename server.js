@@ -370,6 +370,11 @@ function processMessage(storeKey, message, clientIP) {
       const idx = store.soldOutMenus.indexOf(menuName);
       if (idx === -1) store.soldOutMenus.push(menuName);
       else store.soldOutMenus.splice(idx, 1);
+      // 품절 메뉴가 1개 이상이면 STATUS(판매중 설정) 자동 클리어
+      if (store.soldOutMenus.length > 0 && store.currentStatus) {
+        store.currentStatus = '';
+        broadcast(store, 'all', { type: 'STATUS', text: '' });
+      }
       responseData = { type: 'MENU_UPDATE', soldOutMenus: [...store.soldOutMenus] };
       broadcastTarget = 'all';
       console.log(`🚫 ${store.name} 품절: ${menuName} (현재: ${store.soldOutMenus.join(', ')})`);
