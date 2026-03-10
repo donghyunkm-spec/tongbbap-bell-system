@@ -210,7 +210,7 @@
         document.getElementById('v-msg').innerText = "서버와 연결이 끊겼습니다. 재연결 중...";
         document.getElementById('v-mode').innerText = "모드: 연결 끊김";
         document.getElementById('v-mode').style.color = "#ff4757";
-        setTimeout(connect, 3000);
+        setTimeout(connect, 5000);
       };
 
       ws.onmessage = (e) => {

@@ -153,7 +153,7 @@ const cleanupTimer = setInterval(cleanupOldConnections, 5 * 60 * 1000);
 // ====== Static & Routes ======
 // 민감한 파일 접근 차단 (server.js, package.json, .git 등)
 app.use((req, res, next) => {
-  const blocked = ['/server.js', '/package.json', '/package-lock.json', '/CLAUDE.md', '/.claudeignore'];
+  const blocked = ['/server.js', '/package.json', '/package-lock.json', '/CLAUDE.md', '/.claudeignore', '/.env'];
   if (blocked.includes(req.path) || req.path.startsWith('/.git') || req.path.startsWith('/.claude') || req.path.startsWith('/node_modules')) {
     return res.status(404).send('Not found');
   }
@@ -169,7 +169,7 @@ function sendFullState(ws, store) {
   safeSend(ws, { type: 'MODE', mode: store.currentDisplayMode });
   // 2. 호출 목록
   if (store.currentNumbers.length > 0)
-    safeSend(ws, { type: 'CALL', list: [...store.currentNumbers] });
+    safeSend(ws, { type: 'CALL', list: [...store.currentNumbers], calledNumber: null });
   // 3. 품절
   if (store.soldOutMenus.length > 0)
     safeSend(ws, { type: 'MENU_UPDATE', soldOutMenus: [...store.soldOutMenus] });
@@ -290,7 +290,7 @@ function processMessage(storeKey, message, clientIP) {
     }
   } else if (message.startsWith('CALL:') || message.startsWith('CALL_PLUS_ONE:')) {
     const number = parseInt(message.split(':')[1]);
-    if (!isNaN(number)) {
+    if (!isNaN(number) && number >= 1 && number <= 1000) {
       const idx = store.currentNumbers.indexOf(number);
       if (idx !== -1) store.currentNumbers.splice(idx, 1);
       store.currentNumbers.push(number);
@@ -337,21 +337,7 @@ function processMessage(storeKey, message, clientIP) {
 
   } else if (message.startsWith('MSG:')) {
     const text = message.substring(4);
-    if (storeKey === '1ru') {
-      const match = text.match(/(\d+)번 손님까지 드립니다/);
-      if (match) {
-        const num = parseInt(match[1]);
-        if (!store.currentNumbers.includes(num)) {
-          store.currentNumbers.push(num);
-          if (store.currentNumbers.length > 10) store.currentNumbers.shift();
-        }
-        responseData = { type: 'SERVE_UNTIL', text, number: num, currentNumbers: [...store.currentNumbers] };
-      } else {
-        responseData = { type: 'MSG', text };
-      }
-    } else {
-      responseData = { type: 'MSG', text };
-    }
+    responseData = { type: 'MSG', text };
     broadcastTarget = 'all';
     console.log(`💬 ${store.name} 메시지: "${text}"`);
 

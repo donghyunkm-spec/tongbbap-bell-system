@@ -503,7 +503,7 @@
         // 연결 복구
       };
       ws.onclose = () => {
-        reconnectTimer = setTimeout(connectWebSocket, 60000);
+        reconnectTimer = setTimeout(connectWebSocket, 5000);
       };
       ws.onerror = (err) => console.error(`⚠️ ${STORE_CODE} 에러`, err);
 
@@ -534,7 +534,7 @@
             updateNumbers(data.list);
             if (data.calledNumbers && Array.isArray(data.calledNumbers)) showFullscreenCallSequence(data.calledNumbers);
             else if (data.calledNumber) showFullscreenCall(data.calledNumber);
-            else if (data.list.length > 0) showFullscreenCall(data.list[data.list.length - 1]);
+            // calledNumber가 null이면 초기 상태 전송이므로 풀스크린 안 보여줌
           }
           else if (data.type === "AUDIO") {
             if (!audioManager.hasUserInteraction) return;

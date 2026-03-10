@@ -354,10 +354,7 @@
     // === 번호 표시 ===
     function updateNumbers(numbers) {
       if (currentMode !== 'CALL') return;
-      const existingServe = document.getElementById('serveUntilMessage');
-      if (existingServe) existingServe.remove();
       const container = document.getElementById("numbers");
-      container.style.display = 'flex';
       const cur = Array.from(container.querySelectorAll('.numBox')).map(c => c.innerText);
       container.innerHTML = '';
 
@@ -440,22 +437,6 @@
       })();
     }
 
-    // === 서빙 메시지 (1루점 전용) ===
-    function showServeUntilMessage(message, number) {
-      if (isClosedForDay) return;
-      const container = document.getElementById("numbers");
-      container.style.display = 'none';
-      const existing = document.getElementById('serveUntilMessage');
-      if (existing) existing.remove();
-
-      const msgBox = document.createElement("div");
-      msgBox.id = 'serveUntilMessage';
-      msgBox.style.cssText = 'background:linear-gradient(145deg,#43A047,#66BB6A);color:white;font-family:"Noto Sans KR",sans-serif;font-size:8vw;font-weight:900;padding:4vh 5vw;border-radius:25px;display:flex;align-items:center;justify-content:center;animation:newNumberEntry 0.6s ease-out;text-align:center;line-height:1.2;min-height:20vh;margin:0 auto;max-width:80vw;margin-top:4vh;box-shadow:0 4px 20px rgba(67,160,71,0.4);';
-      msgBox.innerText = message;
-      container.parentNode.insertBefore(msgBox, container);
-      setTimeout(() => audioManager.addToQueue(number), 100);
-    }
-
     // === 하단 바 높이에 맞춰 padding 조정 ===
     function adjustBottomPadding() {
       const bar = document.querySelector('.bottom-bar');
@@ -532,7 +513,7 @@
         // 연결 복구
       };
       ws.onclose = () => {
-        reconnectTimer = setTimeout(connectWebSocket, 60000);
+        reconnectTimer = setTimeout(connectWebSocket, 5000);
       };
       ws.onerror = (err) => console.error(`⚠️ ${STORE_CODE} 에러`, err);
 
@@ -563,9 +544,8 @@
             updateNumbers(data.list);
             if (data.calledNumbers && Array.isArray(data.calledNumbers)) showFullscreenCallSequence(data.calledNumbers);
             else if (data.calledNumber) showFullscreenCall(data.calledNumber);
-            else if (data.list.length > 0) showFullscreenCall(data.list[data.list.length - 1]);
+            // calledNumber가 null이면 초기 상태 전송이므로 풀스크린 안 보여줌
           }
-          else if (data.type === "SERVE_UNTIL") showServeUntilMessage(data.text, data.number);
           else if (data.type === "AUDIO") {
             if (!audioManager.hasUserInteraction) return;
             const files = {'monitor':'voice/monitor.mp3','noodle':'voice/noodle.mp3','pork':'voice/pork.mp3'};
