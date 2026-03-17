@@ -92,7 +92,7 @@
       justify-content: center;
       flex-shrink: 1;
       position: relative;
-      transition: all 0.3s ease;
+      transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
       box-shadow: 0 4px 15px rgba(255,202,40,0.35), inset 0 2px 0 rgba(255,255,255,0.4);
       border: 2px solid rgba(255,255,255,0.15);
     }
@@ -278,12 +278,16 @@
         const ua = navigator.userAgent.toLowerCase();
         this.isAndroidTV = ua.includes('android') && (ua.includes('tv') || ua.includes('television'));
       }
-      getAudio() {
+      preload() {
         if (!this.cachedAudio) {
           this.cachedAudio = new Audio(); this.cachedAudio.src = 'dingdong.mp4';
           this.cachedAudio.preload = 'auto'; this.cachedAudio.volume = 1.0;
           if (this.isAndroidTV) { this.cachedAudio.loop = false; this.cachedAudio.autoplay = false; }
+          this.cachedAudio.load();
         }
+      }
+      getAudio() {
+        this.preload();
         return this.cachedAudio;
       }
       async addToQueue(n) { if (!this.hasUserInteraction) return; this.queue.push(n); if (!this.playing) this.playNext(); }
@@ -311,6 +315,7 @@
 
       async function activate() {
         audioManager.hasUserInteraction = true; audioEnabled = true;
+        audioManager.preload();
         try { const t = new Audio(); t.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAAAQElGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA=='; await t.play(); } catch(e){}
         gate.classList.add('hidden');
         if (currentMode === 'WAITING') switchToWaitingMode(); else switchToCallMode();
@@ -385,29 +390,35 @@
       autoFitNumbers();
     }
     function autoFitNumbers() {
-      const container = document.getElementById('numbers');
-      const rows = container.querySelectorAll('.number-row');
-      if (!rows.length) return;
-      const boxes = container.querySelectorAll('.numBox');
-      if (!boxes.length) return;
+      requestAnimationFrame(() => {
+        const container = document.getElementById('numbers');
+        const rows = container.querySelectorAll('.number-row');
+        if (!rows.length) return;
+        const boxes = container.querySelectorAll('.numBox');
+        if (!boxes.length) return;
 
-      const availH = container.clientHeight;
-      const availW = container.clientWidth;
-      const numRows = rows.length;
-      const gap = parseFloat(getComputedStyle(container).gap) || 0;
-      const padding = parseFloat(getComputedStyle(container).paddingTop) + parseFloat(getComputedStyle(container).paddingBottom);
-      const rowGapTotal = gap * (numRows - 1);
-      const maxRowH = (availH - padding - rowGapTotal) / numRows;
+        // 한 번에 읽기 (layout read batch)
+        const availH = container.clientHeight;
+        const availW = container.clientWidth;
+        const numRows = rows.length;
+        const containerStyle = getComputedStyle(container);
+        const gap = parseFloat(containerStyle.gap) || 0;
+        const padding = parseFloat(containerStyle.paddingTop) + parseFloat(containerStyle.paddingBottom);
+        const rowGap = parseFloat(getComputedStyle(rows[0]).gap) || 0;
 
-      let maxCols = 1;
-      rows.forEach(r => { const c = r.querySelectorAll('.numBox').length; if (c > maxCols) maxCols = c; });
-      const rowGap = parseFloat(getComputedStyle(rows[0]).gap) || 0;
-      const maxBoxW = (availW - rowGap * (maxCols - 1)) / maxCols;
+        const rowGapTotal = gap * (numRows - 1);
+        const maxRowH = (availH - padding - rowGapTotal) / numRows;
 
-      const fontSize = Math.min(maxRowH * 0.55, maxBoxW * 0.45);
-      const fontPx = Math.max(fontSize, 20);
+        let maxCols = 1;
+        rows.forEach(r => { const c = r.children.length; if (c > maxCols) maxCols = c; });
+        const maxBoxW = (availW - rowGap * (maxCols - 1)) / maxCols;
 
-      boxes.forEach(b => { b.style.fontSize = fontPx + 'px'; });
+        const fontSize = Math.min(maxRowH * 0.55, maxBoxW * 0.45);
+        const fontPx = Math.max(fontSize, 20) + 'px';
+
+        // 한 번에 쓰기 (layout write batch)
+        boxes.forEach(b => { b.style.fontSize = fontPx; });
+      });
     }
     window.addEventListener('resize', () => { if (currentMode === 'CALL') autoFitNumbers(); });
 
@@ -417,7 +428,7 @@
       document.getElementById('fullscreenNumber').textContent = number;
       document.getElementById('fullscreenMessage').textContent = `${number}번 손님 주문 나왔습니다!`;
       document.getElementById('fullscreenCall').classList.add('active');
-      setTimeout(() => audioManager.addToQueue(number), 100);
+      audioManager.addToQueue(number);
       if (fullscreenTimer) clearTimeout(fullscreenTimer);
       fullscreenTimer = setTimeout(() => document.getElementById('fullscreenCall').classList.remove('active'), 5000);
     }
@@ -431,7 +442,7 @@
         document.getElementById('fullscreenNumber').textContent = n;
         document.getElementById('fullscreenMessage').textContent = `${n}번 손님 주문 나왔습니다!`;
         document.getElementById('fullscreenCall').classList.add('active');
-        setTimeout(() => audioManager.addToQueue(n), 100);
+        audioManager.addToQueue(n);
         i++;
         setTimeout(() => { if (i < numbers.length) next(); else setTimeout(() => document.getElementById('fullscreenCall').classList.remove('active'), 3000); }, 3000);
       })();
