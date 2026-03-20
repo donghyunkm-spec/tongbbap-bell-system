@@ -6,7 +6,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
-    body { background: linear-gradient(160deg, #0f0c29 0%, #1a1a2e 50%, #16213e 100%); color: white; font-family: 'Noto Sans KR', sans-serif; text-align: center; margin: 0; padding: 0; overflow: hidden; min-height: 100vh; position: relative; -webkit-user-select: none; user-select: none; }
+    body { background: #0f0c29; color: white; font-family: 'Noto Sans KR', sans-serif; text-align: center; margin: 0; padding: 0; overflow: hidden; min-height: 100vh; position: relative; -webkit-user-select: none; user-select: none; }
+    /* GPU 가속 힌트 */
+    .numBox, .fullscreen-call, .fullscreen-closed, .text-overlay, .waiting-screen { will-change: transform, opacity; transform: translateZ(0); }
 
     .audio-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20000; font-size: 6vw; color: white; }
     .audio-gate.hidden { display: none; }
@@ -44,12 +46,6 @@
       height: 1.2vw;
       background: #69f0ae;
       border-radius: 50%;
-      animation: dotPulse 1.5s ease-in-out infinite;
-      box-shadow: 0 0 10px rgba(105,240,174,0.6);
-    }
-    @keyframes dotPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.8); }
     }
     .ready-text {
       font-size: 3.5vw;
@@ -63,7 +59,6 @@
       background: rgba(255,255,255,0.03);
       border-radius: 20px;
       border: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 4px 30px rgba(0,0,0,0.2), inset 0 0 30px rgba(255,255,255,0.02);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -74,11 +69,11 @@
     #availableBar { display: none; width: 100%; padding: 0.6vh 2vw; background: linear-gradient(90deg, rgba(56,142,60,0.95), rgba(76,175,80,0.95)); justify-content: center; align-items: center; font-size: 2.8vw; font-weight: 900; color: white; flex-shrink: 0; }
     #availableBar.show { display: flex; }
 
-    #numbers { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh; perspective: 1000px; width: 100%; padding: 2vh 2vw; }
+    #numbers { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh; width: 100%; padding: 2vh 2vw; }
     .number-row { display: flex; justify-content: center; align-items: center; gap: 1.5vw; width: 100%; flex-wrap: nowrap; }
 
     .numBox {
-      background: linear-gradient(145deg, #ffe082, #ffca28);
+      background: #ffca28;
       color: #1a1a1a;
       font-family: 'Noto Sans KR', sans-serif;
       font-size: 10vw;
@@ -92,24 +87,13 @@
       justify-content: center;
       flex-shrink: 1;
       position: relative;
-      transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-      box-shadow: 0 4px 15px rgba(255,202,40,0.35), inset 0 2px 0 rgba(255,255,255,0.4);
       border: 2px solid rgba(255,255,255,0.15);
     }
-    /* numBox 크기는 autoFitNumbers()에서 동적으로 설정 */
-    .numBox.new-number { animation: newNumberEntry 0.6s ease-out; }
-    @keyframes newNumberEntry { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
 
     .numBox.latest {
-      background: linear-gradient(145deg, #ff6b6b, #e91e63);
+      background: #e91e63;
       color: white;
-      box-shadow: 0 4px 20px rgba(233,30,99,0.5), 0 0 35px rgba(233,30,99,0.2);
       border-color: rgba(255,255,255,0.3);
-      animation: latestGlow 2s ease-in-out infinite;
-    }
-    @keyframes latestGlow {
-      0%, 100% { box-shadow: 0 4px 20px rgba(233,30,99,0.5), 0 0 35px rgba(233,30,99,0.2); }
-      50% { box-shadow: 0 4px 30px rgba(233,30,99,0.7), 0 0 50px rgba(233,30,99,0.35); }
     }
 
     /* 빈 화면 상태 */
@@ -124,21 +108,17 @@
       font-weight: 700;
       gap: 1.5vh;
     }
-    .empty-icon { font-size: 10vw; animation: emptyFloat 3s ease-in-out infinite; }
-    @keyframes emptyFloat {
-      0%, 100% { transform: translateY(0); opacity: 0.4; }
-      50% { transform: translateY(-1vh); opacity: 0.7; }
-    }
+    .empty-icon { font-size: 10vw; opacity: 0.5; }
 
-    .fullscreen-call { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg,#ff6b6b,#e91e63); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; animation: fullscreenPulse 0.5s ease-in-out; }
+    .fullscreen-call { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e91e63; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
     .fullscreen-call.active { display: flex; }
-    .fullscreen-number { font-size: 50vw; font-weight: 900; color: white; text-shadow: 0 0 60px rgba(0,0,0,0.3); animation: numberBounce 0.6s ease-out; }
-    .fullscreen-message { font-size: 8vw; font-weight: 700; color: white; margin-top: 2vh; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.2s both; }
+    .fullscreen-number { font-size: 50vw; font-weight: 900; color: white; }
+    .fullscreen-message { font-size: 8vw; font-weight: 700; color: white; margin-top: 2vh; }
 
-    .fullscreen-closed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg,#8b0000,#dc143c); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; animation: fullscreenPulse 0.5s ease-in-out; }
+    .fullscreen-closed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #dc143c; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; }
     .fullscreen-closed.active { display: flex; }
-    .closed-title { font-size: 12vw; font-weight: 900; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.2s both; margin-bottom: 4vh; text-align: center; }
-    .closed-message { font-size: 6vw; font-weight: 700; color: white; text-shadow: 0 0 30px rgba(0,0,0,0.3); animation: messageSlideUp 0.8s ease-out 0.4s both; text-align: center; line-height: 1.3; }
+    .closed-title { font-size: 12vw; font-weight: 900; color: white; margin-bottom: 4vh; text-align: center; }
+    .closed-message { font-size: 6vw; font-weight: 700; color: white; text-align: center; line-height: 1.3; }
 
     /* 하단 고정 영역: status + notice를 겹치지 않게 배치 */
     .bottom-bar {
@@ -159,10 +139,9 @@
       font-size: 4vw;
       font-weight: 900;
       text-align: center;
-      box-shadow: 0 -4px 15px rgba(0,0,0,0.4);
     }
     .status-indicator.show { display: block; }
-    .status-indicator.closed { background: linear-gradient(90deg, #c62828, #dc3545); }
+    .status-indicator.closed { background: #dc3545; }
 
     #noticeBar {
       width: 100%;
@@ -180,10 +159,6 @@
       flex-shrink: 0;
     }
 
-    @keyframes fullscreenPulse{0%{opacity:0;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
-    @keyframes numberBounce{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
-    @keyframes messageSlideUp{0%{transform:translateY(50px);opacity:0}100%{transform:translateY(0);opacity:1}}
-
     .waiting-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a2e; z-index: 2000; overflow: hidden; }
     .waiting-screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .slide { display: none; width: 100%; height: 100%; position: relative; animation: slideIn 1s ease-in-out; }
@@ -192,9 +167,8 @@
     .slide-image { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 
-    .text-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background-color: rgba(0,0,0,0.85); color: white; padding: 5vh 5vw; border-radius: 20px; font-size: 8vw; font-weight: bold; z-index: 15000; text-align: center; width: 80%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 5px solid #ffc107; display: none; animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .text-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background-color: rgba(0,0,0,0.85); color: white; padding: 5vh 5vw; border-radius: 20px; font-size: 8vw; font-weight: bold; z-index: 15000; text-align: center; width: 80%; border: 5px solid #ffc107; display: none; }
     .text-overlay.active { display: block; }
-    @keyframes popIn{0%{transform:translate(-50%,-50%) scale(0.5);opacity:0}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}
 
     /* 소형 화면 대응 (핸드폰 확인용) */
     @media (max-width: 768px) {
@@ -356,55 +330,60 @@
       if (currentMode === 'WAITING') switchToWaitingMode(); else switchToCallMode();
     }
 
-    // === 번호 표시 ===
+    // === 번호 표시 (DOM 재사용으로 최적화) ===
+    let lastNumbers = [];
     function updateNumbers(numbers) {
       if (currentMode !== 'CALL') return;
       const container = document.getElementById("numbers");
-      const cur = Array.from(container.querySelectorAll('.numBox')).map(c => c.innerText);
+      const nums = numbers || [];
+      const numsStr = nums.join(',');
+      const lastStr = lastNumbers.join(',');
+      if (numsStr === lastStr) return;
+      lastNumbers = nums.slice();
+
       container.innerHTML = '';
 
-      if (!numbers || numbers.length === 0) {
+      if (nums.length === 0) {
         container.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><div>주문 준비중...</div></div>';
         return;
       }
 
-      [numbers.slice(0,5), numbers.slice(5,10)].forEach(rowNums => {
+      const frag = document.createDocumentFragment();
+      [nums.slice(0,5), nums.slice(5,10)].forEach(rowNums => {
         if (rowNums.length > 0) {
           const row = document.createElement("div"); row.className = "number-row";
           const cls = `row-count-${rowNums.length}`;
           rowNums.forEach(num => {
-            const box = document.createElement("div"); box.className = `numBox ${cls}`; box.innerText = num;
-            if (!cur.includes(num.toString())) box.classList.add('new-number');
+            const box = document.createElement("div"); box.className = `numBox ${cls}`; box.textContent = num;
             row.appendChild(box);
           });
-          container.appendChild(row);
+          frag.appendChild(row);
         }
       });
+      container.appendChild(frag);
 
-      // 최신 호출 번호 강조
       const allBoxes = container.querySelectorAll('.numBox');
-      if (allBoxes.length > 0) {
-        allBoxes[allBoxes.length - 1].classList.add('latest');
-      }
+      if (allBoxes.length > 0) allBoxes[allBoxes.length - 1].classList.add('latest');
 
       autoFitNumbers();
     }
+    let fitRAF = 0;
     function autoFitNumbers() {
-      requestAnimationFrame(() => {
+      if (fitRAF) cancelAnimationFrame(fitRAF);
+      fitRAF = requestAnimationFrame(() => {
+        fitRAF = 0;
         const container = document.getElementById('numbers');
         const rows = container.querySelectorAll('.number-row');
         if (!rows.length) return;
         const boxes = container.querySelectorAll('.numBox');
         if (!boxes.length) return;
 
-        // 한 번에 읽기 (layout read batch)
         const availH = container.clientHeight;
         const availW = container.clientWidth;
         const numRows = rows.length;
-        const containerStyle = getComputedStyle(container);
-        const gap = parseFloat(containerStyle.gap) || 0;
-        const padding = parseFloat(containerStyle.paddingTop) + parseFloat(containerStyle.paddingBottom);
-        const rowGap = parseFloat(getComputedStyle(rows[0]).gap) || 0;
+        const gap = 16;
+        const padding = 32;
+        const rowGap = 12;
 
         const rowGapTotal = gap * (numRows - 1);
         const maxRowH = (availH - padding - rowGapTotal) / numRows;
@@ -416,7 +395,6 @@
         const fontSize = Math.min(maxRowH * 0.55, maxBoxW * 0.45);
         const fontPx = Math.max(fontSize, 20) + 'px';
 
-        // 한 번에 쓰기 (layout write batch)
         boxes.forEach(b => { b.style.fontSize = fontPx; });
       });
     }
@@ -559,8 +537,12 @@
           }
           else if (data.type === "AUDIO") {
             if (!audioManager.hasUserInteraction) return;
+            if (!window._audioCache) window._audioCache = {};
             const files = {'monitor':'voice/monitor.mp3','noodle':'voice/noodle.mp3','pork':'voice/pork.mp3'};
-            if (files[data.audioType]) { const a = new Audio(files[data.audioType]); a.volume = 1.0; a.play().catch(()=>{}); }
+            if (files[data.audioType]) {
+              if (!window._audioCache[data.audioType]) { window._audioCache[data.audioType] = new Audio(files[data.audioType]); window._audioCache[data.audioType].volume = 1.0; }
+              const a = window._audioCache[data.audioType]; a.currentTime = 0; a.play().catch(()=>{});
+            }
           }
         }
       };
