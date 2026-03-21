@@ -357,6 +357,12 @@ function processMessage(storeKey, message, clientIP) {
     broadcastTarget = 'all';
     console.log(`🧹 ${store.name} 초기화`);
 
+  } else if (message === 'CLEAR_MENUS') {
+    store.soldOutMenus = [];
+    responseData = { type: 'MENU_UPDATE', soldOutMenus: [] };
+    broadcastTarget = 'all';
+    console.log(`🧹 ${store.name} 품절 메뉴 초기화`);
+
   } else if (message.startsWith('TOGGLE_MENU:')) {
     const menuName = message.substring(12);
     if (menuName) {

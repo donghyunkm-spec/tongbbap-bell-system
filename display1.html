@@ -167,7 +167,7 @@
     .slide-image { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 
-    .text-overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background-color: rgba(0,0,0,0.85); color: white; padding: 5vh 5vw; border-radius: 20px; font-size: 8vw; font-weight: bold; z-index: 15000; text-align: center; width: 80%; border: 5px solid #ffc107; display: none; }
+    .text-overlay { position: fixed; bottom: 8vh; left: 50%; transform: translateX(-50%); background-color: rgba(0,0,0,0.85); color: white; padding: 3vh 5vw; border-radius: 20px; font-size: 5vw; font-weight: bold; z-index: 15000; text-align: center; width: 80%; border: 5px solid #ffc107; display: none; }
     .text-overlay.active { display: block; }
 
     /* 소형 화면 대응 (핸드폰 확인용) */
@@ -538,7 +538,7 @@
           else if (data.type === "AUDIO") {
             if (!audioManager.hasUserInteraction) return;
             if (!window._audioCache) window._audioCache = {};
-            const files = {'monitor':'voice/monitor.mp3','noodle':'voice/noodle.mp3','pork':'voice/pork.mp3'};
+            const files = {'monitor':'voice/monitor.mp3','noodle':'voice/noodle.mp3','pork':'voice/pork.mp3','dingdong':'dingdong.mp4'};
             if (files[data.audioType]) {
               if (!window._audioCache[data.audioType]) { window._audioCache[data.audioType] = new Audio(files[data.audioType]); window._audioCache[data.audioType].volume = 1.0; }
               const a = window._audioCache[data.audioType]; a.currentTime = 0; a.play().catch(()=>{});
