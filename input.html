@@ -346,7 +346,7 @@
       if (idleTimer) clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
         if (currentMode === 'CALL' && !isClosed && !hasSoldOut) send('MODE:WAITING');
-      }, 180000);
+      }, 300000);
     }
 
     function ensureCallMode() { if (currentMode !== 'CALL') send('MODE:CALL'); }
