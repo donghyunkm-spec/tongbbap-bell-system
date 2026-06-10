@@ -498,6 +498,7 @@
       ws = new WebSocket(`${protocol}//${location.host}`);
 
       ws.onopen = () => {
+        lastServerContact = Date.now();
         ws.send(`DISPLAY:${STORE_CODE}`);
         // 연결 복구
       };
@@ -507,6 +508,7 @@
       ws.onerror = (err) => console.error(`⚠️ ${STORE_CODE} 에러`, err);
 
       ws.onmessage = (event) => {
+        lastServerContact = Date.now();
         let data; try { data = JSON.parse(event.data); } catch(e) { return; }
 
         if (data.type === "PING") { try { ws.send(JSON.stringify({type:'PONG'})); } catch(e){} return; }
@@ -547,6 +549,35 @@
         }
       };
     }
+
+    // === 연결 생존 감시 ===
+    // TCP가 소리 없이 죽으면(Wi-Fi 절전, NAT 만료) onclose가 안 불려서 재연결이 영영 안 됨.
+    // 주기적으로 keepalive를 보내고, 서버 메시지가 일정 시간 없으면 죽은 연결로 보고 강제 재연결.
+    let lastServerContact = Date.now();
+    const STALE_LIMIT = 150000; // 서버 PING(60초) 2회 이상 누락 시 죽은 연결로 간주
+
+    function forceReconnect(reason) {
+      console.warn(`🔌 ${STORE_CODE} 강제 재연결 (${reason})`);
+      if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e) {} }
+      connectWebSocket();
+    }
+
+    setInterval(() => {
+      if (!ws) return;
+      if (ws.readyState === WebSocket.OPEN) {
+        try { ws.send(JSON.stringify({ type: 'PONG' })); } catch(e) {} // keepalive: Wi-Fi 절전·NAT 만료 방지
+        if (Date.now() - lastServerContact > STALE_LIMIT) forceReconnect('no_server_response');
+      } else if (ws.readyState === WebSocket.CLOSED && !reconnectTimer) {
+        connectWebSocket();
+      }
+    }, 25000);
+
+    window.addEventListener('online', () => {
+      if (ws && ws.readyState !== WebSocket.OPEN) forceReconnect('network_online');
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && ws && Date.now() - lastServerContact > STALE_LIMIT) forceReconnect('visibility_resume');
+    });
 
     document.addEventListener('DOMContentLoaded', () => { initializeAudioGate(); connectWebSocket(); switchToWaitingMode(); });
     window.addEventListener('beforeunload', () => { if(ws) ws.close(); if(reconnectTimer) clearTimeout(reconnectTimer); if(fullscreenTimer) clearTimeout(fullscreenTimer); audioManager.cleanup(); });

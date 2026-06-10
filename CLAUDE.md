@@ -76,8 +76,9 @@ Audio uses a single cached `Audio` element with a playback queue to prevent over
 
 - Default port: `3000` (override with `PORT` env var)
 - Admin password: `"1234"` (hardcoded, for closing/emergency actions)
-- Heartbeat interval: 300s (5min)
-- Client timeout: 600s (10min, 2x heartbeat)
+- Heartbeat interval: 60s (short, to keep traffic flowing — prevents TV Wi-Fi power-save and router NAT timeouts from silently killing connections)
+- Client timeout: 180s (3x heartbeat)
+- Display pages also run a client-side watchdog: keepalive `PONG` every 25s + force-reconnect if no server message for 150s (handles half-open TCP where `onclose` never fires)
 - Max displayed numbers: 10
 
 ## URL Routes

@@ -105,8 +105,9 @@ app.get('/status', (req, res) => {
 });
 
 // ====== Heartbeat ======
-const HEARTBEAT_INTERVAL = 300000;
-const CLIENT_TIMEOUT = 600000;
+// 짧은 주기로 트래픽을 유지해 TV의 Wi-Fi 절전 진입과 공유기 NAT 세션 만료를 방지
+const HEARTBEAT_INTERVAL = 60000;
+const CLIENT_TIMEOUT = 180000;
 
 function heartbeat() {
   for (const storeKey in stores) {
