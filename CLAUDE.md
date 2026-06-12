@@ -38,6 +38,7 @@ Clients connect via WebSocket and register by sending `DISPLAY` or `INPUT` as th
 | `input1.html` | Admin panel (staff) | 1루점 |
 | `display.html` | Customer-facing TV/kiosk | 3루점 |
 | `display1.html` | Customer-facing TV/kiosk | 1루점 |
+| `display11.html` | Fully Kiosk Browser variant of `display1.html` (audio auto-unlock via autoplay, full page reload after 6min of no server contact) | 1루점 |
 
 ### WebSocket Message Flow
 

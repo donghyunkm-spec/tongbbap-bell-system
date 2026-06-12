@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>통빱 1루점 디스플레이 (키오스크)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #0f0c29; color: white; font-family: 'Noto Sans KR', sans-serif; text-align: center; margin: 0; padding: 0; overflow: hidden; min-height: 100vh; position: relative; -webkit-user-select: none; user-select: none; }
+    /* GPU 가속 힌트 */
+    .numBox, .fullscreen-call, .fullscreen-closed, .text-overlay, .waiting-screen { will-change: transform, opacity; transform: translateZ(0); }
+
+    .audio-gate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20000; font-size: 6vw; color: white; }
+    .audio-gate.hidden { display: none; }
+    .start-button { font-size: 8vw; font-weight: 900; background: #ff6b6b; color: white; border: none; padding: 3vh 6vw; border-radius: 25px; margin-top: 4vh; cursor: pointer; animation: pulse 2s infinite; outline: 3px solid transparent; transition: all 0.3s ease; }
+    .start-button:focus { outline: 3px solid #ffd700; background: #ff5252; transform: scale(1.05); }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+    .call-screen { display: flex; flex-direction: column; height: 100vh; padding: 0; padding-bottom: 45px; }
+    .call-screen.hidden { display: none; }
+
+    /* 브랜드 헤더: 로고 + 준비완료 한 줄 */
+    .screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2vh 3vw;
+      background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 70%, transparent 100%);
+      flex-shrink: 0;
+    }
+    .header-logo-wrap {
+      background: white;
+      border-radius: 12px;
+      padding: 0.6vh 1.5vw;
+      display: flex;
+      align-items: center;
+    }
+    .header-logo { height: 4.5vh; object-fit: contain; }
+    .header-ready {
+      display: flex;
+      align-items: center;
+      gap: 0.8vw;
+    }
+    .ready-dot {
+      width: 1.2vw;
+      height: 1.2vw;
+      background: #69f0ae;
+      border-radius: 50%;
+    }
+    .ready-text {
+      font-size: 3.5vw;
+      font-weight: 900;
+      color: #69f0ae;
+      letter-spacing: 0.3vw;
+    }
+    .main-card {
+      flex: 1;
+      margin: 0.5vh 2.5vw;
+      background: rgba(255,255,255,0.03);
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #message { display: none; width: 100%; padding: 0.8vh 2vw; background: linear-gradient(90deg, rgba(220,53,69,0.95), rgba(183,28,28,0.95)); justify-content: center; align-items: center; font-size: 2.8vw; font-weight: 900; color: white; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #message.show { display: flex; }
+    #availableBar { display: none; width: 100%; padding: 0.6vh 2vw; background: linear-gradient(90deg, rgba(56,142,60,0.95), rgba(76,175,80,0.95)); justify-content: center; align-items: center; font-size: 2.8vw; font-weight: 900; color: white; flex-shrink: 0; }
+    #availableBar.show { display: flex; }
+
+    #numbers { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vh; width: 100%; padding: 2vh 2vw; }
+    .number-row { display: flex; justify-content: center; align-items: center; gap: 1.5vw; width: 100%; flex-wrap: nowrap; }
+
+    .numBox {
+      background: #ffca28;
+      color: #1a1a1a;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 10vw;
+      font-weight: 900;
+      padding: 2vh 2vw;
+      border-radius: 20px;
+      min-width: 5vw;
+      min-height: 5vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 1;
+      position: relative;
+      border: 2px solid rgba(255,255,255,0.15);
+    }
+
+    .numBox.latest {
+      background: #e91e63;
+      color: white;
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    /* 빈 화면 상태 */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.35);
+      font-size: 4vw;
+      font-weight: 700;
+      gap: 1.5vh;
+    }
+    .empty-icon { font-size: 10vw; opacity: 0.5; }
+
+    .fullscreen-call { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e91e63; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+    .fullscreen-call.active { display: flex; }
+    .fullscreen-number { font-size: 50vw; font-weight: 900; color: white; }
+    .fullscreen-message { font-size: 8vw; font-weight: 700; color: white; margin-top: 2vh; }
+
+    .fullscreen-closed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #dc143c; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; }
+    .fullscreen-closed.active { display: flex; }
+    .closed-title { font-size: 12vw; font-weight: 900; color: white; margin-bottom: 4vh; text-align: center; }
+    .closed-message { font-size: 6vw; font-weight: 700; color: white; text-align: center; line-height: 1.3; }
+
+    /* 하단 고정 영역: status + notice를 겹치지 않게 배치 */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+    .status-indicator {
+      display: none;
+      width: 100%;
+      padding: 1.2vh 2vw;
+      background: linear-gradient(90deg, #388E3C, #4CAF50);
+      color: white;
+      font-size: 4vw;
+      font-weight: 900;
+      text-align: center;
+    }
+    .status-indicator.show { display: block; }
+    .status-indicator.closed { background: #dc3545; }
+
+    #noticeBar {
+      width: 100%;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3vw;
+      background: linear-gradient(90deg, #1a1a2e, #2d1b3d, #1a1a2e);
+      color: rgba(255,255,255,0.85);
+      font-size: 2.2vw;
+      font-weight: bold;
+      border-top: 2px solid #e91e63;
+      letter-spacing: 0.1vw;
+      flex-shrink: 0;
+    }
+
+    .waiting-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a2e; z-index: 2000; overflow: hidden; }
+    .waiting-screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .slide { display: none; width: 100%; height: 100%; position: relative; animation: slideIn 1s ease-in-out; }
+    .slide.active { display: block; }
+    @keyframes slideIn{0%{opacity:0}100%{opacity:1}}
+    .slide-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+
+    .text-overlay { position: fixed; bottom: 8vh; left: 50%; transform: translateX(-50%); background-color: rgba(0,0,0,0.85); color: white; padding: 3vh 5vw; border-radius: 20px; font-size: 5vw; font-weight: bold; z-index: 15000; text-align: center; width: 80%; border: 5px solid #ffc107; display: none; }
+    .text-overlay.active { display: block; }
+
+    /* 소형 화면 대응 (핸드폰 확인용) */
+    @media (max-width: 768px) {
+      .screen-header { padding: 0.5vh 2vw; }
+      .header-logo { height: 3vh; }
+      .main-card { margin: 0.3vh 1.5vw; border-radius: 15px; }
+      .ready-dot { width: 2vw; height: 2vw; }
+      .ready-text { font-size: 3.5vw; }
+      .numBox { padding: 1.5vh 1.5vw; border-radius: 15px; min-height: 8vh; }
+      /* numBox 크기는 autoFitNumbers()에서 동적으로 설정 */
+      #noticeBar { height: 35px; font-size: 3vw; }
+      .call-screen { padding-bottom: 35px; }
+      .status-indicator { font-size: 3.5vw; padding: 1vh 2vw; }
+      .sold-out-item { font-size: 3vw; padding: 0.5vh 1.5vw; }
+      .empty-state { font-size: 5vw; }
+      .empty-icon { font-size: 12vw; }
+    }
+  </style>
+</head>
+<body>
+  <div id="audioGate" class="audio-gate">
+    <div>🔊 통빱 1루점 호출벨 시스템</div>
+    <div style="font-size:4vw;margin-top:2vh;">음성 안내를 들으려면 리모컨 확인 버튼을 눌러주세요</div>
+    <button id="startAudioBtn" class="start-button">🎵 음성 활성화</button>
+  </div>
+
+  <div id="textOverlay" class="text-overlay"></div>
+
+  <div id="callScreen" class="call-screen hidden">
+    <div class="screen-header">
+      <div class="header-logo-wrap"><img src="logo.png" alt="통빱" class="header-logo" /></div>
+      <div class="header-ready">
+        <span class="ready-dot"></span>
+        <span class="ready-text">준비완료</span>
+      </div>
+    </div>
+    <div class="main-card">
+      <div id="message"></div>
+      <div id="availableBar"></div>
+      <div id="numbers">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🍽️</div>
+          <div>주문 준비중...</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <div id="statusIndicator" class="status-indicator"></div>
+      <div id="noticeBar">
+        음식준비 순서에 따라 뒷 번호가 먼저 받으실 수도 있습니다. 양해 부탁드립니다.
+      </div>
+    </div>
+  </div>
+
+  <div id="fullscreenCall" class="fullscreen-call">
+    <div id="fullscreenNumber" class="fullscreen-number"></div>
+    <div id="fullscreenMessage" class="fullscreen-message"></div>
+  </div>
+
+  <div id="fullscreenClosed" class="fullscreen-closed">
+    <div class="closed-title">재고 소진</div>
+    <div class="closed-message">금일 재고소진으로 인해<br>마감합니다.<br><br>대단히 죄송합니다.</div>
+  </div>
+
+  <div id="waitingScreen" class="waiting-screen active">
+    <div class="slide active" id="slide1">
+      <img src="slide1.jpg" alt="통빱 1루점 브랜딩" class="slide-image">
+    </div>
+  </div>
+
+  <script>
+    // === Fully Kiosk Browser 전용 버전 ===
+    // display1.html과 동일하되 두 가지 보강:
+    //  1) 오디오 자동 활성화 — Fully Kiosk의 자동재생 허용 설정이면 터치 없이 바로 음성 사용 가능
+    //  2) 장기 무응답 시 페이지 전체 리로드 — WS 재연결로도 못 살리는 브라우저 동결 대응
+    //     (리로드 후에도 1)번 덕분에 음성이 자동 복구되므로 안전)
+    let ws, reconnectTimer = null, fullscreenTimer = null, textOverlayTimer = null;
+    let audioEnabled = false, isClosedForDay = false, currentMode = 'WAITING';
+    let savedStatusText = "";
+    const STORE_CODE = '1ru';
+    const SILENT_WAV = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAAAQElGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+
+    // === 오디오 매니저 (AndroidTV 호환) ===
+    class AudioManager {
+      constructor() {
+        this.cachedAudio = null; this.hasUserInteraction = false; this.queue = []; this.playing = false;
+        const ua = navigator.userAgent.toLowerCase();
+        this.isAndroidTV = ua.includes('android') && (ua.includes('tv') || ua.includes('television'));
+      }
+      preload() {
+        if (!this.cachedAudio) {
+          this.cachedAudio = new Audio(); this.cachedAudio.src = 'dingdong.mp4';
+          this.cachedAudio.preload = 'auto'; this.cachedAudio.volume = 1.0;
+          if (this.isAndroidTV) { this.cachedAudio.loop = false; this.cachedAudio.autoplay = false; }
+          this.cachedAudio.load();
+        }
+      }
+      getAudio() {
+        this.preload();
+        return this.cachedAudio;
+      }
+      async addToQueue(n) { if (!this.hasUserInteraction) return; this.queue.push(n); if (!this.playing) this.playNext(); }
+      async playNext() {
+        if (this.queue.length === 0) { this.playing = false; return; }
+        this.playing = true; this.queue.shift();
+        try {
+          const a = this.getAudio(); a.currentTime = 0;
+          await new Promise((res, rej) => {
+            a.addEventListener('ended', res, { once: true });
+            a.addEventListener('error', rej, { once: true });
+            a.play().catch(rej);
+          });
+        } catch (e) {}
+        setTimeout(() => this.playNext(), 100);
+      }
+      cleanup() { if (this.cachedAudio) { this.cachedAudio.pause(); this.cachedAudio.src = ''; this.cachedAudio = null; } }
+    }
+    const audioManager = new AudioManager();
+
+    function initializeAudioGate() {
+      const gate = document.getElementById('audioGate');
+      const btn = document.getElementById('startAudioBtn');
+      btn.focus();
+      let activated = false;
+
+      async function activate() {
+        if (activated) return;
+        activated = true;
+        audioManager.hasUserInteraction = true; audioEnabled = true;
+        audioManager.preload();
+        try { const t = new Audio(); t.src = SILENT_WAV; await t.play(); } catch(e){}
+        gate.classList.add('hidden');
+        if (currentMode === 'WAITING') switchToWaitingMode(); else switchToCallMode();
+      }
+
+      // Fully Kiosk: 자동재생이 허용돼 있으면 무음 재생이 성공 → 터치 없이 즉시 활성화.
+      // 차단된 환경(일반 브라우저)이면 실패하고 기존 터치 게이트로 폴백.
+      (async () => {
+        try {
+          const t = new Audio(); t.src = SILENT_WAV;
+          await t.play();
+          activate();
+        } catch (e) {
+          console.warn('🔇 자동재생 차단됨 — 수동 활성화 필요 (Fully Kiosk의 Autoplay Audio 설정 확인)');
+        }
+      })();
+
+      btn.addEventListener('click', activate);
+      btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.keyCode === 23) { e.preventDefault(); activate(); } });
+      document.addEventListener('keydown', function handler(e) {
+        if (!audioEnabled && (e.key === 'Enter' || e.keyCode === 23)) { e.preventDefault(); activate(); document.removeEventListener('keydown', handler); }
+      });
+    }
+
+    // === 화면 전환 ===
+    function switchToWaitingMode() {
+      if (isClosedForDay) return;
+      currentMode = 'WAITING';
+      document.getElementById('callScreen').classList.add('hidden');
+      document.getElementById('waitingScreen').classList.add('active');
+      document.getElementById('fullscreenCall').classList.remove('active');
+      if (fullscreenTimer) clearTimeout(fullscreenTimer);
+    }
+    function switchToCallMode() {
+      if (isClosedForDay) return;
+      currentMode = 'CALL';
+      document.getElementById('waitingScreen').classList.remove('active');
+      document.getElementById('callScreen').classList.remove('hidden');
+      updateStatusIndicator(savedStatusText);
+    }
+    function showClosedScreen() {
+      document.getElementById('fullscreenClosed').classList.add('active');
+      document.getElementById('callScreen').classList.add('hidden');
+      document.getElementById('waitingScreen').classList.remove('active');
+      isClosedForDay = true;
+    }
+    function hideClosedScreen() {
+      document.getElementById('fullscreenClosed').classList.remove('active');
+      isClosedForDay = false;
+      if (currentMode === 'WAITING') switchToWaitingMode(); else switchToCallMode();
+    }
+
+    // === 번호 표시 (DOM 재사용으로 최적화) ===
+    let lastNumbers = [];
+    function updateNumbers(numbers) {
+      if (currentMode !== 'CALL') return;
+      const container = document.getElementById("numbers");
+      const nums = numbers || [];
+      const numsStr = nums.join(',');
+      const lastStr = lastNumbers.join(',');
+      if (numsStr === lastStr) return;
+      lastNumbers = nums.slice();
+
+      container.innerHTML = '';
+
+      if (nums.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><div>주문 준비중...</div></div>';
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+      [nums.slice(0,5), nums.slice(5,10)].forEach(rowNums => {
+        if (rowNums.length > 0) {
+          const row = document.createElement("div"); row.className = "number-row";
+          const cls = `row-count-${rowNums.length}`;
+          rowNums.forEach(num => {
+            const box = document.createElement("div"); box.className = `numBox ${cls}`; box.textContent = num;
+            row.appendChild(box);
+          });
+          frag.appendChild(row);
+        }
+      });
+      container.appendChild(frag);
+
+      const allBoxes = container.querySelectorAll('.numBox');
+      if (allBoxes.length > 0) allBoxes[allBoxes.length - 1].classList.add('latest');
+
+      autoFitNumbers();
+    }
+    let fitRAF = 0;
+    function autoFitNumbers() {
+      if (fitRAF) cancelAnimationFrame(fitRAF);
+      fitRAF = requestAnimationFrame(() => {
+        fitRAF = 0;
+        const container = document.getElementById('numbers');
+        const rows = container.querySelectorAll('.number-row');
+        if (!rows.length) return;
+        const boxes = container.querySelectorAll('.numBox');
+        if (!boxes.length) return;
+
+        const availH = container.clientHeight;
+        const availW = container.clientWidth;
+        const numRows = rows.length;
+        const gap = 16;
+        const padding = 32;
+        const rowGap = 12;
+
+        const rowGapTotal = gap * (numRows - 1);
+        const maxRowH = (availH - padding - rowGapTotal) / numRows;
+
+        let maxCols = 1;
+        rows.forEach(r => { const c = r.children.length; if (c > maxCols) maxCols = c; });
+        const maxBoxW = (availW - rowGap * (maxCols - 1)) / maxCols;
+
+        const fontSize = Math.min(maxRowH * 0.55, maxBoxW * 0.45);
+        const fontPx = Math.max(fontSize, 20) + 'px';
+
+        boxes.forEach(b => { b.style.fontSize = fontPx; });
+      });
+    }
+    window.addEventListener('resize', () => { if (currentMode === 'CALL') autoFitNumbers(); });
+
+    // === 풀스크린 호출 ===
+    function showFullscreenCall(number) {
+      if (isClosedForDay) return;
+      document.getElementById('fullscreenNumber').textContent = number;
+      document.getElementById('fullscreenMessage').textContent = `${number}번 손님 주문 나왔습니다!`;
+      document.getElementById('fullscreenCall').classList.add('active');
+      audioManager.addToQueue(number);
+      if (fullscreenTimer) clearTimeout(fullscreenTimer);
+      fullscreenTimer = setTimeout(() => document.getElementById('fullscreenCall').classList.remove('active'), 5000);
+    }
+    function showFullscreenCallSequence(numbers) {
+      if (isClosedForDay || !Array.isArray(numbers) || !numbers.length) return;
+      let i = 0;
+      if (fullscreenTimer) { clearTimeout(fullscreenTimer); fullscreenTimer = null; }
+      (function next() {
+        if (i >= numbers.length) return;
+        const n = numbers[i];
+        document.getElementById('fullscreenNumber').textContent = n;
+        document.getElementById('fullscreenMessage').textContent = `${n}번 손님 주문 나왔습니다!`;
+        document.getElementById('fullscreenCall').classList.add('active');
+        audioManager.addToQueue(n);
+        i++;
+        setTimeout(() => { if (i < numbers.length) next(); else setTimeout(() => document.getElementById('fullscreenCall').classList.remove('active'), 3000); }, 3000);
+      })();
+    }
+
+    // === 하단 바 높이에 맞춰 padding 조정 ===
+    function adjustBottomPadding() {
+      const bar = document.querySelector('.bottom-bar');
+      if (bar) {
+        document.getElementById('callScreen').style.paddingBottom = bar.offsetHeight + 'px';
+      }
+    }
+
+    // === 상태 표시 ===
+    function updateStatusIndicator(text) {
+      savedStatusText = text || "";
+      if (currentMode !== 'CALL' || isClosedForDay) return;
+      const si = document.getElementById('statusIndicator');
+      if (savedStatusText && savedStatusText.trim()) {
+        si.innerText = savedStatusText;
+        si.classList.add('show');
+        autoFitNumbers();
+      } else {
+        si.innerText = '';
+        si.classList.remove('show');
+        autoFitNumbers();
+      }
+      if (savedStatusText.includes('재고소진') || savedStatusText.includes('마감')) {
+        si.classList.add('closed');
+      } else {
+        si.classList.remove('closed');
+      }
+      adjustBottomPadding();
+    }
+    const ALL_MENUS = ['삼겹살', '김치말이국수', '소세지나쵸', '비빔면', '우동', '잔치국수'];
+    const DEFAULT_NOTICE = '음식준비 순서에 따라 뒷 번호가 먼저 받으실 수도 있습니다. 양해 부탁드립니다.';
+    function updateSoldOutMenus(menus) {
+      const mb = document.getElementById('message');
+      const ab = document.getElementById('availableBar');
+      const nb = document.getElementById('noticeBar');
+      if (menus && menus.length > 0) {
+        mb.textContent = '🚫 품절: ' + menus.join(', ');
+        mb.classList.add('show');
+        const available = ALL_MENUS.filter(m => !menus.includes(m));
+        if (available.length > 0) {
+          ab.textContent = '✅ 판매중: ' + available.join(', ');
+          ab.classList.add('show');
+        } else {
+          ab.textContent = '';
+          ab.classList.remove('show');
+        }
+        nb.textContent = DEFAULT_NOTICE;
+        if (currentMode === 'CALL') autoFitNumbers();
+      } else {
+        mb.textContent = '';
+        mb.classList.remove('show');
+        ab.textContent = '';
+        ab.classList.remove('show');
+        nb.textContent = DEFAULT_NOTICE;
+        if (currentMode === 'CALL') autoFitNumbers();
+      }
+    }
+    function showTextOverlay(text, duration) {
+      const ov = document.getElementById('textOverlay');
+      if (!text || !text.trim()) { ov.classList.remove('active'); return; }
+      ov.innerText = text; ov.classList.add('active');
+      if (textOverlayTimer) clearTimeout(textOverlayTimer);
+      if (duration < 90000) textOverlayTimer = setTimeout(() => ov.classList.remove('active'), duration);
+    }
+
+    // === WebSocket ===
+    function connectWebSocket() {
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${location.host}`);
+
+      ws.onopen = () => {
+        lastServerContact = Date.now();
+        ws.send(`DISPLAY:${STORE_CODE}`);
+        // 연결 복구
+      };
+      ws.onclose = () => {
+        reconnectTimer = setTimeout(connectWebSocket, 5000);
+      };
+      ws.onerror = (err) => console.error(`⚠️ ${STORE_CODE} 에러`, err);
+
+      ws.onmessage = (event) => {
+        lastServerContact = Date.now();
+        let data; try { data = JSON.parse(event.data); } catch(e) { return; }
+
+        if (data.type === "PING") { try { ws.send(JSON.stringify({type:'PONG'})); } catch(e){} return; }
+        if (data.type === "RELOAD") { location.reload(); return; }
+
+        if (data.type === "MODE") {
+          if (data.mode === "WAITING") switchToWaitingMode();
+          else if (data.mode === "CALL") switchToCallMode();
+          return;
+        }
+
+        if (data.type === "MENU_UPDATE") updateSoldOutMenus(data.soldOutMenus);
+        if (data.type === "MSG_DISPLAY") showTextOverlay(data.text, data.duration);
+        if (data.type === "MSG") {
+          const t = data.text || "";
+          if (t.includes('재고소진') && t.includes('마감')) showClosedScreen();
+          else if (t === '안녕하세요! 통빱 입니다' && isClosedForDay) hideClosedScreen();
+        }
+
+        if (data.type === "STATUS") updateStatusIndicator(data.text);
+
+        if (currentMode === 'CALL') {
+          if (data.type === "CALL" && Array.isArray(data.list)) {
+            updateNumbers(data.list);
+            if (data.calledNumbers && Array.isArray(data.calledNumbers)) showFullscreenCallSequence(data.calledNumbers);
+            else if (data.calledNumber) showFullscreenCall(data.calledNumber);
+            // calledNumber가 null이면 초기 상태 전송이므로 풀스크린 안 보여줌
+          }
+          else if (data.type === "AUDIO") {
+            if (!audioManager.hasUserInteraction) return;
+            if (!window._audioCache) window._audioCache = {};
+            const files = {'monitor':'voice/monitor.mp3','noodle':'voice/noodle.mp3','pork':'voice/pork.mp3','dingdong':'dingdong.mp4'};
+            if (files[data.audioType]) {
+              if (!window._audioCache[data.audioType]) { window._audioCache[data.audioType] = new Audio(files[data.audioType]); window._audioCache[data.audioType].volume = 1.0; }
+              const a = window._audioCache[data.audioType]; a.currentTime = 0; a.play().catch(()=>{});
+            }
+          }
+        }
+      };
+    }
+
+    // === 연결 생존 감시 ===
+    // TCP가 소리 없이 죽으면(Wi-Fi 절전, NAT 만료) onclose가 안 불려서 재연결이 영영 안 됨.
+    // 주기적으로 keepalive를 보내고, 서버 메시지가 일정 시간 없으면 죽은 연결로 보고 강제 재연결.
+    let lastServerContact = Date.now();
+    const STALE_LIMIT = 150000; // 서버 PING(60초) 2회 이상 누락 시 죽은 연결로 간주
+    const RELOAD_LIMIT = 360000; // 강제 재연결로도 6분간 복구 안 되면 페이지 통째로 리로드
+
+    function forceReconnect(reason) {
+      console.warn(`🔌 ${STORE_CODE} 강제 재연결 (${reason})`);
+      if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch(e) {} }
+      connectWebSocket();
+    }
+
+    setInterval(() => {
+      // WS 재연결 시도가 누적돼도 서버 응답이 없으면 브라우저 네트워크 스택이 먹통인 경우 —
+      // 페이지 리로드로 전부 초기화 (리로드 직후 lastServerContact가 리셋되므로 자연히 6분 간격 제한됨)
+      if (Date.now() - lastServerContact > RELOAD_LIMIT) { location.reload(); return; }
+      if (!ws) return;
+      if (ws.readyState === WebSocket.OPEN) {
+        try { ws.send(JSON.stringify({ type: 'PONG' })); } catch(e) {} // keepalive: Wi-Fi 절전·NAT 만료 방지
+        if (Date.now() - lastServerContact > STALE_LIMIT) forceReconnect('no_server_response');
+      } else if (ws.readyState === WebSocket.CLOSED && !reconnectTimer) {
+        connectWebSocket();
+      }
+    }, 25000);
+
+    window.addEventListener('online', () => {
+      if (ws && ws.readyState !== WebSocket.OPEN) forceReconnect('network_online');
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && ws && Date.now() - lastServerContact > STALE_LIMIT) forceReconnect('visibility_resume');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => { initializeAudioGate(); connectWebSocket(); switchToWaitingMode(); });
+    window.addEventListener('beforeunload', () => { if(ws) ws.close(); if(reconnectTimer) clearTimeout(reconnectTimer); if(fullscreenTimer) clearTimeout(fullscreenTimer); audioManager.cleanup(); });
+  </script>
+</body>
+</html>
