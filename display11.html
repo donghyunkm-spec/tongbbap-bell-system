@@ -249,7 +249,8 @@
     let audioEnabled = false, isClosedForDay = false, currentMode = 'WAITING';
     let savedStatusText = "";
     const STORE_CODE = '1ru';
-    const SILENT_WAV = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAAAQElGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+    // 주의: display1.html의 무음 WAV base64는 헤더가 깨진 파일이라 자동재생 감지용으로 못 씀 (재생 자체가 항상 실패)
+    const SILENT_WAV = 'data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQgAAAAAAAAAAAAAAA==';
 
     // === 오디오 매니저 (AndroidTV 호환) ===
     class AudioManager {
@@ -312,7 +313,9 @@
           await t.play();
           activate();
         } catch (e) {
-          console.warn('🔇 자동재생 차단됨 — 수동 활성화 필요 (Fully Kiosk의 Autoplay Audio 설정 확인)');
+          // TV 화면에서 원인을 바로 볼 수 있게 게이트에 표시 (개발자 콘솔 없이 진단)
+          gate.querySelector('div:nth-child(2)').innerText =
+            '자동재생 차단됨(' + (e && e.name ? e.name : e) + ') — Fully Kiosk의 Autoplay Audio 설정을 켜거나 리모컨 확인 버튼을 눌러주세요';
         }
       })();
 
